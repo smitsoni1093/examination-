@@ -21,6 +21,14 @@ namespace ExamAPI.DTOs
     public record UserTestStatusDto(int Id, string Name, int Duration, int QuestionCount, bool IsCompleted, int? Score);
     public record AdminTestDto(int Id, string Name, int Duration, int QuestionCount);
 
+    public class ImportSummaryDto
+    {
+        public int TotalRows { get; set; }
+        public int SuccessCount { get; set; }
+        public int FailedCount { get; set; }
+        public List<string> Errors { get; set; } = new List<string>();
+    }
+
     // Responses
     public record QuestionDto(
         int Id, int OrderIndex,

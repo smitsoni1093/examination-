@@ -2,6 +2,10 @@ using ExamAPI.Data;
 using ExamAPI.DTOs;
 using ExamAPI.Models;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using System.Linq;
 
 namespace ExamAPI.Services
 {
@@ -121,6 +125,88 @@ namespace ExamAPI.Services
                 r.SubmittedAt
             ))
             .ToListAsync();
+        }
+
+        // ── Excel/CSV Import ──────────────────────────────────────────────────
+        public async Task<ImportSummaryDto> ImportQuestionsAsync(IFormFile file)
+        {
+            var summary = new ImportSummaryDto();
+            var questionsToInsert = new List<Question>();
+            var extension = Path.GetExtension(file.FileName).ToLower();
+
+            if (extension == ".xlsx")
+            {
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream);
+                using var package = new ExcelPackage(stream);
+                var worksheet = package.Workbook.Worksheets[0];
+                int rowCount = worksheet.Dimension?.Rows ?? 0;
+                summary.TotalRows = Math.Max(0, rowCount - 1);
+
+                for (int row = 2; row <= rowCount; row++)
+                {
+                    try {
+                        string q = worksheet.Cells[row, 1].Text?.Trim() ?? "";
+                        if (string.IsNullOrEmpty(q)) continue;
+                        questionsToInsert.Add(MapToQuestion(
+                            q,
+                            worksheet.Cells[row, 2].Text,
+                            worksheet.Cells[row, 3].Text,
+                            worksheet.Cells[row, 4].Text,
+                            worksheet.Cells[row, 5].Text,
+                            worksheet.Cells[row, 6].Text,
+                            row, summary));
+                    } catch (Exception ex) { summary.Errors.Add($"Row {row}: {ex.Message}"); summary.FailedCount++; }
+                }
+            }
+            else if (extension == ".csv")
+            {
+                using var reader = new StreamReader(file.OpenReadStream());
+                var content = await reader.ReadToEndAsync();
+                var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+                summary.TotalRows = Math.Max(0, lines.Length - 1);
+
+                for (int i = 1; i < lines.Length; i++)
+                {
+                    if (string.IsNullOrWhiteSpace(lines[i])) continue;
+                    try {
+                        var parts = lines[i].Split(','); // Simple split
+                        if (parts.Length < 6) { summary.Errors.Add($"Row {i+1}: Missing columns."); summary.FailedCount++; continue; }
+                        questionsToInsert.Add(MapToQuestion(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], i + 1, summary));
+                    } catch (Exception ex) { summary.Errors.Add($"Row {i+1}: {ex.Message}"); summary.FailedCount++; }
+                }
+            }
+
+            questionsToInsert = questionsToInsert.Where(q => q != null).ToList();
+            if (questionsToInsert.Any())
+            {
+                await _db.Questions.AddRangeAsync(questionsToInsert);
+                await _db.SaveChangesAsync();
+            }
+            return summary;
+        }
+
+        private Question MapToQuestion(string q, string a, string b, string c, string d, string ans, int row, ImportSummaryDto summary)
+        {
+            q = q?.Trim(); a = a?.Trim(); b = b?.Trim(); c = c?.Trim(); d = d?.Trim(); ans = ans?.Trim()?.ToUpper();
+            if (string.IsNullOrEmpty(q) || string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b) || string.IsNullOrEmpty(c) || string.IsNullOrEmpty(d))
+            {
+                summary.Errors.Add($"Row {row}: Missing fields.");
+                summary.FailedCount++;
+                return null;
+            }
+
+            int correctOpt = ans switch { "A" => 1, "B" => 2, "C" => 3, "D" => 4, _ => 0 };
+            if (correctOpt == 0)
+            {
+                summary.Errors.Add($"Row {row}: Invalid CorrectAnswer '{ans}'.");
+                summary.FailedCount++;
+                return null;
+            }
+
+            summary.SuccessCount++;
+            return new Question { Question_EN = q, Option1_EN = a, Option2_EN = b, Option3_EN = c, Option4_EN = d, CorrectOption = correctOpt };
         }
     }
 }

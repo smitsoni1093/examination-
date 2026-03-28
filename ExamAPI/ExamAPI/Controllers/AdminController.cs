@@ -54,6 +54,20 @@ namespace ExamAPI.Controllers
             return Ok(questions.Select(q => new { q.Id, q.Question_EN, q.CorrectOption }));
         }
 
+        [HttpPost("questions/import")]
+        public async Task<IActionResult> ImportQuestions(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return BadRequest(new { message = "No file uploaded." });
+            
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            if (extension != ".xlsx" && extension != ".csv") return BadRequest(new { message = "Only .xlsx and .csv files are supported." });
+
+            if (file.Length > 5 * 1024 * 1024) return BadRequest(new { message = "File size exceeds 5MB limit." });
+
+            var summary = await _adminService.ImportQuestionsAsync(file);
+            return Ok(summary);
+        }
+
         // ── Tests ──────────────────────────────────────────────────────────────
 
         [HttpGet("tests")]

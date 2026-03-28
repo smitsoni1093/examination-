@@ -13,6 +13,9 @@ export const adminApi = {
   getTests: () => api.get('/admin/tests'),
   getTestQuestions: (testId: number) => api.get(`/admin/test-questions/${testId}`),
   assignQuestions: (data: any) => api.post('/admin/assign-questions-to-test', data),
+  importQuestions: (formData: FormData) => api.post('/admin/questions/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
   getResults: () => api.get('/admin/results'),
 };
 

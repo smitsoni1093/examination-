@@ -6,7 +6,8 @@ import {
   Assignment, 
   Assessment,
   ArrowForwardIos,
-  Shield
+  Shield,
+  TableChart
 } from '@mui/icons-material';
 
 const Dashboard = () => {
@@ -40,6 +41,13 @@ const Dashboard = () => {
           icon: <Assessment sx={{ fontSize: 32 }} />, 
           path: '/admin/results',
           color: '#10B981'
+        },
+        { 
+          title: 'Bulk Manifest', 
+          subtitle: 'Import evaluation items',
+          icon: <TableChart sx={{ fontSize: 32 }} />, 
+          path: '/admin/import-questions',
+          color: '#6366F1'
         },
     ];
 

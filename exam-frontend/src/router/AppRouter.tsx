@@ -12,6 +12,7 @@ import CreateTest from '../pages/admin/CreateTest';
 import TestList from '../pages/admin/TestList';
 import ManageTestQuestions from '../pages/admin/ManageTestQuestions';
 import ViewResults from '../pages/admin/ViewResults';
+import ImportQuestions from '../pages/admin/ImportQuestions';
 
 // User
 import UserLogin from '../pages/user/UserLogin';
@@ -42,6 +43,7 @@ const AppRouter = () => {
           <Route path="tests" element={<TestList />} />
           <Route path="manage-questions/:testId" element={<ManageTestQuestions />} />
           <Route path="results" element={<ViewResults />} />
+          <Route path="import-questions" element={<ImportQuestions />} />
         </Route>
 
         {/* User Protected Routes */}
