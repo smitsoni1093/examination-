@@ -19,6 +19,7 @@ namespace ExamAPI.DTOs
     public record SubmitAnswerDto(int TestId, int QuestionId, int SelectedOption);
     public record SubmitTestDto(int TestId);
     public record UserTestStatusDto(int Id, string Name, int Duration, int QuestionCount, bool IsCompleted, int? Score);
+    public record AdminTestDto(int Id, string Name, int Duration, int QuestionCount);
 
     // Responses
     public record QuestionDto(

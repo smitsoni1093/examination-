@@ -60,6 +60,22 @@ namespace ExamAPI.Services
 
         // ── Tests ──────────────────────────────────────────────────────────────
 
+        public async Task<List<AdminTestDto>> GetTestsAsync()
+        {
+            return await _db.Tests
+                .Select(t => new AdminTestDto(t.Id, t.Name, t.Duration, t.TestQuestions.Count))
+                .ToListAsync();
+        }
+
+        public async Task<List<int>> GetTestQuestionIdsAsync(int testId)
+        {
+            return await _db.TestQuestions
+                .Where(tq => tq.TestId == testId)
+                .OrderBy(tq => tq.OrderIndex)
+                .Select(tq => tq.QuestionId)
+                .ToListAsync();
+        }
+
         public async Task<Test> CreateTestAsync(CreateTestDto dto)
         {
             var test = new Test { Name = dto.Name, Duration = dto.Duration };

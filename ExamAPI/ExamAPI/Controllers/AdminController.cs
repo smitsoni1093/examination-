@@ -56,6 +56,24 @@ namespace ExamAPI.Controllers
 
         // ── Tests ──────────────────────────────────────────────────────────────
 
+        [HttpGet("tests")]
+        public async Task<IActionResult> GetTests()
+        {
+            var tests = await _adminService.GetTestsAsync();
+            return Ok(tests);
+        }
+
+        [HttpGet("test-questions/{testId}")]
+        public async Task<IActionResult> GetTestQuestions(int testId)
+        {
+            try
+            {
+                var questionIds = await _adminService.GetTestQuestionIdsAsync(testId);
+                return Ok(questionIds);
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        }
+
         [HttpPost("create-test")]
         public async Task<IActionResult> CreateTest([FromBody] CreateTestDto dto)
         {

@@ -9,6 +9,8 @@ import Dashboard from '../pages/admin/Dashboard';
 import CreateUser from '../pages/admin/CreateUser';
 import CreateQuestion from '../pages/admin/CreateQuestion';
 import CreateTest from '../pages/admin/CreateTest';
+import TestList from '../pages/admin/TestList';
+import ManageTestQuestions from '../pages/admin/ManageTestQuestions';
 import ViewResults from '../pages/admin/ViewResults';
 
 // User
@@ -37,6 +39,8 @@ const AppRouter = () => {
           <Route path="create-user" element={<CreateUser />} />
           <Route path="create-question" element={<CreateQuestion />} />
           <Route path="create-test" element={<CreateTest />} />
+          <Route path="tests" element={<TestList />} />
+          <Route path="manage-questions/:testId" element={<ManageTestQuestions />} />
           <Route path="results" element={<ViewResults />} />
         </Route>
 

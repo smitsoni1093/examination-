@@ -144,3 +144,4 @@ C:\Users\Admin\exam\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\refint\ExamAPI
 C:\Users\Admin\exam\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\ExamAPI.pdb
 C:\Users\Admin\exam\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\ExamAPI.genruntimeconfig.cache
 C:\Users\Admin\exam\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\ref\ExamAPI.dll
+C:\Users\Admin\exam\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\ExamAPI.sourcelink.json

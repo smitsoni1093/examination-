@@ -10,6 +10,8 @@ export const adminApi = {
   getQuestions: () => api.get('/admin/questions'),
   createQuestion: (data: any) => api.post('/admin/create-question', data),
   createTest: (data: any) => api.post('/admin/create-test', data),
+  getTests: () => api.get('/admin/tests'),
+  getTestQuestions: (testId: number) => api.get(`/admin/test-questions/${testId}`),
   assignQuestions: (data: any) => api.post('/admin/assign-questions-to-test', data),
   getResults: () => api.get('/admin/results'),
 };

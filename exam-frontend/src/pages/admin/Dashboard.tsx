@@ -31,7 +31,7 @@ const Dashboard = () => {
           title: 'Test Engineering', 
           subtitle: 'Build and assign evaluations',
           icon: <Assignment sx={{ fontSize: 32 }} />, 
-          path: '/admin/create-test',
+          path: '/admin/tests',
           color: '#EC4899'
         },
         { 
