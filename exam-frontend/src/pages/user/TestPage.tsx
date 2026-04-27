@@ -1,75 +1,125 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { useTranslation } from 'react-i18next';
 import { 
   Container, Typography, Box, Paper, Button, Radio, RadioGroup, 
-  FormControlLabel, FormControl, Grid, Dialog, DialogTitle, DialogActions 
+  FormControlLabel, FormControl, Grid, Dialog, DialogTitle, DialogActions
 } from '@mui/material';
+import { ArrowBackRounded } from '@mui/icons-material';
 import type { RootState } from '../../store/store';
-import { saveAnswer, clearTest } from '../../store/examSlice';
+import { saveAnswer, clearTest, setTest, setAttemptId } from '../../store/examSlice';
 import { userApi } from '../../api/endpoints';
 
 const TestPage = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { i18n, t } = useTranslation();
+  const themeMode = useSelector((state: RootState) => state.theme?.mode || 'light');
+  const isDark = themeMode === 'dark';
   
-  const { testName, duration, questions, savedAnswers } = useSelector((state: RootState) => state.exam);
+  const { testName, questions, savedAnswers, attemptId } = useSelector((state: RootState) => state.exam);
   
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(duration ? duration * 60 : 3600);
   const [submitting, setSubmitting] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [navigatorPage, setNavigatorPage] = useState(1);
+  const navigatorPageSize = 20;
 
-  // Anti-cheat: Warning on tab switch
+  // Load attempt progress on mount / when testId changes
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && !submitting) {
-        alert("WARNING: Tab switching is not allowed. Further violations may cancel your exam.");
+    const loadAttempt = async () => {
+      if (!testId) return;
+      try {
+        const res = await userApi.getTestAttempt(Number(testId));
+        dispatch(setTest({
+          id: res.data.testId,
+          name: res.data.testName,
+          testImageUrl: res.data.testImageUrl,
+          duration: res.data.duration,
+          questions: res.data.questions,
+          savedAnswers: res.data.savedAnswers,
+          attemptId: res.data.attemptId,
+        }));
+        dispatch(setAttemptId(res.data.attemptId));
+
+        // Jump to last saved index or first unanswered
+        const answers: Record<number, number> = res.data.savedAnswers || {};
+        const qs: any[] = res.data.questions || [];
+        const lastIdx: number | null = res.data.lastQuestionIndex ?? null;
+
+        if (typeof lastIdx === 'number' && lastIdx >= 0 && lastIdx < qs.length) {
+          setCurrentIdx(lastIdx);
+        } else {
+          const firstUnanswered = qs.findIndex((q: any) => !answers[q.id]);
+          setCurrentIdx(firstUnanswered === -1 ? 0 : firstUnanswered);
+        }
+
+      } catch (err) {
+        // If no attempt exists (direct navigation), fall back to legacy test load
+        try {
+          const legacy = await userApi.getTest(Number(testId));
+          dispatch(setTest(legacy.data));
+        } catch {
+          // ignore
+        }
       }
     };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    loadAttempt();
+  }, [testId, dispatch]);
+
+  // Anti-cheat: keep right-click prevention only
+  useEffect(() => {
     // Prevent right click
     const handleContextMenu = (e: any) => e.preventDefault();
     document.addEventListener("contextmenu", handleContextMenu);
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
       document.removeEventListener("contextmenu", handleContextMenu);
     };
-  }, [submitting]);
+  }, []);
 
-  // Timer logic
   useEffect(() => {
-    if (timeLeft <= 0) {
-      handleFinalSubmit();
-      return;
+    const pageFromIndex = Math.floor(currentIdx / navigatorPageSize) + 1;
+    if (pageFromIndex !== navigatorPage) {
+      setNavigatorPage(pageFromIndex);
     }
-    const timerId = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-    return () => clearInterval(timerId);
-  }, [timeLeft]);
+  }, [currentIdx]);
 
   const currentQ = questions[currentIdx];
-  const lang = i18n.language.toUpperCase(); // EN, HI, GU
+  const lang = 'EN';
   const currentAnswer = savedAnswers[currentQ?.id] || 0;
+  const navigatorPageCount = Math.max(1, Math.ceil(questions.length / navigatorPageSize));
+  const navigatorStart = (navigatorPage - 1) * navigatorPageSize;
+  const navigatorQuestions = questions.slice(navigatorStart, navigatorStart + navigatorPageSize);
+
+  const persistAnswer = useCallback(async (questionId: number, selectedOption: number, questionIndex: number) => {
+    if (attemptId) {
+      await userApi.saveAttemptAnswer(attemptId, {
+        questionId,
+        selectedOption,
+        lastQuestionIndex: questionIndex,
+      });
+      return;
+    }
+
+    await userApi.submitAnswer({
+      testId: Number(testId),
+      questionId,
+      selectedOption,
+    });
+  }, [attemptId, testId]);
 
   const handleOptionSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const optionNo = Number(e.target.value);
-    
+
     // Optimistic UI update
     dispatch(saveAnswer({ questionId: currentQ.id, selectedOption: optionNo }));
 
-    // Auto-save to backend
     try {
-      await userApi.submitAnswer({
-        testId: Number(testId),
-        questionId: currentQ.id,
-        selectedOption: optionNo
-      });
+      await persistAnswer(currentQ.id, optionNo, currentIdx);
     } catch (err) {
-      console.error("Auto-save failed", err);
+      console.error('Auto-save failed', err);
     }
   };
 
@@ -77,39 +127,80 @@ const TestPage = () => {
     if (submitting) return;
     setSubmitting(true);
     try {
-      await userApi.submitTest({ testId: Number(testId) });
+      if (attemptId) {
+        await userApi.submitAttempt(attemptId);
+      } else {
+        await userApi.submitTest({ testId: Number(testId) });
+      }
       dispatch(clearTest());
       navigate(`/user/result/${testId}`);
     } catch (err) {
       console.error("Submit failed", err);
       setSubmitting(false);
     }
-  }, [submitting, testId, navigate, dispatch]);
+  }, [submitting, testId, navigate, dispatch, attemptId]);
 
   if (!currentQ) return <Typography>Loading test...</Typography>;
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-  };
-
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4, userSelect: 'none' }}>
+    <Container
+      maxWidth="lg"
+      sx={{
+        mt: 4,
+        mb: 4,
+        userSelect: 'none',
+        color: isDark ? '#FFFFFF' : 'inherit',
+        '& .MuiPaper-root': {
+          backgroundColor: isDark ? '#000000' : undefined,
+          color: isDark ? '#FFFFFF' : undefined,
+          borderColor: isDark ? 'rgba(148, 163, 184, 0.28)' : undefined,
+        },
+        '& .MuiButton-root': {
+          color: isDark ? '#FFFFFF' : undefined,
+        },
+        '& .MuiTypography-root': {
+          color: isDark ? '#FFFFFF' : undefined,
+        },
+        '& .MuiFormControlLabel-label': {
+          color: isDark ? '#FFFFFF' : undefined,
+        },
+      }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackRounded />}
+          onClick={() => navigate('/user')}
+          sx={{
+            borderRadius: 3,
+            px: 2,
+            py: 0.8,
+            fontWeight: 700,
+            fontSize: '0.83rem',
+            textTransform: 'none',
+            borderColor: isDark ? 'rgba(148, 163, 184, 0.45)' : '#CBD5E1',
+            color: isDark ? '#FFFFFF' : '#334155',
+            bgcolor: isDark ? '#000000' : '#FFFFFF',
+            '& .MuiButton-startIcon svg': { fontSize: 18 },
+            '&:hover': {
+              borderColor: isDark ? '#CBD5E1' : '#94A3B8',
+              bgcolor: isDark ? '#111111' : '#F8FAFC',
+            },
+          }}
+        >
+          Back to Dashboard
+        </Button>
+      </Box>
+
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5">{testName}</Typography>
-        <Paper sx={{ p: 1.5, bgcolor: timeLeft < 300 ? 'error.light' : 'primary.light', color: 'white' }}>
-          <Typography variant="h6" fontWeight="bold">
-            ⏱ {t('timeLeft')}: {formatTime(timeLeft)}
-          </Typography>
-        </Paper>
+        <Typography variant="h5" sx={{ color: isDark ? '#FFFFFF' : undefined }}>{testName}</Typography>
       </Box>
 
       <Grid container spacing={3}>
         {/* Left Side - Question */}
         <Grid item xs={12} md={9}>
           <Paper sx={{ p: 4, minHeight: 400 }}>
-            <Typography variant="h6" sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ mb: 3, fontSize: '1.08rem', lineHeight: 1.4, color: isDark ? '#FFFFFF' : undefined }}>
               Q{currentIdx + 1}. {(currentQ as any)[`question_${lang}`]}
             </Typography>
 
@@ -118,9 +209,35 @@ const TestPage = () => {
                 {[1, 2, 3, 4].map((opt) => (
                   <FormControlLabel 
                     key={opt} value={opt} 
-                    control={<Radio size="medium" />} 
+                    control={
+                      <Radio
+                        size="small"
+                        sx={{
+                          color: isDark ? '#94A3B8' : undefined,
+                          '&.Mui-checked': {
+                            color: isDark ? '#FFFFFF' : undefined,
+                          },
+                        }}
+                      />
+                    } 
                     label={(currentQ as any)[`option${opt}_${lang}`]} 
-                    sx={{ mb: 2 }}
+                    sx={{
+                      mb: 1.4,
+                      px: 1.25,
+                      py: 0.9,
+                      borderRadius: 2.5,
+                      border: isDark ? '1px solid rgba(148, 163, 184, 0.28)' : '1px solid #E2E8F0',
+                      bgcolor: currentAnswer === opt ? (isDark ? 'rgba(255,255,255,0.12)' : '#EFF6FF') : (isDark ? '#000000' : '#FFFFFF'),
+                      transition: 'background-color 180ms ease, border-color 180ms ease',
+                      '&:hover': {
+                        bgcolor: isDark ? '#111111' : '#F8FAFC',
+                      },
+                      '& .MuiFormControlLabel-label': {
+                        fontSize: '0.92rem',
+                        lineHeight: 1.35,
+                        color: isDark ? '#FFFFFF' : '#0F172A',
+                      },
+                    }}
                   />
                 ))}
               </RadioGroup>
@@ -132,20 +249,22 @@ const TestPage = () => {
               variant="outlined" 
               disabled={currentIdx === 0}
               onClick={() => setCurrentIdx(prev => prev - 1)}
+              sx={{ fontSize: '0.82rem', py: 0.8, color: isDark ? '#FFFFFF' : undefined, borderColor: isDark ? 'rgba(148, 163, 184, 0.45)' : undefined, bgcolor: isDark ? '#000000' : undefined }}
             >
-              ⟵ {t('previous')}
+              ⟵ Previous
             </Button>
             
             {currentIdx === questions.length - 1 ? (
-              <Button variant="contained" color="error" onClick={() => setConfirmSubmit(true)}>
-                {t('submitTest')}
+              <Button variant="contained" color="error" onClick={() => setConfirmSubmit(true)} sx={{ fontSize: '0.82rem', py: 0.8 }}>
+                Submit Test
               </Button>
             ) : (
               <Button 
                 variant="contained" 
                 onClick={() => setCurrentIdx(prev => prev + 1)}
+                sx={{ fontSize: '0.82rem', py: 0.8 }}
               >
-                {t('next')} ⟶
+                Next ⟶
               </Button>
             )}
           </Box>
@@ -154,29 +273,116 @@ const TestPage = () => {
         {/* Right Side - Question Grid Navigator */}
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom align="center">Question Navigator</Typography>
+            <Typography variant="subtitle2" gutterBottom align="center" sx={{ fontSize: '0.86rem', fontWeight: 700, color: isDark ? '#FFFFFF' : undefined }}>Question Navigator</Typography>
             <Grid container spacing={1} sx={{ mt: 1 }}>
-              {questions.map((q, idx) => {
+              {navigatorQuestions.map((q, localIdx) => {
+                const idx = navigatorStart + localIdx;
                 const isAnswered = !!savedAnswers[q.id];
                 const isActive = idx === currentIdx;
+                const buttonLabel = isAnswered && !isActive ? `✓ ${idx + 1}` : `${idx + 1}`;
                 
                 return (
                   <Grid item xs={3} key={q.id}>
                     <Button
                       fullWidth
-                      variant={isActive ? "contained" : (isAnswered ? "contained" : "outlined")}
-                      color={isActive ? "primary" : (isAnswered ? "success" : "inherit")}
-                      sx={{ minWidth: 0, p: 1 }}
+                      variant={isActive ? 'contained' : 'outlined'}
+                      sx={{
+                        minWidth: 0,
+                        p: 0.7,
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        bgcolor: isDark
+                          ? (isActive
+                              ? '#111111'
+                              : isAnswered
+                                ? '#000000'
+                                : '#000000')
+                          : (isActive
+                              ? '#2563EB'
+                              : isAnswered
+                                ? '#10B981'
+                                : '#FFFFFF'),
+                        color: isDark
+                          ? (isActive
+                              ? '#FFFFFF'
+                              : '#FFFFFF')
+                          : (isActive
+                              ? '#FFFFFF'
+                              : '#0F172A'),
+                        borderColor: isDark
+                          ? (isActive
+                              ? '#FFFFFF'
+                              : isAnswered
+                                ? '#10B981'
+                                : 'rgba(148, 163, 184, 0.45)')
+                          : (isActive
+                              ? '#2563EB'
+                              : isAnswered
+                                ? '#10B981'
+                                : '#CBD5E1'),
+                        boxShadow: isDark && isAnswered && !isActive ? '0 0 0 1px rgba(16, 185, 129, 0.55)' : undefined,
+                        '&:hover': {
+                          bgcolor: isDark
+                            ? (isActive ? '#1F1F1F' : isAnswered ? '#111111' : '#111111')
+                            : (isActive ? '#1D4ED8' : isAnswered ? '#059669' : '#F8FAFC'),
+                        },
+                      }}
                       onClick={() => setCurrentIdx(idx)}
                     >
-                      {idx + 1}
+                      {buttonLabel}
                     </Button>
                   </Grid>
                 );
               })}
             </Grid>
+
+            {navigatorPageCount > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.75, mt: 2 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setNavigatorPage(1)}
+                  disabled={navigatorPage === 1}
+                  sx={{ minWidth: 32, px: 0.6, fontSize: '0.72rem', lineHeight: 1, color: isDark ? '#FFFFFF' : undefined, borderColor: isDark ? 'rgba(148, 163, 184, 0.45)' : undefined, bgcolor: isDark ? '#000000' : undefined }}
+                >
+                  {'<<'}
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setNavigatorPage((prev) => Math.max(1, prev - 1))}
+                  disabled={navigatorPage === 1}
+                  sx={{ minWidth: 32, px: 0.6, fontSize: '0.72rem', lineHeight: 1, color: isDark ? '#FFFFFF' : undefined, borderColor: isDark ? 'rgba(148, 163, 184, 0.45)' : undefined, bgcolor: isDark ? '#000000' : undefined }}
+                >
+                  {'<'}
+                </Button>
+                <Typography variant="caption" sx={{ fontWeight: 800, px: 0.4, fontSize: '0.72rem', color: isDark ? '#FFFFFF' : undefined }}>
+                  Page {navigatorPage} of {navigatorPageCount}
+                </Typography>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setNavigatorPage((prev) => Math.min(navigatorPageCount, prev + 1))}
+                  disabled={navigatorPage === navigatorPageCount}
+                  sx={{ minWidth: 32, px: 0.6, fontSize: '0.72rem', lineHeight: 1, color: isDark ? '#FFFFFF' : undefined, borderColor: isDark ? 'rgba(148, 163, 184, 0.45)' : undefined, bgcolor: isDark ? '#000000' : undefined }}
+                >
+                  {'>'}
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setNavigatorPage(navigatorPageCount)}
+                  disabled={navigatorPage === navigatorPageCount}
+                  sx={{ minWidth: 32, px: 0.6, fontSize: '0.72rem', lineHeight: 1, color: isDark ? '#FFFFFF' : undefined, borderColor: isDark ? 'rgba(148, 163, 184, 0.45)' : undefined, bgcolor: isDark ? '#000000' : undefined }}
+                >
+                  {'>>'}
+                </Button>
+              </Box>
+            )}
+
             <Box sx={{ mt: 4, mb: 2 }}>
-              <Button fullWidth variant="contained" color="error" onClick={() => setConfirmSubmit(true)}>
+              <Button fullWidth variant="contained" color="error" onClick={() => setConfirmSubmit(true)} sx={{ fontSize: '0.8rem', py: 0.95 }}>
                 FINISH EXAM
               </Button>
             </Box>
@@ -186,7 +392,7 @@ const TestPage = () => {
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmSubmit} onClose={() => setConfirmSubmit(false)}>
-        <DialogTitle>Are you sure you want to submit the test?</DialogTitle>
+        <DialogTitle sx={{ bgcolor: isDark ? '#000000' : undefined, color: isDark ? '#FFFFFF' : undefined }}>Are you sure you want to submit the test?</DialogTitle>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={() => setConfirmSubmit(false)}>Cancel</Button>
           <Button onClick={handleFinalSubmit} variant="contained" color="error" disabled={submitting}>

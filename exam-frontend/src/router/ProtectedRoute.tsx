@@ -9,12 +9,18 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ allowedRole }: ProtectedRouteProps) => {
   const { token, role } = useSelector((state: RootState) => state.auth);
 
+  const homeByRole = (r: string | null) => {
+    if (r === 'SuperAdmin') return '/superadmin';
+    if (r === 'Admin') return '/admin';
+    return '/user';
+  };
+
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
   if (allowedRole && role !== allowedRole) {
-    return <Navigate to={role === 'Admin' ? '/admin' : '/user'} replace />;
+    return <Navigate to={homeByRole(role)} replace />;
   }
 
   return <Outlet />;

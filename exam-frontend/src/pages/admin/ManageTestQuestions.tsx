@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Container, Typography, Box, Paper, Grid, Button, Checkbox, InputAdornment, TextField, Alert, Avatar, Chip, Stack, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, MenuItem, Tabs, Tab, Divider } from '@mui/material';
-import { Quiz, Search, DoneAll, ArrowBack, PlaylistAddCheck, Add, Language, Translate, CheckCircleOutline, Save, EditNote } from '@mui/icons-material';
+import { Container, Typography, Box, Paper, Grid, Button, Checkbox, InputAdornment, TextField, Alert, Avatar, Chip, Stack, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, MenuItem, Tabs, Tab, Divider, IconButton } from '@mui/material';
+import { Quiz, Search, DoneAll, ArrowBack, PlaylistAddCheck, Add, Language, Translate, CheckCircleOutline, Save, EditNote, Delete } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { adminApi } from '../../api/endpoints';
 
@@ -17,6 +17,7 @@ const ManageTestQuestions = () => {
 
     // Question Creation Dialog State
     const [openDialog, setOpenDialog] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
     const [tabValue, setTabValue] = useState(0);
     const [newQuestion, setNewQuestion] = useState({
         Question_EN: '', Option1_EN: '', Option2_EN: '', Option3_EN: '', Option4_EN: '',
@@ -24,6 +25,29 @@ const ManageTestQuestions = () => {
         Question_GU: '', Option1_GU: '', Option2_GU: '', Option3_GU: '', Option4_GU: '',
         CorrectOption: 1
     });
+
+    const handleOpenCreate = () => {
+        setEditingId(null);
+        setTabValue(0);
+        setNewQuestion({
+            Question_EN: '', Option1_EN: '', Option2_EN: '', Option3_EN: '', Option4_EN: '',
+            Question_HI: '', Option1_HI: '', Option2_HI: '', Option3_HI: '', Option4_HI: '',
+            Question_GU: '', Option1_GU: '', Option2_GU: '', Option3_GU: '', Option4_GU: '',
+            CorrectOption: 1
+        });
+        setOpenDialog(true);
+    };
+
+    const handleEditQuestion = (q: any) => {
+        setEditingId(q.id);
+        setNewQuestion({
+            Question_EN: q.question_EN || '', Option1_EN: q.option1_EN || '', Option2_EN: q.option2_EN || '', Option3_EN: q.option3_EN || '', Option4_EN: q.option4_EN || '',
+            Question_HI: q.question_HI || '', Option1_HI: q.option1_HI || '', Option2_HI: q.option2_HI || '', Option3_HI: q.option3_HI || '', Option4_HI: q.option4_HI || '',
+            Question_GU: q.question_GU || '', Option1_GU: q.option1_GU || '', Option2_GU: q.option2_GU || '', Option3_GU: q.option3_GU || '', Option4_GU: q.option4_GU || '',
+            CorrectOption: q.correctOption || 1
+        });
+        setOpenDialog(true);
+    };
 
     useEffect(() => {
         if (testId) {
@@ -58,6 +82,46 @@ const ManageTestQuestions = () => {
         setSelectedQuestions(newSelected);
     };
 
+    const handleSelectAll = () => {
+        const filteredIds = filteredQuestions.map(q => q.id);
+        const allFilteredSelected = filteredIds.every(id => selectedQuestions.includes(id));
+        
+        if (allFilteredSelected) {
+            // Deselect only filtered ones
+            setSelectedQuestions(prev => prev.filter(id => !filteredIds.includes(id)));
+        } else {
+            // Select all filtered ones
+            const newSelected = [...selectedQuestions];
+            filteredIds.forEach(id => {
+                if (!newSelected.includes(id)) {
+                    newSelected.push(id);
+                }
+            });
+            setSelectedQuestions(newSelected);
+        }
+    };
+
+    const handleDeleteSelected = async () => {
+        if (selectedQuestions.length === 0) return;
+        if (!window.confirm(`Permanently remove ${selectedQuestions.length} selected items from the repository? This action cannot be undone.`)) return;
+
+        setSaving(true);
+        try {
+            await adminApi.deleteBulkQuestions(selectedQuestions);
+            setMessage({ type: 'success', text: `${selectedQuestions.length} items purged from registry.` });
+            
+            // Refresh
+            const qRes = await adminApi.getQuestions();
+            setQuestions(qRes.data);
+            setSelectedQuestions([]); 
+            setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+        } catch (err: any) {
+            setMessage({ type: 'error', text: 'Bulk purge failed.' });
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -73,30 +137,52 @@ const ManageTestQuestions = () => {
 
     const handleCreateQuestion = async (autoClose = true) => {
         try {
-            const res = await adminApi.createQuestion(newQuestion);
-            const createdId = res.data.id;
-            
-            // Add to selection
-            setSelectedQuestions(prev => [...prev, createdId]);
-            
-            // Reset form
-            setNewQuestion({
-                Question_EN: '', Option1_EN: '', Option2_EN: '', Option3_EN: '', Option4_EN: '',
-                Question_HI: '', Option1_HI: '', Option2_HI: '', Option3_HI: '', Option4_HI: '',
-                Question_GU: '', Option1_GU: '', Option2_GU: '', Option3_GU: '', Option4_GU: '',
-                CorrectOption: 1
-            });
-            
-            if (autoClose) setOpenDialog(false);
-            setMessage({ type: 'success', text: `New question ${autoClose ? 'created and linked.' : 'added successfully. Keep going!'}` });
+            if (editingId) {
+                await adminApi.updateQuestion(editingId, newQuestion);
+                setMessage({ type: 'success', text: 'Evaluation item updated.' });
+                setOpenDialog(false);
+            } else {
+                const res = await adminApi.createQuestion(newQuestion);
+                const createdId = res.data.id;
+                
+                // Add to selection
+                setSelectedQuestions(prev => [...prev, createdId]);
+                
+                // Reset form
+                setNewQuestion({
+                    Question_EN: '', Option1_EN: '', Option2_EN: '', Option3_EN: '', Option4_EN: '',
+                    Question_HI: '', Option1_HI: '', Option2_HI: '', Option3_HI: '', Option4_HI: '',
+                    Question_GU: '', Option1_GU: '', Option2_GU: '', Option3_GU: '', Option4_GU: '',
+                    CorrectOption: 1
+                });
+                
+                if (autoClose) setOpenDialog(false);
+                else setTabValue(0); 
+                setMessage({ type: 'success', text: `New question ${autoClose ? 'created and linked.' : 'added successfully. Keep going!'}` });
+                setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+            }
             
             // Refresh question bank
             const qRes = await adminApi.getQuestions();
             setQuestions(qRes.data);
-            if (!autoClose) setTabValue(0); 
-
         } catch (err) {
-            setMessage({ type: 'error', text: 'Failed to create question.' });
+            setMessage({ type: 'error', text: 'Transaction failed.' });
+        }
+    };
+
+    const handleDeleteQuestion = async (id: number) => {
+        if (!window.confirm("Permanently remove this item from the repository? This will also unassign it from any linked evaluations.")) return;
+        
+        try {
+            await adminApi.deleteQuestion(id);
+            setMessage({ type: 'success', text: 'Question purged from registry.' });
+            
+            // Immediately update local state or re-fetch
+            const qRes = await adminApi.getQuestions();
+            setQuestions(qRes.data);
+            setSelectedQuestions(prev => prev.filter(sq => sq !== id));
+        } catch (err: any) {
+            setMessage({ type: 'error', text: 'Purge failed. Item may be in use.' });
         }
     };
 
@@ -190,7 +276,7 @@ const ManageTestQuestions = () => {
                             <Button 
                                 variant="outlined" 
                                 startIcon={<Add />}
-                                onClick={() => setOpenDialog(true)}
+                                onClick={handleOpenCreate}
                                 sx={{ 
                                     borderRadius: 3, fontWeight: 800, color: '#EC4899', borderColor: 'rgba(236, 72, 153, 0.3)',
                                     px: 3, py: 1.2,
@@ -262,8 +348,37 @@ const ManageTestQuestions = () => {
                         <Paper elevation={0} sx={{ borderRadius: 6, border: '1px solid #E2E8F0', overflow: 'hidden', bgcolor: '#FFFFFF' }}>
                             <Box sx={{ px: 5, py: 4, borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Box>
-                                    <Typography variant="h6" sx={{ fontWeight: 900, color: '#0F172A' }}>Question Repository</Typography>
-                                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#64748B' }}>Select items to include in this evaluation phase</Typography>
+                                    <Stack direction="row" spacing={2} alignItems="center">
+                                        <Checkbox 
+                                            checked={filteredQuestions.length > 0 && filteredQuestions.every(q => selectedQuestions.includes(q.id))}
+                                            indeterminate={filteredQuestions.some(q => selectedQuestions.includes(q.id)) && !(filteredQuestions.length > 0 && filteredQuestions.every(q => selectedQuestions.includes(q.id)))}
+                                            onChange={handleSelectAll}
+                                            sx={{ 
+                                                p: 0,
+                                                color: '#E2E8F0', 
+                                                '&.Mui-checked': { color: '#EC4899' },
+                                                '&.MuiCheckbox-indeterminate': { color: '#EC4899' }
+                                            }}
+                                        />
+                                        <Typography variant="h6" sx={{ fontWeight: 900, color: '#0F172A' }}>Question Repository</Typography>
+                                        
+                                        {selectedQuestions.length > 0 && (
+                                            <Button 
+                                                startIcon={<Delete />} 
+                                                size="small" 
+                                                color="error" 
+                                                onClick={handleDeleteSelected}
+                                                sx={{ 
+                                                    ml: 2, fontWeight: 800, textTransform: 'none', 
+                                                    bgcolor: 'rgba(239, 68, 68, 0.05)',
+                                                    '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' }
+                                                }}
+                                            >
+                                                Delete Selected ({selectedQuestions.length})
+                                            </Button>
+                                        )}
+                                    </Stack>
+                                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#64748B', display: 'block', mt: 0.5 }}>Select items to include in this evaluation phase</Typography>
                                 </Box>
                                 <TextField 
                                     size="small" placeholder="Fast search..." 
@@ -289,23 +404,23 @@ const ManageTestQuestions = () => {
                                     return (
                                         <Box 
                                             key={q.id} 
-                                            onClick={() => handleToggle(q.id)}
                                             sx={{ 
                                                 px: 5, py: 3.5, borderBottom: '1px solid #F1F5F9',
-                                                cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s',
+                                                display: 'flex', alignItems: 'center', transition: 'all 0.2s',
                                                 bgcolor: isSelected ? 'rgba(236, 72, 153, 0.02)' : 'transparent',
                                                 '&:hover': { bgcolor: '#F8FAFC' }
                                             }}
                                         >
                                             <Checkbox 
                                                 checked={isSelected} 
+                                                onClick={() => handleToggle(q.id)}
                                                 sx={{ 
                                                     color: '#E2E8F0', 
                                                     '&.Mui-checked': { color: '#EC4899' },
                                                     mr: 3
                                                 }}
                                             />
-                                            <Box sx={{ flex: 1 }}>
+                                            <Box sx={{ flex: 1, cursor: 'pointer' }} onClick={() => handleToggle(q.id)}>
                                                 <Typography sx={{ fontWeight: 700, color: isSelected ? '#0F172A' : '#475569', fontSize: '1.05rem', mb: 0.5 }}>
                                                     {q.question_EN}
                                                 </Typography>
@@ -315,17 +430,30 @@ const ManageTestQuestions = () => {
                                                     <Typography sx={{ color: '#94A3B8', fontWeight: 700, fontSize: 11 }}>COMPLEXITY: SCALE 1</Typography>
                                                 </Stack>
                                             </Box>
-                                            <Chip 
-                                                label={isSelected ? "SELECTED" : "AVAILABLE"} 
-                                                size="small" 
-                                                variant={isSelected ? "filled" : "outlined"}
-                                                sx={{ 
-                                                    fontWeight: 900, fontSize: 9, 
-                                                    bgcolor: isSelected ? '#EC4899' : 'transparent',
-                                                    color: isSelected ? 'white' : '#ADB5BD',
-                                                    borderColor: isSelected ? '#EC4899' : '#E2E8F0'
-                                                }} 
-                                            />
+                                            <Stack direction="row" spacing={2} alignItems="center">
+                                                <Chip 
+                                                    label={isSelected ? "SELECTED" : "AVAILABLE"} 
+                                                    size="small" 
+                                                    sx={{ 
+                                                        fontWeight: 900, fontSize: 10, bgcolor: isSelected ? '#EC4899' : '#F8FAFC', 
+                                                        color: isSelected ? 'white' : '#94A3B8', borderRadius: 2, pointerEvents: 'none'
+                                                    }} 
+                                                />
+                                                <IconButton 
+                                                    size="small" 
+                                                    onClick={(e) => { e.stopPropagation(); handleEditQuestion(q); }}
+                                                    sx={{ color: '#ADB5BD', '&:hover': { color: '#6366F1', bgcolor: 'rgba(99, 102, 241, 0.05)' } }}
+                                                >
+                                                    <EditNote sx={{ fontSize: 20 }} />
+                                                </IconButton>
+                                                <IconButton 
+                                                    size="small" 
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteQuestion(q.id); }}
+                                                    sx={{ color: '#ADB5BD', '&:hover': { color: '#EF4444', bgcolor: 'rgba(239, 68, 68, 0.05)' } }}
+                                                >
+                                                    <Delete sx={{ fontSize: 20 }} />
+                                                </IconButton>
+                                            </Stack>
                                         </Box>
                                     );
                                 })}
@@ -364,8 +492,12 @@ const ManageTestQuestions = () => {
                             <EditNote sx={{ fontSize: 32 }} />
                         </Avatar>
                         <Box>
-                            <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: -0.5 }}>Item Configurator</Typography>
-                            <Typography variant="caption" sx={{ color: '#94A3B8', fontWeight: 800, letterSpacing: 1 }}>NEW MULTI-LANGUAGE ASSESSMENT</Typography>
+                            <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: -0.5 }}>
+                                {editingId ? 'Modify Strategy Item' : 'Create Evaluation Entry'}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#94A3B8', fontWeight: 800, letterSpacing: 1 }}>
+                                {editingId ? `MODIFICATION PHASE - ID #${editingId}` : 'INITIALIZATION PHASE'}
+                            </Typography>
                         </Box>
                     </Stack>
                 </DialogTitle>

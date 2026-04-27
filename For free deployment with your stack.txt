@@ -1,0 +1,181 @@
+For free deployment with your stack:
+
+React frontend
+.NET backend
+SQL Server database
+Best practical free setup:
+Option 1 (Recommended)
+Frontend → Netlify (Free)
+
+Use for React.
+
+Deploy from GitHub:
+
+Push frontend to GitHub
+Go to Netlify
+New Project → Import from GitHub
+Build command:
+npm run build
+Publish directory:
+dist
+
+(if Vite)
+
+or
+
+build
+
+(if Create React App)
+
+Done.
+
+Backend → Render (Free)
+
+Use Render
+
+Push backend to GitHub
+Create Web Service
+Connect repo
+Build command:
+dotnet publish -c Release
+Start command:
+dotnet YourProject.dll
+
+You’ll get:
+
+https://your-api.onrender.com
+Database (Free)
+Use PostgreSQL on Render (free)
+
+OR
+
+Use free SQL Server alternative:
+
+Better to migrate from SQL Server to PostgreSQL if possible.
+
+(Free SQL Server hosting is much harder.)
+
+Update React API URL
+
+Change:
+
+http://10.198.96.67:5121/api
+
+to:
+
+https://your-api.onrender.com/api
+Final architecture:
+React → Netlify
+.NET API → Render
+Database → Render PostgreSQL
+
+Free.
+
+Option 2 (Can keep React + .NET together)
+
+Deploy both on:
+
+Render
+
+or
+
+Railway
+
+Sometimes simpler.
+
+About SQL Server (important)
+
+If your app depends heavily on SSMS / SQL Server, free hosting is the hardest part.
+
+Possible alternatives:
+
+Move to PostgreSQL (best free route)
+Use SQL Server Express on your own PC/VPS
+Use free Azure credits (if available)
+My honest recommendation:
+
+If first deployment:
+
+1. Deploy frontend to Netlify
+2. Deploy backend to Render
+3. Move DB to PostgreSQL
+
+That is the cleanest free path.
+
+If you want to keep SQL Server without changing database, I can show another route too.
+
+if i deploy in different platform so it is work ??
+
+Yes — absolutely, that is normal.
+
+This is called separate frontend/backend deployment and it is very common.
+
+Example:
+
+Frontend on Netlify
+
+https://myapp.netlify.app
+
+Backend on Render
+
+https://myapi.onrender.com
+
+Database somewhere else.
+
+This works fine.
+
+Flow:
+User opens React frontend
+↓
+Frontend calls backend API
+↓
+Backend talks to database
+↓
+Returns data to frontend
+
+Completely normal.
+
+You only need 2 things:
+1. Change API URL in React
+
+Instead of localhost:
+
+https://myapi.onrender.com/api
+2. Allow frontend in backend CORS
+policy.WithOrigins("https://myapp.netlify.app")
+      .AllowAnyHeader()
+      .AllowAnyMethod();
+
+Very important.
+
+This is how big systems work too
+
+Even huge apps separate them:
+
+Frontend server
+API server
+Database server
+
+Normal architecture.
+
+Only possible issue:
+
+Free hosting may sleep.
+
+Example:
+
+Backend sleeps after inactivity
+First API call may take 30–60 seconds
+
+That is a free-tier limitation.
+
+So yes:
+
+✅ Different platforms works
+✅ Very common
+✅ Safe
+✅ Scalable
+
+Actually I often recommend it.
+
+If you want to deploy React + .NET + keep SQL Server specifically, I can help plan that too.

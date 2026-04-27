@@ -1,21 +1,41 @@
 import { useState, useEffect } from 'react';
-import { Container, Typography, Box, TextField, Button, Alert, Paper, List, ListItem, ListItemText, Checkbox, Grid, Avatar, Chip, Stack, InputAdornment } from '@mui/material';
-import { Assignment, Timer, Quiz, DoneAll, Search, PlaylistAddCheck, ArrowBack } from '@mui/icons-material';
+import { Container, Typography, Box, TextField, Button, Alert, Paper, List, ListItem, ListItemText, Checkbox, Grid, Avatar, Chip, Stack, InputAdornment, MenuItem, FormControlLabel, Switch } from '@mui/material';
+import { Assignment, Quiz, DoneAll, Search, PlaylistAddCheck, ArrowBack } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../../api/endpoints';
 
 const CreateTest = () => {
     const navigate = useNavigate();
     const [name, setName] = useState('');
-    const [duration, setDuration] = useState<number | ''>('');
+    const [closingAt, setClosingAt] = useState('');
+    const [isGlobal, setIsGlobal] = useState(false);
+    const [classId, setClassId] = useState<number | ''>('');
+    const [classes, setClasses] = useState<any[]>([]);
+    const [instructionBank, setInstructionBank] = useState<any[]>([]);
     const [questions, setQuestions] = useState<any[]>([]);
     const [selectedQuestions, setSelectedQuestions] = useState<number[]>([]);
+    const [selectedInstructionIds, setSelectedInstructionIds] = useState<number[]>([]);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetchQuestions();
+    }, []);
+
+    const fetchClasses = async () => {
+        try {
+            const [classRes, instructionRes] = await Promise.all([
+                adminApi.getClasses(),
+                adminApi.getInstructions(),
+            ]);
+            setClasses(classRes.data);
+            setInstructionBank(Array.isArray(instructionRes.data) ? instructionRes.data : []);
+        } catch (err) {}
+    };
+
+    useEffect(() => {
+        fetchClasses();
     }, []);
 
     const fetchQuestions = async () => {
@@ -33,6 +53,17 @@ const CreateTest = () => {
         setSelectedQuestions(newSelected);
     };
 
+    const toIsoEndOfDay = (dateOnly: string) => {
+        const [yearStr, monthStr, dayStr] = dateOnly.split('-');
+        const year = Number(yearStr);
+        const month = Number(monthStr) - 1;
+        const day = Number(dayStr);
+        if (!year || Number.isNaN(month) || !day) return null;
+
+        const localEndOfDay = new Date(year, month, day, 23, 59, 59, 999);
+        return localEndOfDay.toISOString();
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (selectedQuestions.length === 0) {
@@ -40,14 +71,37 @@ const CreateTest = () => {
             return;
         }
 
+        if (!isGlobal && classId === '') {
+            setMessage({ type: 'error', text: 'Please select a class or enable All Classes.' });
+            return;
+        }
+
+        if (!closingAt) {
+            setMessage({ type: 'error', text: 'Please set a last date of submission.' });
+            return;
+        }
+
+        const closingAtIso = toIsoEndOfDay(closingAt);
+        if (!closingAtIso) {
+            setMessage({ type: 'error', text: 'Please provide a valid last date of submission.' });
+            return;
+        }
+
+        if (new Date(closingAtIso).getTime() <= Date.now()) {
+            setMessage({ type: 'error', text: 'Last date of submission must be in the future.' });
+            return;
+        }
+
         setLoading(true);
         try {
-            const testRes = await adminApi.createTest({ name, duration: Number(duration) });
+            const payload: any = { name, duration: 0, closingAt: closingAtIso, isGlobal, instructionIds: selectedInstructionIds };
+            if (!isGlobal) payload.classId = classId === '' ? null : classId;
+            const testRes = await adminApi.createTest(payload);
             const testId = testRes.data.id;
             await adminApi.assignQuestions({ testId, questionIds: selectedQuestions });
             
             setMessage({ type: 'success', text: `Test '${name}' successfully deployed with ${selectedQuestions.length} questions.` });
-            setName(''); setDuration(''); setSelectedQuestions([]);
+            setName(''); setClosingAt(''); setSelectedQuestions([]); setSelectedInstructionIds([]); setIsGlobal(false); setClassId('');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err: any) {
             setMessage({ type: 'error', text: err.message || 'Deployment terminal error' });
@@ -111,17 +165,32 @@ const CreateTest = () => {
                                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
                                 />
                                 <TextField 
-                                    label="Duration (minutes)" type="number" required fullWidth 
-                                    value={duration} onChange={e => setDuration(Number(e.target.value))} 
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Timer sx={{ color: '#64748B', fontSize: 20 }} />
-                                            </InputAdornment>
-                                        ),
-                                    }}
+                                    label="Last Date of Submission" type="date" required fullWidth
+                                    value={closingAt} onChange={e => setClosingAt(e.target.value)}
+                                    InputLabelProps={{ shrink: true }}
                                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
                                 />
+
+                                <FormControlLabel
+                                    control={<Switch checked={isGlobal} onChange={(e) => setIsGlobal(e.target.checked)} />}
+                                    label="All Classes"
+                                />
+
+                                {!isGlobal && (
+                                    <TextField
+                                        select
+                                        label="Class"
+                                        fullWidth
+                                        value={classId}
+                                        onChange={(e) => setClassId(e.target.value === '' ? '' : Number(e.target.value))}
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                    >
+                                        <MenuItem value="">Select Class</MenuItem>
+                                        {classes.map((c: any) => (
+                                            <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                                        ))}
+                                    </TextField>
+                                )}
 
                                 <Box sx={{ p: 2, bgcolor: '#F8FAFC', borderRadius: 3, border: '1px dashed #E2E8F0', mt: 1 }}>
                                     <Typography variant="caption" sx={{ fontWeight: 800, color: '#64748B', display: 'block', mb: 1 }}>SELECTION SUMMARY</Typography>
@@ -129,6 +198,35 @@ const CreateTest = () => {
                                         <Quiz sx={{ fontSize: 18, color: '#EC4899' }} />
                                         <Typography variant="body2" sx={{ fontWeight: 700 }}>{selectedQuestions.length} Questions Selected</Typography>
                                     </Stack>
+                                </Box>
+
+                                <Box>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#334155', mb: 1 }}>
+                                        Test Instructions
+                                    </Typography>
+                                    <Paper variant="outlined" sx={{ borderColor: '#E2E8F0', borderRadius: 2, maxHeight: 180, overflow: 'auto' }}>
+                                        <List sx={{ py: 0 }}>
+                                            {instructionBank.filter((item: any) => item.isActive).map((item: any) => {
+                                                const checked = selectedInstructionIds.includes(item.id);
+                                                return (
+                                                    <ListItem
+                                                        key={item.id}
+                                                        divider
+                                                        onClick={() => setSelectedInstructionIds(prev => checked ? prev.filter(id => id !== item.id) : [...prev, item.id])}
+                                                        sx={{ cursor: 'pointer' }}
+                                                    >
+                                                        <Checkbox checked={checked} />
+                                                        <ListItemText primary={item.text} />
+                                                    </ListItem>
+                                                );
+                                            })}
+                                            {instructionBank.filter((item: any) => item.isActive).length === 0 && (
+                                                <ListItem>
+                                                    <ListItemText primary="No active instructions found. Create them in Instruction Bank." />
+                                                </ListItem>
+                                            )}
+                                        </List>
+                                    </Paper>
                                 </Box>
 
                                 <Button 

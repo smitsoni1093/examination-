@@ -1,21 +1,34 @@
 using System.Text;
 using ExamAPI.Data;
 using ExamAPI.Services;
+using ExamAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// EPPlus 8+ requires setting the static license before creating any ExcelPackage instances.
+ExcelPackage.License.SetNonCommercialOrganization("ExamAPI");
 
 // ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ── Services ──────────────────────────────────────────────────────────────────
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<ClassService>();
+builder.Services.AddScoped<SuperAdminService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<AttemptService>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<ISmsService, UrlTemplateSmsService>();
+builder.Services.AddSingleton<LocalizationService>();
+builder.Services.AddHttpClient();
 
 // ── JWT Authentication ────────────────────────────────────────────────────────
 var jwtConfig = builder.Configuration.GetSection("Jwt");
@@ -42,17 +55,41 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()!;
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
-        policy.WithOrigins(allowedOrigins)
+        policy.SetIsOriginAllowed(origin =>
+              {
+                  if (allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
+                  {
+                      return true;
+                  }
+
+                  if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                  {
+                      return false;
+                  }
+
+                  // Allow local frontend dev servers (Vite often shifts ports when busy).
+                  var isLocalhost = uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+                  var isLanIp = uri.Host.Equals("192.168.20.14", StringComparison.OrdinalIgnoreCase);
+                //   var isLanIp = uri.Host.Equals("10.198.96.67", StringComparison.OrdinalIgnoreCase);
+                  return uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase)
+                         && (isLocalhost || isLanIp)
+                         && uri.Port >= 5173
+                         && uri.Port <= 5185;
+              })
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
 
 // ── Controllers + Swagger ─────────────────────────────────────────────────────
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -77,6 +114,7 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // ── Middleware Pipeline ────────────────────────────────────────────────────────
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -88,12 +126,10 @@ app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 // ── Auto-migrate on startup ───────────────────────────────────────────────────
-/* 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
-*/
 
 app.Run();

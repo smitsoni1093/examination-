@@ -10,7 +10,9 @@ interface Question {
 
 interface ExamState {
   testId: number | null;
+  attemptId: number | null;
   testName: string | null;
+  testImageUrl: string | null;
   duration: number; // minutes
   questions: Question[];
   savedAnswers: Record<number, number>; // questionId -> selectedOption
@@ -18,7 +20,9 @@ interface ExamState {
 
 const initialState: ExamState = {
   testId: null,
+  attemptId: null,
   testName: null,
+  testImageUrl: null,
   duration: 0,
   questions: [],
   savedAnswers: {}
@@ -30,10 +34,15 @@ const examSlice = createSlice({
   reducers: {
     setTest: (state, action: PayloadAction<any>) => {
       state.testId = action.payload.id;
+      state.attemptId = action.payload.attemptId ?? null;
       state.testName = action.payload.name;
+      state.testImageUrl = action.payload.testImageUrl ?? null;
       state.duration = action.payload.duration;
       state.questions = action.payload.questions;
       state.savedAnswers = action.payload.savedAnswers || {};
+    },
+    setAttemptId: (state, action: PayloadAction<number | null>) => {
+      state.attemptId = action.payload;
     },
     saveAnswer: (state, action: PayloadAction<{questionId: number, selectedOption: number}>) => {
       state.savedAnswers[action.payload.questionId] = action.payload.selectedOption;
@@ -42,5 +51,5 @@ const examSlice = createSlice({
   }
 });
 
-export const { setTest, saveAnswer, clearTest } = examSlice.actions;
+export const { setTest, setAttemptId, saveAnswer, clearTest } = examSlice.actions;
 export default examSlice.reducer;

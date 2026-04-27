@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace ExamAPI.Models
 {
     /// <summary>
@@ -31,6 +33,15 @@ namespace ExamAPI.Models
 
         /// <summary>Correct option index: 1, 2, 3, or 4</summary>
         public int CorrectOption { get; set; }
+
+        public string SourceFileName { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // FK to Admin (who imported/created this question); nullable for backward compatibility
+        public int? AdminId { get; set; }
+
+        [ForeignKey("AdminId")]
+        public User? Admin { get; set; }
 
         // Navigation
         public ICollection<TestQuestion> TestQuestions { get; set; } = new List<TestQuestion>();

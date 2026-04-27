@@ -11,13 +11,13 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Gujarati', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Gujarati', system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -30,24 +30,23 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+:root[data-theme='dark'] {
+  --text: #9ca3af;
+  --text-h: #ffffff;
+  --bg: #000000;
+  --border: #2e303a;
+  --code-bg: #0f172a;
+  --accent: #c084fc;
+  --accent-bg: rgba(192, 132, 252, 0.15);
+  --accent-border: rgba(192, 132, 252, 0.5);
+  --social-bg: rgba(47, 48, 58, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  color-scheme: dark;
+}
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+:root[data-theme='dark'] #social .button-icon {
+  filter: invert(1) brightness(2);
 }
 
 #root {
@@ -60,6 +59,81 @@
 
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  transition: background-color 220ms ease, color 220ms ease;
+}
+
+:root[data-theme='dark'] body,
+:root[data-theme='dark'] #root {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .MuiPaper-root,
+:root[data-theme='dark'] .MuiCard-root,
+:root[data-theme='dark'] .MuiAppBar-root,
+:root[data-theme='dark'] .MuiDrawer-paper,
+:root[data-theme='dark'] .MuiDialog-paper,
+:root[data-theme='dark'] .MuiPopover-paper,
+:root[data-theme='dark'] .MuiMenu-paper {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+:root[data-theme='dark'] .MuiTypography-root,
+:root[data-theme='dark'] .MuiListItemText-primary,
+:root[data-theme='dark'] .MuiListItemText-secondary,
+:root[data-theme='dark'] .MuiInputBase-input,
+:root[data-theme='dark'] .MuiInputLabel-root,
+:root[data-theme='dark'] .MuiButton-root,
+:root[data-theme='dark'] .MuiChip-label,
+:root[data-theme='dark'] .MuiSvgIcon-root {
+  color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .MuiOutlinedInput-notchedOutline,
+:root[data-theme='dark'] .MuiDivider-root,
+:root[data-theme='dark'] .MuiTableCell-root {
+  border-color: rgba(148, 163, 184, 0.32) !important;
+}
+
+:root[data-theme='dark'] .MuiButton-text,
+:root[data-theme='dark'] .MuiButton-outlined {
+  background-color: transparent !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.45) !important;
+}
+
+:root[data-theme='dark'] .MuiButton-outlined:hover,
+:root[data-theme='dark'] .MuiButton-text:hover {
+  background-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+:root[data-theme='dark'] .MuiInputBase-root,
+:root[data-theme='dark'] .MuiOutlinedInput-root,
+:root[data-theme='dark'] .MuiSelect-select,
+:root[data-theme='dark'] .MuiAutocomplete-paper {
+  background-color: #000000 !important;
+  color: #f8fafc !important;
+}
+
+:root[data-theme='dark'] .MuiBox-root,
+:root[data-theme='dark'] .MuiStack-root,
+:root[data-theme='dark'] .MuiContainer-root {
+  color: #f8fafc !important;
+}
+
+:root[data-theme='dark'] .MuiBox-root[style*='background'],
+:root[data-theme='dark'] .MuiBox-root[class*='MuiBox-root'],
+:root[data-theme='dark'] .MuiCard-root,
+:root[data-theme='dark'] .MuiPaper-root,
+:root[data-theme='dark'] .MuiTableContainer-root,
+:root[data-theme='dark'] .MuiAccordion-root {
+  background-color: #000000 !important;
+  color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
 }
 
 h1,
