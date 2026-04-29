@@ -1,1075 +1,1819 @@
-import { useState, useEffect } from 'react';
-import { Container, Typography, Box, TextField, Button, Alert, Paper, Grid, Avatar, Chip, MenuItem, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Checkbox, FormControlLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip } from '@mui/material';
-import { PersonAdd, Group, UploadFile, ArrowBack, Edit as EditIcon, Delete as DeleteIcon, Download as DownloadIcon } from '@mui/icons-material';
-import { adminApi } from '../../api/endpoints';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useState, useEffect, useCallback } from "react";
+import {
+  Container,
+  Typography,
+  Box,
+  TextField,
+  Button,
+  Alert,
+  Paper,
+  Grid,
+  Avatar,
+  Chip,
+  MenuItem,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Checkbox,
+  FormControlLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import {
+  PersonAdd,
+  Group,
+  UploadFile,
+  ArrowBack,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Download as DownloadIcon,
+} from "@mui/icons-material";
+import { adminApi } from "../../api/endpoints";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store/store";
 
 type CandidateUser = {
-    id: number;
-    name: string;
-    username: string;
-    email?: string;
-    mobileNumber?: string;
-    rollNumber?: string;
-    pincode?: string;
-    address?: string;
-    classId?: number | null;
+  id: number;
+  name: string;
+  username: string;
+  email?: string;
+  mobileNumber?: string;
+  rollNumber?: string;
+  pincode?: string;
+  address?: string;
+  classId?: number | null;
+};
+
+type ClassItem = {
+  id: number;
+  name: string;
+};
+
+type ApiError = {
+  response?: {
+    data?: {
+      messageKey?: string;
+      message?: string;
+    };
+  };
+  message?: string;
 };
 
 type UserImportHeader = {
-    index: number;
-    header: string;
+  index: number;
+  header: string;
 };
 
 type UserImportMapping = {
-    fullName: number | '';
-    email: number | '';
-    mobileNumber: number | '';
-    pincode: number | '';
-    address: number | '';
-    class: number | '';
+  fullName: number | "";
+  email: number | "";
+  mobileNumber: number | "";
+  pincode: number | "";
+  address: number | "";
+  class: number | "";
 };
 
 type UserImportPreviewRow = {
-    rowNumber: number;
-    values: Record<string, string>;
-    isValid: boolean;
-    errors: string[];
+  rowNumber: number;
+  values: Record<string, string>;
+  isValid: boolean;
+  errors: string[];
 };
 
 type UserImportPreview = {
-    sessionId: string;
-    totalRows: number;
-    validRows: number;
-    invalidRows: number;
-    rows: UserImportPreviewRow[];
-    errors: string[];
+  sessionId: string;
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  rows: UserImportPreviewRow[];
+  errors: string[];
 };
 
 type UserImportSummary = {
-    totalRows: number;
-    successCount: number;
-    failedCount: number;
-    skippedCount: number;
-    errors: string[];
+  totalRows: number;
+  successCount: number;
+  failedCount: number;
+  skippedCount: number;
+  errors: string[];
 };
 
-const importFields: Array<{ key: keyof UserImportMapping; label: string; required: boolean }> = [
-    { key: 'fullName', label: 'Full Name', required: true },
-    { key: 'email', label: 'Email', required: true },
-    { key: 'mobileNumber', label: 'Mobile Number', required: true },
-    { key: 'pincode', label: 'Pincode', required: false },
-    { key: 'address', label: 'Address', required: false },
-    { key: 'class', label: 'Class', required: false },
+const importFields: Array<{
+  key: keyof UserImportMapping;
+  label: string;
+  required: boolean;
+}> = [
+  { key: "fullName", label: "Full Name", required: true },
+  { key: "email", label: "Email", required: true },
+  { key: "mobileNumber", label: "Mobile Number", required: true },
+  { key: "pincode", label: "Pincode", required: false },
+  { key: "address", label: "Address", required: false },
+  { key: "class", label: "Class", required: false },
 ];
 
 const initialImportMapping: UserImportMapping = {
-    fullName: '',
-    email: '',
-    mobileNumber: '',
-    pincode: '',
-    address: '',
-    class: '',
+  fullName: "",
+  email: "",
+  mobileNumber: "",
+  pincode: "",
+  address: "",
+  class: "",
 };
 
 const CreateUser = () => {
-    const { t } = useTranslation();
-    const navigate = useNavigate();
-    const themeMode = useSelector((state: any) => state.theme?.mode || 'light');
-    const isDark = themeMode === 'dark';
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [mobileNumber, setMobileNumber] = useState('');
-    const [pincode, setPincode] = useState('');
-    const [address, setAddress] = useState('');
-    const [classId, setClassId] = useState<number | ''>('');
-    const [classes, setClasses] = useState<any[]>([]);
-    const [users, setUsers] = useState<CandidateUser[]>([]);
-    const [usersPage, setUsersPage] = useState(1);
-    const [usersPageSize] = useState(10);
-    const [usersTotalCount, setUsersTotalCount] = useState(0);
-    const [message, setMessage] = useState({ type: '', text: '' });
-    const [loading, setLoading] = useState(false);
-    const [importFile, setImportFile] = useState<File | null>(null);
-    const [importSessionId, setImportSessionId] = useState('');
-    const [importHeaders, setImportHeaders] = useState<UserImportHeader[]>([]);
-    const [importMapping, setImportMapping] = useState<UserImportMapping>(initialImportMapping);
-    const [importStep, setImportStep] = useState<'upload' | 'mapping' | 'preview' | 'result'>('upload');
-    const [importPreview, setImportPreview] = useState<UserImportPreview | null>(null);
-    const [importLoading, setImportLoading] = useState(false);
-    const [importSummary, setImportSummary] = useState<UserImportSummary | null>(null);
-    const [importSkipInvalidRows, setImportSkipInvalidRows] = useState(false);
-    const [importError, setImportError] = useState('');
-    const [editOpen, setEditOpen] = useState(false);
-    const [editLoading, setEditLoading] = useState(false);
-    const [deleteLoadingId, setDeleteLoadingId] = useState<number | null>(null);
-    const [editingUser, setEditingUser] = useState<CandidateUser | null>(null);
-    const [editName, setEditName] = useState('');
-    const [editEmail, setEditEmail] = useState('');
-    const [editMobileNumber, setEditMobileNumber] = useState('');
-    const [editPincode, setEditPincode] = useState('');
-    const [editAddress, setEditAddress] = useState('');
-    const [editClassId, setEditClassId] = useState<number | ''>('');
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const themeMode = useSelector(
+    (state: RootState) => state.theme?.mode || "light",
+  );
+  const isDark = themeMode === "dark";
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [address, setAddress] = useState("");
+  const [classId, setClassId] = useState<number | "">("");
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [users, setUsers] = useState<CandidateUser[]>([]);
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersPageSize] = useState(10);
+  const [usersTotalCount, setUsersTotalCount] = useState(0);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const [loading, setLoading] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importSessionId, setImportSessionId] = useState("");
+  const [importHeaders, setImportHeaders] = useState<UserImportHeader[]>([]);
+  const [importMapping, setImportMapping] =
+    useState<UserImportMapping>(initialImportMapping);
+  const [importStep, setImportStep] = useState<
+    "upload" | "mapping" | "preview" | "result"
+  >("upload");
+  const [importPreview, setImportPreview] = useState<UserImportPreview | null>(
+    null,
+  );
+  const [importLoading, setImportLoading] = useState(false);
+  const [importSummary, setImportSummary] = useState<UserImportSummary | null>(
+    null,
+  );
+  const [importSkipInvalidRows, setImportSkipInvalidRows] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [deleteLoadingId, setDeleteLoadingId] = useState<number | null>(null);
+  const [editingUser, setEditingUser] = useState<CandidateUser | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editMobileNumber, setEditMobileNumber] = useState("");
+  const [editPincode, setEditPincode] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [editClassId, setEditClassId] = useState<number | "">("");
 
-    const fetchUsers = async (page = usersPage) => {
-        try {
-            const res = await adminApi.getUsersPaged(page, usersPageSize);
-            const items = Array.isArray(res.data?.items) ? res.data.items : [];
-            const normalized: CandidateUser[] = items.map((u: any) => ({
-                id: u.id ?? u.Id,
-                name: u.name ?? u.Name ?? '',
-                username: u.username ?? u.Username ?? '',
-                email: u.email ?? u.Email,
-                mobileNumber: u.mobileNumber ?? u.MobileNumber ?? u.mobile ?? u.phoneNumber,
-                rollNumber: u.rollNumber ?? u.RollNumber,
-                pincode: u.pincode ?? u.Pincode,
-                address: u.address ?? u.Address,
-                classId: u.classId ?? u.ClassId ?? null,
-            }));
-            setUsers(normalized);
-            setUsersTotalCount(typeof res.data?.totalCount === 'number' ? res.data.totalCount : normalized.length);
+  const fetchUsers = useCallback(
+    async (page = usersPage) => {
+      try {
+        const res = await adminApi.getUsersPaged(page, usersPageSize);
+        const items = Array.isArray(res.data?.items) ? res.data.items : [];
+        const normalized: CandidateUser[] = items.map(
+          (u: CandidateUser & { mobile?: string; phoneNumber?: string }) => ({
+            id: u.id,
+            name: u.name ?? "",
+            username: u.username ?? "",
+            email: u.email,
+            mobileNumber: u.mobileNumber ?? u.mobile ?? u.phoneNumber,
+            rollNumber: u.rollNumber,
+            pincode: u.pincode,
+            address: u.address,
+            classId: u.classId ?? null,
+          }),
+        );
+        setUsers(normalized);
+        setUsersTotalCount(
+          typeof res.data?.totalCount === "number"
+            ? res.data.totalCount
+            : normalized.length,
+        );
 
-            if (page > 1 && normalized.length === 0 && (res.data?.totalCount ?? 0) > 0) {
-                setUsersPage(page - 1);
-            }
-        } catch (err) { }
-    };
-
-    useEffect(() => { fetchUsers(usersPage); }, [usersPage]);
-
-    const fetchClasses = async () => {
-        try {
-            const res = await adminApi.getClasses();
-            setClasses(res.data);
-        } catch (err) { }
-    };
-
-    useEffect(() => { fetchClasses(); }, []);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            const normalizedMobile = mobileNumber.replace(/\D/g, '').slice(-10);
-            if (normalizedMobile.length !== 10) {
-                setMessage({ type: 'error', text: t('api.MOBILE_REQUIRED') });
-                setLoading(false);
-                return;
-            }
-
-            const res = await adminApi.createUser({
-                fullName: name,
-                email,
-                mobileNumber: normalizedMobile,
-                pincode: pincode.trim() || null,
-                address: address.trim() || null,
-                classId: classId === '' ? null : classId
-            });
-            const createdUsername = res.data?.username;
-            const createdRollNumber = res.data?.rollNumber;
-            const successText = createdUsername
-                ? `${t('invite.userCreatedForOtpSuccess')} ${t('invite.generatedUsername')}: ${createdUsername}${createdRollNumber ? ` | ${t('invite.rollNumber')}: ${createdRollNumber}` : ''}`
-                : t('invite.userCreatedForOtpSuccess');
-            setMessage({ type: 'success', text: successText });
-            setName(''); setEmail(''); setMobileNumber(''); setPincode(''); setAddress(''); setClassId('');
-            fetchUsers(usersPage);
-        } catch (err: any) {
-            const messageKey = err?.response?.data?.messageKey;
-            const backendMessage = err?.response?.data?.message;
-            if (messageKey && messageKey !== 'ERROR_UNKNOWN' && t(`api.${messageKey}`) !== `api.${messageKey}`) {
-                setMessage({ type: 'error', text: t(`api.${messageKey}`) });
-            } else {
-                const fallback = err?.message ? `${t('invite.createUserFailed')} (${err.message})` : t('invite.createUserFailed');
-                setMessage({ type: 'error', text: backendMessage || fallback });
-            }
-        } finally {
-            setLoading(false);
+        if (
+          page > 1 &&
+          normalized.length === 0 &&
+          (res.data?.totalCount ?? 0) > 0
+        ) {
+          setUsersPage(page - 1);
         }
-    };
+      } catch (err: unknown) {
+        console.error(err);
+      }
+    },
+    [usersPage, usersPageSize],
+  );
 
-    const validateImportMapping = () => {
-        const requiredFields: Array<keyof UserImportMapping> = ['fullName', 'email', 'mobileNumber'];
+  useEffect(() => {
+    fetchUsers(usersPage);
+  }, [usersPage, fetchUsers]);
 
-        for (const field of requiredFields) {
-            if (importMapping[field] === '') {
-                const label = importFields.find((item) => item.key === field)?.label ?? field;
-                return `Please map ${label}.`;
-            }
-        }
+  const fetchClasses = useCallback(async () => {
+    try {
+      const res = await adminApi.getClasses();
+      setClasses(Array.isArray(res.data) ? res.data : []);
+    } catch (err: unknown) {
+      console.error(err);
+    }
+  }, []);
 
-        const selectedColumns = Object.values(importMapping).filter((value) => value !== '') as number[];
-        if (new Set(selectedColumns).size !== selectedColumns.length) {
-            return 'Duplicate column mapping is not allowed.';
-        }
+  useEffect(() => {
+    fetchClasses();
+  }, [fetchClasses]);
 
-        return null;
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const normalizedMobile = mobileNumber.replace(/\D/g, "").slice(-10);
+      if (normalizedMobile.length !== 10) {
+        setMessage({ type: "error", text: t("api.MOBILE_REQUIRED") });
+        setLoading(false);
+        return;
+      }
 
-    const buildImportMappingPayload = () => ({
-        fullName: importMapping.fullName === '' ? null : importMapping.fullName,
-        email: importMapping.email === '' ? null : importMapping.email,
-        mobileNumber: importMapping.mobileNumber === '' ? null : importMapping.mobileNumber,
-        pincode: importMapping.pincode === '' ? null : importMapping.pincode,
-        address: importMapping.address === '' ? null : importMapping.address,
-        class: importMapping.class === '' ? null : importMapping.class,
-    });
+      const res = await adminApi.createUser({
+        fullName: name,
+        email,
+        mobileNumber: normalizedMobile,
+        pincode: pincode.trim() || null,
+        address: address.trim() || null,
+        classId: classId === "" ? null : classId,
+      });
+      const createdUsername = res.data?.username;
+      const createdRollNumber = res.data?.rollNumber;
+      const successText = createdUsername
+        ? `${t("invite.userCreatedForOtpSuccess")} ${t("invite.generatedUsername")}: ${createdUsername}${createdRollNumber ? ` | ${t("invite.rollNumber")}: ${createdRollNumber}` : ""}`
+        : t("invite.userCreatedForOtpSuccess");
+      setMessage({ type: "success", text: successText });
+      setName("");
+      setEmail("");
+      setMobileNumber("");
+      setPincode("");
+      setAddress("");
+      setClassId("");
+      fetchUsers(usersPage);
+    } catch (err: unknown) {
+      const errorObj = err as ApiError;
+      const messageKey = errorObj.response?.data?.messageKey;
+      const backendMessage = errorObj.response?.data?.message;
+      if (
+        messageKey &&
+        messageKey !== "ERROR_UNKNOWN" &&
+        t(`api.${messageKey}`) !== `api.${messageKey}`
+      ) {
+        setMessage({ type: "error", text: t(`api.${messageKey}`) });
+      } else {
+        const fallback = errorObj.message
+          ? `${t("invite.createUserFailed")} (${errorObj.message})`
+          : t("invite.createUserFailed");
+        setMessage({ type: "error", text: backendMessage || fallback });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const resetImportFlow = () => {
-        setImportFile(null);
-        setImportSessionId('');
-        setImportHeaders([]);
-        setImportMapping(initialImportMapping);
-        setImportStep('upload');
-        setImportPreview(null);
-        setImportSummary(null);
-        setImportSkipInvalidRows(false);
-        setImportError('');
-    };
+  const validateImportMapping = () => {
+    const requiredFields: Array<keyof UserImportMapping> = [
+      "fullName",
+      "email",
+      "mobileNumber",
+    ];
 
-    const handleInspectUserColumns = async () => {
-        if (!importFile) {
-            setMessage({ type: 'error', text: 'Please choose a CSV/XLSX file first.' });
-            return;
-        }
+    for (const field of requiredFields) {
+      if (importMapping[field] === "") {
+        const label =
+          importFields.find((item) => item.key === field)?.label ?? field;
+        return `Please map ${label}.`;
+      }
+    }
 
-        setImportLoading(true);
-        setImportError('');
-        setImportSummary(null);
-        setImportPreview(null);
-        try {
-            const formData = new FormData();
-            formData.append('file', importFile);
-            const res = await adminApi.initializeUserImport(formData);
-            setImportSessionId(res.data.sessionId);
-            setImportHeaders(res.data.headers ?? []);
-            setImportMapping(initialImportMapping);
-            setImportStep('mapping');
-        } catch (err: any) {
-            setImportError(err.response?.data?.message || 'Failed to inspect columns.');
-        } finally {
-            setImportLoading(false);
-        }
-    };
+    const selectedColumns = Object.values(importMapping).filter(
+      (value) => value !== "",
+    ) as number[];
+    if (new Set(selectedColumns).size !== selectedColumns.length) {
+      return "Duplicate column mapping is not allowed.";
+    }
 
-    const handlePreviewUserImport = async () => {
-        const validationError = validateImportMapping();
-        if (validationError) {
-            setImportError(validationError);
-            return;
-        }
+    return null;
+  };
 
-        if (!importSessionId) {
-            setImportError('Import session expired. Please upload the file again.');
-            return;
-        }
+  const buildImportMappingPayload = () => ({
+    fullName: importMapping.fullName === "" ? null : importMapping.fullName,
+    email: importMapping.email === "" ? null : importMapping.email,
+    mobileNumber:
+      importMapping.mobileNumber === "" ? null : importMapping.mobileNumber,
+    pincode: importMapping.pincode === "" ? null : importMapping.pincode,
+    address: importMapping.address === "" ? null : importMapping.address,
+    class: importMapping.class === "" ? null : importMapping.class,
+  });
 
-        setImportLoading(true);
-        setImportError('');
+  const resetImportFlow = () => {
+    setImportFile(null);
+    setImportSessionId("");
+    setImportHeaders([]);
+    setImportMapping(initialImportMapping);
+    setImportStep("upload");
+    setImportPreview(null);
+    setImportSummary(null);
+    setImportSkipInvalidRows(false);
+    setImportError("");
+  };
 
-        try {
-            const res = await adminApi.previewUserImport({
-                sessionId: importSessionId,
-                mapping: buildImportMappingPayload(),
-                skipInvalidRows: importSkipInvalidRows,
-            });
+  const handleInspectUserColumns = async () => {
+    if (!importFile) {
+      setMessage({
+        type: "error",
+        text: "Please choose a CSV/XLSX file first.",
+      });
+      return;
+    }
 
-            setImportPreview(res.data);
-            setImportStep('preview');
-        } catch (err: any) {
-            setImportError(err.response?.data?.message || 'Failed to preview the import.');
-        } finally {
-            setImportLoading(false);
-        }
-    };
+    setImportLoading(true);
+    setImportError("");
+    setImportSummary(null);
+    setImportPreview(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", importFile);
+      const res = await adminApi.initializeUserImport(formData);
+      setImportSessionId(res.data.sessionId);
+      setImportHeaders(res.data.headers ?? []);
+      setImportMapping(initialImportMapping);
+      setImportStep("mapping");
+    } catch (err: unknown) {
+      const errorObj = err as ApiError;
+      setImportError(
+        errorObj.response?.data?.message || "Failed to inspect columns.",
+      );
+    } finally {
+      setImportLoading(false);
+    }
+  };
 
-    const handleConfirmUserImport = async () => {
-        const validationError = validateImportMapping();
-        if (validationError) {
-            setImportError(validationError);
-            return;
-        }
+  const handlePreviewUserImport = async () => {
+    const validationError = validateImportMapping();
+    if (validationError) {
+      setImportError(validationError);
+      return;
+    }
 
-        if (!importSessionId) {
-            setImportError('Import session expired. Please upload the file again.');
-            return;
-        }
+    if (!importSessionId) {
+      setImportError("Import session expired. Please upload the file again.");
+      return;
+    }
 
-        setImportLoading(true);
-        setImportError('');
+    setImportLoading(true);
+    setImportError("");
 
-        try {
-            const res = await adminApi.confirmUserImport({
-                sessionId: importSessionId,
-                mapping: buildImportMappingPayload(),
-                skipInvalidRows: importSkipInvalidRows,
-            });
+    try {
+      const res = await adminApi.previewUserImport({
+        sessionId: importSessionId,
+        mapping: buildImportMappingPayload(),
+        skipInvalidRows: importSkipInvalidRows,
+      });
 
-            setImportSummary(res.data);
-            setImportStep('result');
-            setMessage({
-                type: 'success',
-                text: `Import complete: ${res.data.successCount} created, ${res.data.failedCount} failed.`
-            });
-            fetchUsers(usersPage);
-        } catch (err: any) {
-            setImportError(err.response?.data?.message || 'Failed to import users.');
-        } finally {
-            setImportLoading(false);
-        }
-    };
+      setImportPreview(res.data);
+      setImportStep("preview");
+    } catch (err: unknown) {
+      const errorObj = err as ApiError;
+      setImportError(
+        errorObj.response?.data?.message || "Failed to preview the import.",
+      );
+    } finally {
+      setImportLoading(false);
+    }
+  };
 
-    const handleImportMappingChange = (field: keyof UserImportMapping, value: string) => {
-        setImportMapping((current) => ({
-            ...current,
-            [field]: value === '' ? '' : Number(value),
-        }));
-    };
+  const handleConfirmUserImport = async () => {
+    const validationError = validateImportMapping();
+    if (validationError) {
+      setImportError(validationError);
+      return;
+    }
 
-    const handleOpenEdit = (user: CandidateUser) => {
-        setEditingUser(user);
-        setEditName(user.name ?? '');
-        setEditEmail(user.email ?? '');
-        setEditMobileNumber((user.mobileNumber ?? '').replace(/\D/g, '').slice(-10));
-        setEditPincode((user.pincode ?? '').toUpperCase());
-        setEditAddress(user.address ?? '');
-        setEditClassId(user.classId ?? '');
-        setEditOpen(true);
-    };
+    if (!importSessionId) {
+      setImportError("Import session expired. Please upload the file again.");
+      return;
+    }
 
-    const handleCloseEdit = () => {
-        setEditOpen(false);
-        setEditingUser(null);
-        setEditName('');
-        setEditEmail('');
-        setEditMobileNumber('');
-        setEditPincode('');
-        setEditAddress('');
-        setEditClassId('');
-    };
+    setImportLoading(true);
+    setImportError("");
 
-    const handleUpdateUser = async () => {
-        if (!editingUser) return;
+    try {
+      const res = await adminApi.confirmUserImport({
+        sessionId: importSessionId,
+        mapping: buildImportMappingPayload(),
+        skipInvalidRows: importSkipInvalidRows,
+      });
 
-        const normalizedMobile = editMobileNumber.replace(/\D/g, '').slice(-10);
-        if (normalizedMobile.length !== 10) {
-            setMessage({ type: 'error', text: t('api.MOBILE_REQUIRED') });
-            return;
-        }
+      setImportSummary(res.data);
+      setImportStep("result");
+      setMessage({
+        type: "success",
+        text: `Import complete: ${res.data.successCount} created, ${res.data.failedCount} failed.`,
+      });
+      fetchUsers(usersPage);
+    } catch (err: unknown) {
+      const errorObj = err as ApiError;
+      setImportError(
+        errorObj.response?.data?.message || "Failed to import users.",
+      );
+    } finally {
+      setImportLoading(false);
+    }
+  };
 
-        setEditLoading(true);
-        try {
-            await adminApi.updateUser(editingUser.id, {
-                fullName: editName,
-                email: editEmail,
-                mobileNumber: normalizedMobile,
-                pincode: editPincode.trim() || null,
-                address: editAddress.trim() || null,
-                classId: editClassId === '' ? null : editClassId
-            });
-            setMessage({ type: 'success', text: 'User updated successfully.' });
-            handleCloseEdit();
-            fetchUsers(usersPage);
-        } catch (err: any) {
-            const backendMessage = err?.response?.data?.message;
-            setMessage({ type: 'error', text: backendMessage || 'Failed to update user.' });
-        } finally {
-            setEditLoading(false);
-        }
-    };
+  const handleImportMappingChange = (
+    field: keyof UserImportMapping,
+    value: string,
+  ) => {
+    setImportMapping((current) => ({
+      ...current,
+      [field]: value === "" ? "" : Number(value),
+    }));
+  };
 
-    const handleDeleteUser = async (user: CandidateUser) => {
-        const ok = window.confirm(`Delete user "${user.name}"? This action cannot be undone.`);
-        if (!ok) return;
-
-        setDeleteLoadingId(user.id);
-        try {
-            await adminApi.deleteUser(user.id);
-            setMessage({ type: 'success', text: 'User deleted successfully.' });
-            fetchUsers();
-        } catch (err: any) {
-            const backendMessage = err?.response?.data?.message;
-            setMessage({ type: 'error', text: backendMessage || 'Failed to delete user.' });
-        } finally {
-            setDeleteLoadingId(null);
-        }
-    };
-
-    const handleDownloadUsersExcel = async () => {
-        try {
-            const res = await adminApi.downloadUsersExcel();
-            const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            const disposition = res.headers?.['content-disposition'] as string | undefined;
-            const fileNameFromHeader = disposition?.match(/filename="?([^";]+)"?/i)?.[1];
-            link.href = url;
-            link.download = fileNameFromHeader || `users-${new Date().toISOString().replace(/[:.]/g, '-')}.xlsx`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-        } catch {
-            setMessage({ type: 'error', text: 'Failed to download users Excel.' });
-        }
-    };
-
-    return (
-        <Box
-            sx={{
-                minHeight: '100vh',
-                bgcolor: isDark ? '#000000' : '#F8FAFC',
-                color: isDark ? '#FFFFFF' : 'inherit',
-                pb: 10,
-                '& .MuiPaper-root': {
-                    backgroundColor: isDark ? '#000000 !important' : undefined,
-                    color: isDark ? '#FFFFFF !important' : undefined,
-                    borderColor: isDark ? 'rgba(148, 163, 184, 0.28) !important' : undefined,
-                },
-                '& .MuiTypography-root': {
-                    color: isDark ? '#FFFFFF' : undefined,
-                },
-                '& .MuiOutlinedInput-root, & .MuiInputBase-root, & .MuiSelect-select': {
-                    backgroundColor: isDark ? '#000000 !important' : undefined,
-                    color: isDark ? '#FFFFFF !important' : undefined,
-                },
-                '& .MuiOutlinedInput-notchedOutline, & .MuiDivider-root, & .MuiTableCell-root': {
-                    borderColor: isDark ? 'rgba(148, 163, 184, 0.32) !important' : undefined,
-                },
-                '& .MuiTableHead-root .MuiTableCell-root, & .MuiTableCell-root': {
-                    backgroundColor: isDark ? '#000000 !important' : undefined,
-                    color: isDark ? '#FFFFFF !important' : undefined,
-                },
-                '& .MuiTableRow-root:hover': {
-                    backgroundColor: isDark ? '#111111 !important' : undefined,
-                },
-                '& .MuiButton-root': {
-                    color: isDark ? '#FFFFFF' : undefined,
-                },
-                '& .MuiButton-outlined, & .MuiButton-contained': {
-                    backgroundColor: isDark ? '#000000' : undefined,
-                    borderColor: isDark ? 'rgba(148, 163, 184, 0.35)' : undefined,
-                },
-                '& .MuiChip-root, & .MuiAvatar-root, & .MuiCheckbox-root': {
-                    color: isDark ? '#FFFFFF' : undefined,
-                },
-                '& .MuiDialog-paper': {
-                    backgroundColor: isDark ? '#000000 !important' : undefined,
-                    color: isDark ? '#FFFFFF !important' : undefined,
-                },
-            }}
-        >
-            {/* Page Header */}
-            <Box sx={{ bgcolor: isDark ? '#000000' : '#FFFFFF', borderBottom: '1px solid #E2E8F0', py: { xs: 2, md: 4 }, mb: { xs: 3, md: 6 } }}>
-                <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 6, lg: 10 } }}>
-                    <Button
-                        startIcon={<ArrowBack />}
-                        onClick={() => navigate('/admin')}
-                        sx={{ mb: 2, color: isDark ? '#E2E8F0' : '#64748B', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.9rem' } }}
-                    >
-                        Back to Dashboard
-                    </Button>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <Group sx={{ color: '#6366F1', mr: 1, fontSize: { xs: 20, sm: 24 } }} />
-                        <Typography variant="overline" sx={{ fontWeight: 800, color: '#94A3B8', letterSpacing: 1.5, fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>Administration</Typography>
-                    </Box>
-                    <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px', color: isDark ? '#FFFFFF' : '#0F172A', fontSize: { xs: '1.5rem', sm: '2.5rem', md: '3rem' } }}>Candidate Management</Typography>
-                </Container>
-            </Box>
-
-            <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 6, lg: 10 } }}>
-                <Grid container spacing={{ xs: 2, sm: 3, md: 5 }}>
-                    {/* Form Section */}
-                    <Grid item xs={12} md={6} lg={4}>
-                        <Paper elevation={0} sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: 5, border: '1px solid #E2E8F0', boxShadow: isDark ? '0 10px 32px rgba(0,0,0,0.65)' : '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 4 } }}>
-                                <Avatar sx={{ bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366F1', mr: 2, width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 } }}>
-                                    <PersonAdd fontSize="small" />
-                                </Avatar>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' } }}>Provision Account</Typography>
-                            </Box>
-
-                            {message.text && (
-                                <Alert 
-                                    severity={message.type as 'success'|'error'} 
-                                    sx={{ mb: 4, borderRadius: 3, fontWeight: 700 }}
-                                    onClose={() => setMessage({ type: '', text: '' })}
-                                >
-                                    {message.text}
-                                </Alert>
-                            )}
-                            
-                            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: { xs: 1.5, md: 3 }, flexDirection: 'column' }}>
-                                <TextField 
-                                    label={t('invite.fullName')} required variant="outlined" fullWidth
-                                    value={name} onChange={e => setName(e.target.value)}
-                                    size="small"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
-                                />
-                                <TextField 
-                                    label={t('invite.email')} required variant="outlined" fullWidth type="email"
-                                    value={email} onChange={e => setEmail(e.target.value)}
-                                    size="small"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
-                                />
-                                <TextField
-                                    label={t('invite.mobileNumber')}
-                                    variant="outlined"
-                                    fullWidth
-                                    required
-                                    value={mobileNumber}
-                                    onChange={e => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                                    inputProps={{ maxLength: 10 }}
-                                    size="small"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
-                                />
-                                <TextField
-                                    label={t('invite.pincode')}
-                                    variant="outlined"
-                                    fullWidth
-                                    value={pincode}
-                                    onChange={e => setPincode(e.target.value.toUpperCase().replace(/[^A-Z0-9 -]/g, '').slice(0, 10))}
-                                    size="small"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
-                                />
-                                <TextField
-                                    label={t('invite.address')}
-                                    variant="outlined"
-                                    fullWidth
-                                    multiline
-                                    minRows={2}
-                                    value={address}
-                                    onChange={e => setAddress(e.target.value)}
-                                    size="small"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
-                                />
-                                <TextField
-                                    select
-                                    label={t('invite.classOptional')}
-                                    fullWidth
-                                    value={classId}
-                                    onChange={(e) => setClassId(e.target.value === '' ? '' : Number(e.target.value))}
-                                    size="small"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
-                                >
-                                    <MenuItem value="">{t('invite.defaultClass')}</MenuItem>
-                                    {classes.map((c: any) => (
-                                        <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-                                    ))}
-                                </TextField>
-                                <Button 
-                                    variant="contained" 
-                                    type="submit" 
-                                    size="small"
-                                    disabled={loading}
-                                    sx={{ mt: { xs: 1, md: 2 }, py: { xs: 0.8, md: 1.8 }, px: 2, borderRadius: 3, fontWeight: 800, fontSize: { xs: '0.75rem', sm: '0.85rem', md: '0.95rem' }, boxShadow: isDark ? '0 10px 18px rgba(0,0,0,0.7)' : '0 10px 15px -3px rgba(99, 102, 241, 0.3)' }}
-                                >
-                                    {loading ? t('invite.creatingUser') : t('invite.createUser')}
-                                </Button>
-                                <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700, fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' } }}>
-                                    {t('invite.rollNumberAuto')}
-                                </Typography>
-                            </Box>
-
-                            <Divider sx={{ my: 4 }} />
-
-                            <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1.5, color: '#0F172A' }}>
-                                Bulk Import (CSV/XLSX)
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 600, mb: 2 }}>
-                                Upload CSV or XLSX, inspect headers, then map Full Name, Email, Mobile Number, optional Pincode, Address, and Class.
-                            </Typography>
-
-                            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-                                <Button
-                                    component="label"
-                                    variant="outlined"
-                                    startIcon={<UploadFile />}
-                                    sx={{ borderRadius: 2.5, fontWeight: 700 }}
-                                >
-                                    Choose CSV/XLSX
-                                    <input
-                                        type="file"
-                                        accept=".csv,.xlsx"
-                                        hidden
-                                        onChange={(e) => {
-                                            setImportFile(e.target.files?.[0] ?? null);
-                                            setImportSessionId('');
-                                            setImportHeaders([]);
-                                            setImportMapping(initialImportMapping);
-                                            setImportStep('upload');
-                                            setImportPreview(null);
-                                            setImportSummary(null);
-                                            setImportError('');
-                                        }}
-                                    />
-                                </Button>
-                                <Typography variant="body2" sx={{ color: '#475569', fontWeight: 700 }}>
-                                    {importFile ? importFile.name : 'No file selected'}
-                                </Typography>
-                            </Box>
-
-                            <Button
-                                variant="contained"
-                                onClick={handleInspectUserColumns}
-                                disabled={importLoading || !importFile}
-                                sx={{ mt: 2, py: 1.2, borderRadius: 2.5, fontWeight: 800 }}
-                            >
-                                {importLoading ? 'Inspecting...' : 'Inspect Headers'}
-                            </Button>
-
-                            {importError && (
-                                <Alert severity="error" sx={{ mt: 2, borderRadius: 3, fontWeight: 700 }}>
-                                    {importError}
-                                </Alert>
-                            )}
-
-                            {importStep === 'mapping' && (
-                                <Box sx={{ mt: 3, p: 2.5, borderRadius: 3, bgcolor: isDark ? '#000000' : '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                    <Typography sx={{ fontWeight: 800, color: '#0F172A', mb: 1 }}>Manual Column Mapping</Typography>
-                                    <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 600, mb: 2 }}>
-                                        Match each system field to one file header.
-                                    </Typography>
-
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                        {importFields.map((field) => (
-                                            <TextField
-                                                key={field.key}
-                                                select
-                                                label={`${field.label}${field.required ? ' *' : ''}`}
-                                                value={importMapping[field.key]}
-                                                onChange={(e) => handleImportMappingChange(field.key, e.target.value)}
-                                                fullWidth
-                                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                            >
-                                                <MenuItem value="">Select header</MenuItem>
-                                                {importHeaders.map((header) => (
-                                                    <MenuItem key={header.index} value={header.index}>
-                                                        {header.header || '(Blank header)'}
-                                                    </MenuItem>
-                                                ))}
-                                            </TextField>
-                                        ))}
-                                    </Box>
-
-                                    <FormControlLabel
-                                        sx={{ mt: 1 }}
-                                        control={
-                                            <Checkbox
-                                                checked={importSkipInvalidRows}
-                                                onChange={(e) => setImportSkipInvalidRows(e.target.checked)}
-                                            />
-                                        }
-                                        label="Skip invalid rows on confirm"
-                                    />
-
-                                    <Box sx={{ display: 'flex', gap: 1.5, mt: 2 }}>
-                                        <Button variant="outlined" onClick={resetImportFlow} sx={{ fontWeight: 700 }}>
-                                            Start Over
-                                        </Button>
-                                        <Box sx={{ flex: 1 }} />
-                                        <Button variant="contained" onClick={handlePreviewUserImport} disabled={importLoading} sx={{ fontWeight: 800 }}>
-                                            {importLoading ? 'Previewing...' : 'Preview Rows'}
-                                        </Button>
-                                    </Box>
-                                </Box>
-                            )}
-
-                            {importStep === 'preview' && importPreview && (
-                                <Box sx={{ mt: 3, p: 2.5, borderRadius: 3, bgcolor: isDark ? '#000000' : '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                    <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>
-                                        Rows: {importPreview.totalRows} | Valid: {importPreview.validRows} | Invalid: {importPreview.invalidRows}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 600, mt: 0.5, mb: 2 }}>
-                                        Preview is based on the selected header mapping.
-                                    </Typography>
-
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxHeight: 280, overflowY: 'auto' }}>
-                                        {importPreview.rows.map((row) => (
-                                            <Box key={row.rowNumber} sx={{ p: 1.5, borderRadius: 2, bgcolor: isDark ? '#000000' : '#FFFFFF', border: '1px solid #E2E8F0' }}>
-                                                <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>
-                                                    Row {row.rowNumber} - {row.isValid ? 'Valid' : 'Invalid'}
-                                                </Typography>
-                                                <Typography variant="caption" sx={{ display: 'block', color: '#475569', fontWeight: 600, mt: 0.5 }}>
-                                                    {Object.entries(row.values).map(([key, value]) => `${key}: ${value || '-'}`).join(' | ')}
-                                                </Typography>
-                                                {row.errors.length > 0 && (
-                                                    <Typography variant="caption" sx={{ display: 'block', color: '#B91C1C', fontWeight: 700, mt: 0.5 }}>
-                                                        {row.errors.join(' • ')}
-                                                    </Typography>
-                                                )}
-                                            </Box>
-                                        ))}
-                                    </Box>
-
-                                    {importPreview.errors.length > 0 && (
-                                        <Box sx={{ mt: 2 }}>
-                                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#B91C1C', mb: 0.5 }}>
-                                                Issues
-                                            </Typography>
-                                            {importPreview.errors.map((err, idx) => (
-                                                <Typography key={idx} variant="caption" sx={{ display: 'block', color: '#991B1B', fontWeight: 600 }}>
-                                                    {err}
-                                                </Typography>
-                                            ))}
-                                        </Box>
-                                    )}
-
-                                    <Box sx={{ display: 'flex', gap: 1.5, mt: 2 }}>
-                                        <Button variant="outlined" onClick={() => setImportStep('mapping')} sx={{ fontWeight: 700 }}>
-                                            Edit Mapping
-                                        </Button>
-                                        <Box sx={{ flex: 1 }} />
-                                        <Button variant="contained" onClick={handleConfirmUserImport} disabled={importLoading} sx={{ fontWeight: 800 }}>
-                                            {importLoading ? 'Importing...' : 'Confirm Import'}
-                                        </Button>
-                                    </Box>
-                                </Box>
-                            )}
-
-                            {importStep === 'result' && importSummary && (
-                                <Box sx={{ mt: 3, p: 2.5, borderRadius: 3, bgcolor: isDark ? '#000000' : '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                                    <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>
-                                        Rows: {importSummary.totalRows} | Created: {importSummary.successCount} | Failed: {importSummary.failedCount} | Skipped: {importSummary.skippedCount}
-                                    </Typography>
-                                    {importSummary.errors.length > 0 && (
-                                        <Box sx={{ mt: 1 }}>
-                                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#B91C1C', mb: 0.5 }}>
-                                                Issues
-                                            </Typography>
-                                            {importSummary.errors.slice(0, 8).map((err, idx) => (
-                                                <Typography key={idx} variant="caption" sx={{ display: 'block', color: '#991B1B', fontWeight: 600 }}>
-                                                    {err}
-                                                </Typography>
-                                            ))}
-                                            {importSummary.errors.length > 8 && (
-                                                <Typography variant="caption" sx={{ display: 'block', color: '#475569', fontWeight: 700 }}>
-                                                    +{importSummary.errors.length - 8} more issues
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    )}
-
-                                    <Button variant="outlined" onClick={resetImportFlow} sx={{ mt: 2, fontWeight: 700 }}>
-                                        Import Another File
-                                    </Button>
-                                </Box>
-                            )}
-                        </Paper>
-                    </Grid>
-
-                    {/* List Section */}
-                    <Grid item xs={12} md={6} lg={8}>
-                        <Paper elevation={0} sx={{ borderRadius: 5, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-                            <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, md: 3 }, borderBottom: '1px solid #E2E8F0', bgcolor: isDark ? '#000000' : '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 0 } }}>
-                                <Typography variant="h6" sx={{ fontWeight: 800, fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' } }}>Active Candidates</Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.2 }, flexWrap: 'wrap', justifyContent: { xs: 'center', sm: 'flex-end' } }}>
-                                    <Button
-                                        size="small"
-                                        variant="outlined"
-                                        startIcon={<DownloadIcon fontSize="small" />}
-                                        onClick={handleDownloadUsersExcel}
-                                        sx={{ fontWeight: 700, borderRadius: 2, fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' }, py: { xs: 0.4, sm: 0.6 }, px: { xs: 0.8, sm: 1.5 } }}
-                                    >
-                                        Download Excel
-                                    </Button>
-                                    <Chip label={`${usersTotalCount} Total Users`} size="small" sx={{ fontWeight: 700, borderRadius: 2, fontSize: { xs: '0.65rem', sm: '0.75rem' } }} />
-                                </Box>
-                            </Box>
-                            <TableContainer
-                                sx={{
-                                    borderRadius: 0,
-                                    borderTop: '0',
-                                    boxShadow: 'none',
-                                    overflowX: 'auto',
-                                    overflowY: 'hidden'
-                                }}
-                            >
-                                <Table sx={{ minWidth: { xs: '100%', sm: 800, md: 1000 } }}>
-                                    <TableHead sx={{ bgcolor: isDark ? '#000000' : '#F8FAFC' }}>
-                                        <TableRow>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', width: { xs: 50, md: 90 }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>NO.</TableCell>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', display: { xs: 'none', lg: 'table-cell' }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>ROLL NO.</TableCell>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>CANDIDATE</TableCell>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', display: { xs: 'none', md: 'table-cell' }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>USERNAME</TableCell>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', display: { xs: 'none', lg: 'table-cell' }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>MOBILE</TableCell>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', display: { xs: 'none', md: 'table-cell' }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>PINCODE</TableCell>
-                                            <TableCell align="center" sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', display: { xs: 'none', sm: 'table-cell' }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>ROLE</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>ACTIONS</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {users.map((u, idx) => {
-                                            const serial = (usersPage - 1) * usersPageSize + idx + 1;
-                                            return (
-                                                <TableRow
-                                                    key={u.id || idx}
-                                                    sx={{ '&:hover': { bgcolor: isDark ? '#111111' : '#F1F5F9' }, transition: 'background 0.2s' }}
-                                                >
-                                                    <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#334155', py: { xs: 1, md: 2.2 }, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>{serial}</TableCell>
-                                                    <TableCell sx={{ fontWeight: 700, color: isDark ? '#FFFFFF' : '#334155', display: { xs: 'none', lg: 'table-cell' }, py: { xs: 1, md: 2.2 }, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>{u.rollNumber || '-'}</TableCell>
-                                                    <TableCell sx={{ py: { xs: 1.2, md: 2.2 } }}>
-                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
-                                                            <Avatar sx={{ width: { xs: 28, sm: 34 }, height: { xs: 28, sm: 34 }, bgcolor: isDark ? '#111111' : '#6366F1', fontSize: { xs: '0.8rem', sm: '0.9rem' }, fontWeight: 800, color: '#FFFFFF' }}>
-                                                                {(u.name || '?').charAt(0).toUpperCase()}
-                                                            </Avatar>
-                                                            <Typography sx={{ fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A', fontSize: { xs: '0.75rem', sm: '0.85rem', md: '0.95rem' } }}>{u.name}</Typography>
-                                                        </Box>
-                                                    </TableCell>
-                                                    <TableCell sx={{ fontWeight: 700, color: isDark ? '#FFFFFF' : '#334155', display: { xs: 'none', md: 'table-cell' }, py: { xs: 1, md: 2.2 }, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>{u.username}</TableCell>
-                                                    <TableCell sx={{ fontWeight: 600, color: isDark ? '#E2E8F0' : '#64748B', display: { xs: 'none', lg: 'table-cell' }, py: { xs: 1, md: 2.2 }, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>{u.mobileNumber || '-'}</TableCell>
-                                                    <TableCell sx={{ fontWeight: 600, color: isDark ? '#E2E8F0' : '#64748B', display: { xs: 'none', md: 'table-cell' }, py: { xs: 1, md: 2.2 }, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>{u.pincode || '-'}</TableCell>
-                                                    <TableCell align="center" sx={{ display: { xs: 'none', sm: 'table-cell' }, py: { xs: 1, md: 2.2 } }}>
-                                                        <Chip label="User" size="small" sx={{ fontWeight: 700, borderRadius: 1.5, bgcolor: isDark ? '#000000' : '#F1F5F9', color: isDark ? '#FFFFFF' : undefined, fontSize: { xs: '0.6rem', sm: '0.75rem' } }} />
-                                                    </TableCell>
-                                                    <TableCell align="right" sx={{ py: { xs: 1, md: 2.2 } }}>
-                                                        <Box
-                                                            sx={{
-                                                                display: 'inline-flex',
-                                                                gap: { xs: 0.5, sm: 1 },
-                                                                flexWrap: 'wrap',
-                                                            }}
-                                                        >
-                                                            <Tooltip title="Edit">
-                                                                <span>
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        color="primary"
-                                                                        onClick={() => handleOpenEdit(u)}
-                                                                        sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}
-                                                                    >
-                                                                        <EditIcon fontSize="inherit" />
-                                                                    </IconButton>
-                                                                </span>
-                                                            </Tooltip>
-                                                            <Tooltip title={deleteLoadingId === u.id ? 'Deleting...' : 'Delete'}>
-                                                                <span>
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        color="error"
-                                                                        onClick={() => handleDeleteUser(u)}
-                                                                        disabled={deleteLoadingId === u.id}
-                                                                        sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}
-                                                                    >
-                                                                        <DeleteIcon fontSize="inherit" />
-                                                                    </IconButton>
-                                                                </span>
-                                                            </Tooltip>
-                                                        </Box>
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                        {users.length === 0 && (
-                                            <TableRow>
-                                                <TableCell colSpan={8}>
-                                                    <Box sx={{ p: { xs: 4, md: 8 }, textAlign: 'center' }}>
-                                                        <Typography sx={{ color: isDark ? '#CBD5E1' : 'text.secondary', fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>No students provisioned in the system.</Typography>
-                                                    </Box>
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
-                            {usersTotalCount > usersPageSize && (
-                                <Box
-                                    sx={{
-                                        px: { xs: 2, sm: 3, md: 4 },
-                                        py: { xs: 2, sm: 2.5, md: 2.5 },
-                                        borderTop: '1px solid #E2E8F0',
-                                        display: 'flex',
-                                        flexDirection: { xs: 'column', sm: 'row' },
-                                        justifyContent: { xs: 'center', sm: 'space-between' },
-                                        alignItems: 'center',
-                                        gap: { xs: 2, sm: 2, md: 3 },
-                                        bgcolor: isDark ? '#000000' : '#FFFFFF',
-                                    }}
-                                >
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            color: isDark ? '#CBD5E1' : '#64748B',
-                                            fontWeight: 600,
-                                            fontSize: { xs: '0.8rem', sm: '0.85rem', md: '0.9rem' },
-                                        }}
-                                    >
-                                        Showing {Math.min((usersPage - 1) * usersPageSize + 1, usersTotalCount)} - {Math.min(usersPage * usersPageSize, usersTotalCount)} of {usersTotalCount}
-                                    </Typography>
-
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: { xs: 0.8, sm: 1.2, md: 1.5 },
-                                            flexWrap: 'wrap',
-                                            justifyContent: 'center',
-                                        }}
-                                    >
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            onClick={() => setUsersPage(1)}
-                                            disabled={usersPage === 1}
-                                            sx={{
-                                                minWidth: { xs: '32px', sm: '36px' },
-                                                p: { xs: 0.6, sm: 0.8 },
-                                                fontSize: { xs: '0.75rem', sm: '0.85rem' },
-                                                fontWeight: 700,
-                                                borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
-                                                color: isDark ? '#E2E8F0' : undefined,
-                                                '&:disabled': {
-                                                    opacity: 0.5,
-                                                },
-                                            }}
-                                        >
-                                            {'<<'}
-                                        </Button>
-
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            onClick={() => setUsersPage(Math.max(1, usersPage - 1))}
-                                            disabled={usersPage === 1}
-                                            sx={{
-                                                minWidth: { xs: '32px', sm: '36px' },
-                                                p: { xs: 0.6, sm: 0.8 },
-                                                fontSize: { xs: '0.75rem', sm: '0.85rem' },
-                                                fontWeight: 700,
-                                                borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
-                                                color: isDark ? '#E2E8F0' : undefined,
-                                                '&:disabled': {
-                                                    opacity: 0.5,
-                                                },
-                                            }}
-                                        >
-                                            {'<'}
-                                        </Button>
-
-                                        <Typography
-                                            sx={{
-                                                minWidth: 'max-content',
-                                                color: isDark ? '#E2E8F0' : '#0F172A',
-                                                fontWeight: 700,
-                                                fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
-                                                px: { xs: 1, sm: 1.5, md: 2 },
-                                            }}
-                                        >
-                                            page {usersPage} of {Math.max(1, Math.ceil(usersTotalCount / usersPageSize))}
-                                        </Typography>
-
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            onClick={() => setUsersPage(Math.min(Math.ceil(usersTotalCount / usersPageSize), usersPage + 1))}
-                                            disabled={usersPage === Math.ceil(usersTotalCount / usersPageSize)}
-                                            sx={{
-                                                minWidth: { xs: '32px', sm: '36px' },
-                                                p: { xs: 0.6, sm: 0.8 },
-                                                fontSize: { xs: '0.75rem', sm: '0.85rem' },
-                                                fontWeight: 700,
-                                                borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
-                                                color: isDark ? '#E2E8F0' : undefined,
-                                                '&:disabled': {
-                                                    opacity: 0.5,
-                                                },
-                                            }}
-                                        >
-                                            {'>'}
-                                        </Button>
-
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            onClick={() => setUsersPage(Math.ceil(usersTotalCount / usersPageSize))}
-                                            disabled={usersPage === Math.ceil(usersTotalCount / usersPageSize)}
-                                            sx={{
-                                                minWidth: { xs: '32px', sm: '36px' },
-                                                p: { xs: 0.6, sm: 0.8 },
-                                                fontSize: { xs: '0.75rem', sm: '0.85rem' },
-                                                fontWeight: 700,
-                                                borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
-                                                color: isDark ? '#E2E8F0' : undefined,
-                                                '&:disabled': {
-                                                    opacity: 0.5,
-                                                },
-                                            }}
-                                        >
-                                            {'>>'}
-                                        </Button>
-                                    </Box>
-                                </Box>
-                            )}
-                        </Paper>
-                    </Grid>
-                </Grid>
-            </Container>
-
-            <Dialog open={editOpen} onClose={handleCloseEdit} fullWidth maxWidth="sm">
-                <DialogTitle sx={{ fontWeight: 800, bgcolor: isDark ? '#000000' : undefined, color: isDark ? '#FFFFFF' : undefined }}>Edit User</DialogTitle>
-                <DialogContent sx={{ pt: 2 }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                        <TextField
-                            label={t('invite.fullName')}
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            fullWidth
-                            required
-                        />
-                        <TextField
-                            label={t('invite.email')}
-                            value={editEmail}
-                            onChange={(e) => setEditEmail(e.target.value)}
-                            fullWidth
-                            type="email"
-                            required
-                        />
-                        <TextField
-                            label={t('invite.mobileNumber')}
-                            value={editMobileNumber}
-                            onChange={(e) => setEditMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                            inputProps={{ maxLength: 10 }}
-                            fullWidth
-                            required
-                        />
-                        <TextField
-                            label={t('invite.pincode')}
-                            value={editPincode}
-                            onChange={(e) => setEditPincode(e.target.value.toUpperCase().replace(/[^A-Z0-9 -]/g, '').slice(0, 10))}
-                            fullWidth
-                        />
-                        <TextField
-                            label={t('invite.address')}
-                            value={editAddress}
-                            onChange={(e) => setEditAddress(e.target.value)}
-                            fullWidth
-                            multiline
-                            minRows={2}
-                        />
-                        <TextField
-                            select
-                            label={t('invite.classOptional')}
-                            fullWidth
-                            value={editClassId}
-                            onChange={(e) => setEditClassId(e.target.value === '' ? '' : Number(e.target.value))}
-                        >
-                            <MenuItem value="">{t('invite.defaultClass')}</MenuItem>
-                            {classes.map((c: any) => (
-                                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-                            ))}
-                        </TextField>
-                    </Box>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Button onClick={handleCloseEdit} variant="text">Cancel</Button>
-                    <Button onClick={handleUpdateUser} variant="contained" disabled={editLoading}>
-                        {editLoading ? 'Saving...' : 'Save changes'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
+  const handleOpenEdit = (user: CandidateUser) => {
+    setEditingUser(user);
+    setEditName(user.name ?? "");
+    setEditEmail(user.email ?? "");
+    setEditMobileNumber(
+      (user.mobileNumber ?? "").replace(/\D/g, "").slice(-10),
     );
+    setEditPincode((user.pincode ?? "").toUpperCase());
+    setEditAddress(user.address ?? "");
+    setEditClassId(user.classId ?? "");
+    setEditOpen(true);
+  };
+
+  const handleCloseEdit = () => {
+    setEditOpen(false);
+    setEditingUser(null);
+    setEditName("");
+    setEditEmail("");
+    setEditMobileNumber("");
+    setEditPincode("");
+    setEditAddress("");
+    setEditClassId("");
+  };
+
+  const handleUpdateUser = async () => {
+    if (!editingUser) return;
+
+    const normalizedMobile = editMobileNumber.replace(/\D/g, "").slice(-10);
+    if (normalizedMobile.length !== 10) {
+      setMessage({ type: "error", text: t("api.MOBILE_REQUIRED") });
+      return;
+    }
+
+    setEditLoading(true);
+    try {
+      await adminApi.updateUser(editingUser.id, {
+        fullName: editName,
+        email: editEmail,
+        mobileNumber: normalizedMobile,
+        pincode: editPincode.trim() || null,
+        address: editAddress.trim() || null,
+        classId: editClassId === "" ? null : editClassId,
+      });
+      setMessage({ type: "success", text: "User updated successfully." });
+      handleCloseEdit();
+      fetchUsers(usersPage);
+    } catch (err: unknown) {
+      const errorObj = err as ApiError;
+      const backendMessage = errorObj.response?.data?.message;
+      setMessage({
+        type: "error",
+        text: backendMessage || "Failed to update user.",
+      });
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (user: CandidateUser) => {
+    const ok = window.confirm(
+      `Delete user "${user.name}"? This action cannot be undone.`,
+    );
+    if (!ok) return;
+
+    setDeleteLoadingId(user.id);
+    try {
+      await adminApi.deleteUser(user.id);
+      setMessage({ type: "success", text: "User deleted successfully." });
+      fetchUsers();
+    } catch (err: unknown) {
+      const errorObj = err as ApiError;
+      const backendMessage = errorObj.response?.data?.message;
+      setMessage({
+        type: "error",
+        text: backendMessage || "Failed to delete user.",
+      });
+    } finally {
+      setDeleteLoadingId(null);
+    }
+  };
+
+  const handleDownloadUsersExcel = async () => {
+    try {
+      const res = await adminApi.downloadUsersExcel();
+      const blob = new Blob([res.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const disposition = res.headers?.["content-disposition"] as
+        | string
+        | undefined;
+      const fileNameFromHeader = disposition?.match(
+        /filename="?([^";]+)"?/i,
+      )?.[1];
+      link.href = url;
+      link.download =
+        fileNameFromHeader ||
+        `users-${new Date().toISOString().replace(/[:.]/g, "-")}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setMessage({ type: "error", text: "Failed to download users Excel." });
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: isDark ? "#000000" : "#F8FAFC",
+        color: isDark ? "#FFFFFF" : "inherit",
+        pb: 10,
+        "& .MuiPaper-root": {
+          backgroundColor: isDark ? "#000000 !important" : undefined,
+          color: isDark ? "#FFFFFF !important" : undefined,
+          borderColor: isDark
+            ? "rgba(148, 163, 184, 0.28) !important"
+            : undefined,
+        },
+        "& .MuiTypography-root": {
+          color: isDark ? "#FFFFFF" : undefined,
+        },
+        "& .MuiOutlinedInput-root, & .MuiInputBase-root, & .MuiSelect-select": {
+          backgroundColor: isDark ? "#000000 !important" : undefined,
+          color: isDark ? "#FFFFFF !important" : undefined,
+        },
+        "& .MuiOutlinedInput-notchedOutline, & .MuiDivider-root, & .MuiTableCell-root":
+          {
+            borderColor: isDark
+              ? "rgba(148, 163, 184, 0.32) !important"
+              : undefined,
+          },
+        "& .MuiTableHead-root .MuiTableCell-root, & .MuiTableCell-root": {
+          backgroundColor: isDark ? "#000000 !important" : undefined,
+          color: isDark ? "#FFFFFF !important" : undefined,
+        },
+        "& .MuiTableRow-root:hover": {
+          backgroundColor: isDark ? "#111111 !important" : undefined,
+        },
+        "& .MuiButton-root": {
+          color: isDark ? "#FFFFFF" : undefined,
+        },
+        "& .MuiButton-outlined, & .MuiButton-contained": {
+          backgroundColor: isDark ? "#000000" : undefined,
+          borderColor: isDark ? "rgba(148, 163, 184, 0.35)" : undefined,
+        },
+        "& .MuiChip-root, & .MuiAvatar-root, & .MuiCheckbox-root": {
+          color: isDark ? "#FFFFFF" : undefined,
+        },
+        "& .MuiDialog-paper": {
+          backgroundColor: isDark ? "#000000 !important" : undefined,
+          color: isDark ? "#FFFFFF !important" : undefined,
+        },
+      }}
+    >
+      {/* Page Header */}
+      <Box
+        sx={{
+          bgcolor: isDark ? "#000000" : "#FFFFFF",
+          borderBottom: "1px solid #E2E8F0",
+          py: { xs: 2, md: 4 },
+          mb: { xs: 3, md: 6 },
+        }}
+      >
+        <Container
+          maxWidth={false}
+          sx={{ px: { xs: 2, sm: 3, md: 6, lg: 10 } }}
+        >
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate("/admin")}
+            sx={{
+              mb: 2,
+              color: isDark ? "#E2E8F0" : "#64748B",
+              fontWeight: 700,
+              fontSize: { xs: "0.75rem", sm: "0.9rem" },
+            }}
+          >
+            Back to Dashboard
+          </Button>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+            <Group
+              sx={{ color: "#6366F1", mr: 1, fontSize: { xs: 20, sm: 24 } }}
+            />
+            <Typography
+              variant="overline"
+              sx={{
+                fontWeight: 800,
+                color: "#94A3B8",
+                letterSpacing: 1.5,
+                fontSize: { xs: "0.65rem", sm: "0.75rem" },
+              }}
+            >
+              Administration
+            </Typography>
+          </Box>
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: 900,
+              letterSpacing: "-1.5px",
+              color: isDark ? "#FFFFFF" : "#0F172A",
+              fontSize: { xs: "1.5rem", sm: "2.5rem", md: "3rem" },
+            }}
+          >
+            Candidate Management
+          </Typography>
+        </Container>
+      </Box>
+
+      <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 6, lg: 10 } }}>
+        <Grid container spacing={{ xs: 2, sm: 3, md: 5 }}>
+          {/* Form Section */}
+          <Grid item xs={12} md={6} lg={4}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2, sm: 3, md: 4 },
+                borderRadius: 5,
+                border: "1px solid #E2E8F0",
+                boxShadow: isDark
+                  ? "0 10px 32px rgba(0,0,0,0.65)"
+                  : "0 4px 6px -1px rgba(0,0,0,0.05)",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  mb: { xs: 2, md: 4 },
+                }}
+              >
+                <Avatar
+                  sx={{
+                    bgcolor: "rgba(99, 102, 241, 0.1)",
+                    color: "#6366F1",
+                    mr: 2,
+                    width: { xs: 36, sm: 40 },
+                    height: { xs: 36, sm: 40 },
+                  }}
+                >
+                  <PersonAdd fontSize="small" />
+                </Avatar>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 800,
+                    color: isDark ? "#FFFFFF" : "#0F172A",
+                    fontSize: { xs: "0.9rem", sm: "1rem", md: "1.1rem" },
+                  }}
+                >
+                  Provision Account
+                </Typography>
+              </Box>
+
+              {message.text && (
+                <Alert
+                  severity={message.type as "success" | "error"}
+                  sx={{ mb: 4, borderRadius: 3, fontWeight: 700 }}
+                  onClose={() => setMessage({ type: "", text: "" })}
+                >
+                  {message.text}
+                </Alert>
+              )}
+
+              <Box
+                component="form"
+                onSubmit={handleSubmit}
+                sx={{
+                  display: "flex",
+                  gap: { xs: 1.5, md: 3 },
+                  flexDirection: "column",
+                }}
+              >
+                <TextField
+                  label={t("invite.fullName")}
+                  required
+                  variant="outlined"
+                  fullWidth
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  size="small"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 3,
+                      fontSize: { xs: "0.85rem", md: "0.95rem" },
+                    },
+                  }}
+                />
+                <TextField
+                  label={t("invite.email")}
+                  required
+                  variant="outlined"
+                  fullWidth
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  size="small"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 3,
+                      fontSize: { xs: "0.85rem", md: "0.95rem" },
+                    },
+                  }}
+                />
+                <TextField
+                  label={t("invite.mobileNumber")}
+                  variant="outlined"
+                  fullWidth
+                  required
+                  value={mobileNumber}
+                  onChange={(e) =>
+                    setMobileNumber(
+                      e.target.value.replace(/\D/g, "").slice(0, 10),
+                    )
+                  }
+                  inputProps={{ maxLength: 10 }}
+                  size="small"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 3,
+                      fontSize: { xs: "0.85rem", md: "0.95rem" },
+                    },
+                  }}
+                />
+                <TextField
+                  label={t("invite.pincode")}
+                  variant="outlined"
+                  fullWidth
+                  value={pincode}
+                  onChange={(e) =>
+                    setPincode(
+                      e.target.value
+                        .toUpperCase()
+                        .replace(/[^A-Z0-9 -]/g, "")
+                        .slice(0, 10),
+                    )
+                  }
+                  size="small"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 3,
+                      fontSize: { xs: "0.85rem", md: "0.95rem" },
+                    },
+                  }}
+                />
+                <TextField
+                  label={t("invite.address")}
+                  variant="outlined"
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  size="small"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 3,
+                      fontSize: { xs: "0.85rem", md: "0.95rem" },
+                    },
+                  }}
+                />
+                <TextField
+                  select
+                  label={t("invite.classOptional")}
+                  fullWidth
+                  value={classId}
+                  onChange={(e) =>
+                    setClassId(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
+                  size="small"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 3,
+                      fontSize: { xs: "0.85rem", md: "0.95rem" },
+                    },
+                  }}
+                >
+                  <MenuItem value="">{t("invite.defaultClass")}</MenuItem>
+                  {classes.map((c: ClassItem) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <Button
+                  variant="contained"
+                  type="submit"
+                  size="small"
+                  disabled={loading}
+                  sx={{
+                    mt: { xs: 1, md: 2 },
+                    py: { xs: 0.8, md: 1.8 },
+                    px: 2,
+                    borderRadius: 3,
+                    fontWeight: 800,
+                    fontSize: { xs: "0.75rem", sm: "0.85rem", md: "0.95rem" },
+                    boxShadow: isDark
+                      ? "0 10px 18px rgba(0,0,0,0.7)"
+                      : "0 10px 15px -3px rgba(99, 102, 241, 0.3)",
+                  }}
+                >
+                  {loading ? t("invite.creatingUser") : t("invite.createUser")}
+                </Button>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "#64748B",
+                    fontWeight: 700,
+                    fontSize: { xs: "0.65rem", sm: "0.75rem", md: "0.85rem" },
+                  }}
+                >
+                  {t("invite.rollNumberAuto")}
+                </Typography>
+              </Box>
+
+              <Divider sx={{ my: 4 }} />
+
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 800, mb: 1.5, color: "#0F172A" }}
+              >
+                Bulk Import (CSV/XLSX)
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ color: "#64748B", fontWeight: 600, mb: 2 }}
+              >
+                Upload CSV or XLSX, inspect headers, then map Full Name, Email,
+                Mobile Number, optional Pincode, Address, and Class.
+              </Typography>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1.5,
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                }}
+              >
+                <Button
+                  component="label"
+                  variant="outlined"
+                  startIcon={<UploadFile />}
+                  sx={{ borderRadius: 2.5, fontWeight: 700 }}
+                >
+                  Choose CSV/XLSX
+                  <input
+                    type="file"
+                    accept=".csv,.xlsx"
+                    hidden
+                    onChange={(e) => {
+                      setImportFile(e.target.files?.[0] ?? null);
+                      setImportSessionId("");
+                      setImportHeaders([]);
+                      setImportMapping(initialImportMapping);
+                      setImportStep("upload");
+                      setImportPreview(null);
+                      setImportSummary(null);
+                      setImportError("");
+                    }}
+                  />
+                </Button>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#475569", fontWeight: 700 }}
+                >
+                  {importFile ? importFile.name : "No file selected"}
+                </Typography>
+              </Box>
+
+              <Button
+                variant="contained"
+                onClick={handleInspectUserColumns}
+                disabled={importLoading || !importFile}
+                sx={{ mt: 2, py: 1.2, borderRadius: 2.5, fontWeight: 800 }}
+              >
+                {importLoading ? "Inspecting..." : "Inspect Headers"}
+              </Button>
+
+              {importError && (
+                <Alert
+                  severity="error"
+                  sx={{ mt: 2, borderRadius: 3, fontWeight: 700 }}
+                >
+                  {importError}
+                </Alert>
+              )}
+
+              {importStep === "mapping" && (
+                <Box
+                  sx={{
+                    mt: 3,
+                    p: 2.5,
+                    borderRadius: 3,
+                    bgcolor: isDark ? "#000000" : "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                  }}
+                >
+                  <Typography sx={{ fontWeight: 800, color: "#0F172A", mb: 1 }}>
+                    Manual Column Mapping
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "#64748B", fontWeight: 600, mb: 2 }}
+                  >
+                    Match each system field to one file header.
+                  </Typography>
+
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
+                    {importFields.map((field) => (
+                      <TextField
+                        key={field.key}
+                        select
+                        label={`${field.label}${field.required ? " *" : ""}`}
+                        value={importMapping[field.key]}
+                        onChange={(e) =>
+                          handleImportMappingChange(field.key, e.target.value)
+                        }
+                        fullWidth
+                        sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
+                      >
+                        <MenuItem value="">Select header</MenuItem>
+                        {importHeaders.map((header) => (
+                          <MenuItem key={header.index} value={header.index}>
+                            {header.header || "(Blank header)"}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    ))}
+                  </Box>
+
+                  <FormControlLabel
+                    sx={{ mt: 1 }}
+                    control={
+                      <Checkbox
+                        checked={importSkipInvalidRows}
+                        onChange={(e) =>
+                          setImportSkipInvalidRows(e.target.checked)
+                        }
+                      />
+                    }
+                    label="Skip invalid rows on confirm"
+                  />
+
+                  <Box sx={{ display: "flex", gap: 1.5, mt: 2 }}>
+                    <Button
+                      variant="outlined"
+                      onClick={resetImportFlow}
+                      sx={{ fontWeight: 700 }}
+                    >
+                      Start Over
+                    </Button>
+                    <Box sx={{ flex: 1 }} />
+                    <Button
+                      variant="contained"
+                      onClick={handlePreviewUserImport}
+                      disabled={importLoading}
+                      sx={{ fontWeight: 800 }}
+                    >
+                      {importLoading ? "Previewing..." : "Preview Rows"}
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+
+              {importStep === "preview" && importPreview && (
+                <Box
+                  sx={{
+                    mt: 3,
+                    p: 2.5,
+                    borderRadius: 3,
+                    bgcolor: isDark ? "#000000" : "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                  }}
+                >
+                  <Typography sx={{ fontWeight: 800, color: "#0F172A" }}>
+                    Rows: {importPreview.totalRows} | Valid:{" "}
+                    {importPreview.validRows} | Invalid:{" "}
+                    {importPreview.invalidRows}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "#64748B", fontWeight: 600, mt: 0.5, mb: 2 }}
+                  >
+                    Preview is based on the selected header mapping.
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1.5,
+                      maxHeight: 280,
+                      overflowY: "auto",
+                    }}
+                  >
+                    {importPreview.rows.map((row) => (
+                      <Box
+                        key={row.rowNumber}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: isDark ? "#000000" : "#FFFFFF",
+                          border: "1px solid #E2E8F0",
+                        }}
+                      >
+                        <Typography sx={{ fontWeight: 800, color: "#0F172A" }}>
+                          Row {row.rowNumber} -{" "}
+                          {row.isValid ? "Valid" : "Invalid"}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: "block",
+                            color: "#475569",
+                            fontWeight: 600,
+                            mt: 0.5,
+                          }}
+                        >
+                          {Object.entries(row.values)
+                            .map(([key, value]) => `${key}: ${value || "-"}`)
+                            .join(" | ")}
+                        </Typography>
+                        {row.errors.length > 0 && (
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              display: "block",
+                              color: "#B91C1C",
+                              fontWeight: 700,
+                              mt: 0.5,
+                            }}
+                          >
+                            {row.errors.join(" • ")}
+                          </Typography>
+                        )}
+                      </Box>
+                    ))}
+                  </Box>
+
+                  {importPreview.errors.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 700, color: "#B91C1C", mb: 0.5 }}
+                      >
+                        Issues
+                      </Typography>
+                      {importPreview.errors.map((err, idx) => (
+                        <Typography
+                          key={idx}
+                          variant="caption"
+                          sx={{
+                            display: "block",
+                            color: "#991B1B",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {err}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+
+                  <Box sx={{ display: "flex", gap: 1.5, mt: 2 }}>
+                    <Button
+                      variant="outlined"
+                      onClick={() => setImportStep("mapping")}
+                      sx={{ fontWeight: 700 }}
+                    >
+                      Edit Mapping
+                    </Button>
+                    <Box sx={{ flex: 1 }} />
+                    <Button
+                      variant="contained"
+                      onClick={handleConfirmUserImport}
+                      disabled={importLoading}
+                      sx={{ fontWeight: 800 }}
+                    >
+                      {importLoading ? "Importing..." : "Confirm Import"}
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+
+              {importStep === "result" && importSummary && (
+                <Box
+                  sx={{
+                    mt: 3,
+                    p: 2.5,
+                    borderRadius: 3,
+                    bgcolor: isDark ? "#000000" : "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                  }}
+                >
+                  <Typography sx={{ fontWeight: 800, color: "#0F172A" }}>
+                    Rows: {importSummary.totalRows} | Created:{" "}
+                    {importSummary.successCount} | Failed:{" "}
+                    {importSummary.failedCount} | Skipped:{" "}
+                    {importSummary.skippedCount}
+                  </Typography>
+                  {importSummary.errors.length > 0 && (
+                    <Box sx={{ mt: 1 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 700, color: "#B91C1C", mb: 0.5 }}
+                      >
+                        Issues
+                      </Typography>
+                      {importSummary.errors.slice(0, 8).map((err, idx) => (
+                        <Typography
+                          key={idx}
+                          variant="caption"
+                          sx={{
+                            display: "block",
+                            color: "#991B1B",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {err}
+                        </Typography>
+                      ))}
+                      {importSummary.errors.length > 8 && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: "block",
+                            color: "#475569",
+                            fontWeight: 700,
+                          }}
+                        >
+                          +{importSummary.errors.length - 8} more issues
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+
+                  <Button
+                    variant="outlined"
+                    onClick={resetImportFlow}
+                    sx={{ mt: 2, fontWeight: 700 }}
+                  >
+                    Import Another File
+                  </Button>
+                </Box>
+              )}
+            </Paper>
+          </Grid>
+
+          {/* List Section */}
+          <Grid item xs={12} md={6} lg={8}>
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 5,
+                border: "1px solid #E2E8F0",
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  px: { xs: 2, sm: 3, md: 4 },
+                  py: { xs: 2, md: 3 },
+                  borderBottom: "1px solid #E2E8F0",
+                  bgcolor: isDark ? "#000000" : "#FFFFFF",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: { xs: 1.5, sm: 0 },
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 800,
+                    fontSize: { xs: "0.9rem", sm: "1rem", md: "1.1rem" },
+                  }}
+                >
+                  Active Candidates
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: { xs: 1, sm: 1.2 },
+                    flexWrap: "wrap",
+                    justifyContent: { xs: "center", sm: "flex-end" },
+                  }}
+                >
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<DownloadIcon fontSize="small" />}
+                    onClick={handleDownloadUsersExcel}
+                    sx={{
+                      fontWeight: 700,
+                      borderRadius: 2,
+                      fontSize: { xs: "0.65rem", sm: "0.75rem", md: "0.85rem" },
+                      py: { xs: 0.4, sm: 0.6 },
+                      px: { xs: 0.8, sm: 1.5 },
+                    }}
+                  >
+                    Download Excel
+                  </Button>
+                  <Chip
+                    label={`${usersTotalCount} Total Users`}
+                    size="small"
+                    sx={{
+                      fontWeight: 700,
+                      borderRadius: 2,
+                      fontSize: { xs: "0.65rem", sm: "0.75rem" },
+                    }}
+                  />
+                </Box>
+              </Box>
+              <TableContainer
+                sx={{
+                  borderRadius: 0,
+                  borderTop: "0",
+                  boxShadow: "none",
+                  overflowX: "auto",
+                  overflowY: "hidden",
+                }}
+              >
+                <Table sx={{ minWidth: { xs: "100%", sm: 800, md: 1000 } }}>
+                  <TableHead sx={{ bgcolor: isDark ? "#000000" : "#F8FAFC" }}>
+                    <TableRow>
+                      <TableCell
+                        sx={{
+                          fontWeight: 800,
+                          color: isDark ? "#FFFFFF" : "#475569",
+                          width: { xs: 50, md: 90 },
+                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                        }}
+                      >
+                        NO.
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: 800,
+                          color: isDark ? "#FFFFFF" : "#475569",
+                          display: { xs: "none", lg: "table-cell" },
+                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                        }}
+                      >
+                        ROLL NO.
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: 800,
+                          color: isDark ? "#FFFFFF" : "#475569",
+                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                        }}
+                      >
+                        CANDIDATE
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: 800,
+                          color: isDark ? "#FFFFFF" : "#475569",
+                          display: { xs: "none", md: "table-cell" },
+                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                        }}
+                      >
+                        USERNAME
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: 800,
+                          color: isDark ? "#FFFFFF" : "#475569",
+                          display: { xs: "none", lg: "table-cell" },
+                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                        }}
+                      >
+                        MOBILE
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontWeight: 800,
+                          color: isDark ? "#FFFFFF" : "#475569",
+                          display: { xs: "none", md: "table-cell" },
+                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                        }}
+                      >
+                        PINCODE
+                      </TableCell>
+                      <TableCell
+                        align="center"
+                        sx={{
+                          fontWeight: 800,
+                          color: isDark ? "#FFFFFF" : "#475569",
+                          display: { xs: "none", sm: "table-cell" },
+                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                        }}
+                      >
+                        ROLE
+                      </TableCell>
+                      <TableCell
+                        align="right"
+                        sx={{
+                          fontWeight: 800,
+                          color: isDark ? "#FFFFFF" : "#475569",
+                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                        }}
+                      >
+                        ACTIONS
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {users.map((u, idx) => {
+                      const serial = (usersPage - 1) * usersPageSize + idx + 1;
+                      return (
+                        <TableRow
+                          key={u.id || idx}
+                          sx={{
+                            "&:hover": {
+                              bgcolor: isDark ? "#111111" : "#F1F5F9",
+                            },
+                            transition: "background 0.2s",
+                          }}
+                        >
+                          <TableCell
+                            sx={{
+                              fontWeight: 800,
+                              color: isDark ? "#FFFFFF" : "#334155",
+                              py: { xs: 1, md: 2.2 },
+                              fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                            }}
+                          >
+                            {serial}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              fontWeight: 700,
+                              color: isDark ? "#FFFFFF" : "#334155",
+                              display: { xs: "none", lg: "table-cell" },
+                              py: { xs: 1, md: 2.2 },
+                              fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                            }}
+                          >
+                            {u.rollNumber || "-"}
+                          </TableCell>
+                          <TableCell sx={{ py: { xs: 1.2, md: 2.2 } }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: { xs: 1, sm: 1.5 },
+                              }}
+                            >
+                              <Avatar
+                                sx={{
+                                  width: { xs: 28, sm: 34 },
+                                  height: { xs: 28, sm: 34 },
+                                  bgcolor: isDark ? "#111111" : "#6366F1",
+                                  fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                                  fontWeight: 800,
+                                  color: "#FFFFFF",
+                                }}
+                              >
+                                {(u.name || "?").charAt(0).toUpperCase()}
+                              </Avatar>
+                              <Typography
+                                sx={{
+                                  fontWeight: 700,
+                                  color: isDark ? "#FFFFFF" : "#0F172A",
+                                  fontSize: {
+                                    xs: "0.75rem",
+                                    sm: "0.85rem",
+                                    md: "0.95rem",
+                                  },
+                                }}
+                              >
+                                {u.name}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              fontWeight: 700,
+                              color: isDark ? "#FFFFFF" : "#334155",
+                              display: { xs: "none", md: "table-cell" },
+                              py: { xs: 1, md: 2.2 },
+                              fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                            }}
+                          >
+                            {u.username}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              fontWeight: 600,
+                              color: isDark ? "#E2E8F0" : "#64748B",
+                              display: { xs: "none", lg: "table-cell" },
+                              py: { xs: 1, md: 2.2 },
+                              fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                            }}
+                          >
+                            {u.mobileNumber || "-"}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              fontWeight: 600,
+                              color: isDark ? "#E2E8F0" : "#64748B",
+                              display: { xs: "none", md: "table-cell" },
+                              py: { xs: 1, md: 2.2 },
+                              fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                            }}
+                          >
+                            {u.pincode || "-"}
+                          </TableCell>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              display: { xs: "none", sm: "table-cell" },
+                              py: { xs: 1, md: 2.2 },
+                            }}
+                          >
+                            <Chip
+                              label="User"
+                              size="small"
+                              sx={{
+                                fontWeight: 700,
+                                borderRadius: 1.5,
+                                bgcolor: isDark ? "#000000" : "#F1F5F9",
+                                color: isDark ? "#FFFFFF" : undefined,
+                                fontSize: { xs: "0.6rem", sm: "0.75rem" },
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{ py: { xs: 1, md: 2.2 } }}
+                          >
+                            <Box
+                              sx={{
+                                display: "inline-flex",
+                                gap: { xs: 0.5, sm: 1 },
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              <Tooltip title="Edit">
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={() => handleOpenEdit(u)}
+                                    sx={{
+                                      fontSize: { xs: "0.8rem", sm: "1rem" },
+                                    }}
+                                  >
+                                    <EditIcon fontSize="inherit" />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                              <Tooltip
+                                title={
+                                  deleteLoadingId === u.id
+                                    ? "Deleting..."
+                                    : "Delete"
+                                }
+                              >
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => handleDeleteUser(u)}
+                                    disabled={deleteLoadingId === u.id}
+                                    sx={{
+                                      fontSize: { xs: "0.8rem", sm: "1rem" },
+                                    }}
+                                  >
+                                    <DeleteIcon fontSize="inherit" />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {users.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={8}>
+                          <Box
+                            sx={{ p: { xs: 4, md: 8 }, textAlign: "center" }}
+                          >
+                            <Typography
+                              sx={{
+                                color: isDark ? "#CBD5E1" : "text.secondary",
+                                fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                              }}
+                            >
+                              No students provisioned in the system.
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {usersTotalCount > usersPageSize && (
+                <Box
+                  sx={{
+                    px: { xs: 2, sm: 3, md: 4 },
+                    py: { xs: 2, sm: 2.5, md: 2.5 },
+                    borderTop: "1px solid #E2E8F0",
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    justifyContent: { xs: "center", sm: "space-between" },
+                    alignItems: "center",
+                    gap: { xs: 2, sm: 2, md: 3 },
+                    bgcolor: isDark ? "#000000" : "#FFFFFF",
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: isDark ? "#CBD5E1" : "#64748B",
+                      fontWeight: 600,
+                      fontSize: { xs: "0.8rem", sm: "0.85rem", md: "0.9rem" },
+                    }}
+                  >
+                    Showing{" "}
+                    {Math.min(
+                      (usersPage - 1) * usersPageSize + 1,
+                      usersTotalCount,
+                    )}{" "}
+                    - {Math.min(usersPage * usersPageSize, usersTotalCount)} of{" "}
+                    {usersTotalCount}
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: { xs: 0.8, sm: 1.2, md: 1.5 },
+                      flexWrap: "wrap",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => setUsersPage(1)}
+                      disabled={usersPage === 1}
+                      sx={{
+                        minWidth: { xs: "32px", sm: "36px" },
+                        p: { xs: 0.6, sm: 0.8 },
+                        fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                        fontWeight: 700,
+                        borderColor: isDark
+                          ? "rgba(148, 163, 184, 0.3)"
+                          : undefined,
+                        color: isDark ? "#E2E8F0" : undefined,
+                        "&:disabled": {
+                          opacity: 0.5,
+                        },
+                      }}
+                    >
+                      {"<<"}
+                    </Button>
+
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => setUsersPage(Math.max(1, usersPage - 1))}
+                      disabled={usersPage === 1}
+                      sx={{
+                        minWidth: { xs: "32px", sm: "36px" },
+                        p: { xs: 0.6, sm: 0.8 },
+                        fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                        fontWeight: 700,
+                        borderColor: isDark
+                          ? "rgba(148, 163, 184, 0.3)"
+                          : undefined,
+                        color: isDark ? "#E2E8F0" : undefined,
+                        "&:disabled": {
+                          opacity: 0.5,
+                        },
+                      }}
+                    >
+                      {"<"}
+                    </Button>
+
+                    <Typography
+                      sx={{
+                        minWidth: "max-content",
+                        color: isDark ? "#E2E8F0" : "#0F172A",
+                        fontWeight: 700,
+                        fontSize: { xs: "0.8rem", sm: "0.9rem", md: "1rem" },
+                        px: { xs: 1, sm: 1.5, md: 2 },
+                      }}
+                    >
+                      page {usersPage} of{" "}
+                      {Math.max(1, Math.ceil(usersTotalCount / usersPageSize))}
+                    </Typography>
+
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() =>
+                        setUsersPage(
+                          Math.min(
+                            Math.ceil(usersTotalCount / usersPageSize),
+                            usersPage + 1,
+                          ),
+                        )
+                      }
+                      disabled={
+                        usersPage === Math.ceil(usersTotalCount / usersPageSize)
+                      }
+                      sx={{
+                        minWidth: { xs: "32px", sm: "36px" },
+                        p: { xs: 0.6, sm: 0.8 },
+                        fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                        fontWeight: 700,
+                        borderColor: isDark
+                          ? "rgba(148, 163, 184, 0.3)"
+                          : undefined,
+                        color: isDark ? "#E2E8F0" : undefined,
+                        "&:disabled": {
+                          opacity: 0.5,
+                        },
+                      }}
+                    >
+                      {">"}
+                    </Button>
+
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() =>
+                        setUsersPage(Math.ceil(usersTotalCount / usersPageSize))
+                      }
+                      disabled={
+                        usersPage === Math.ceil(usersTotalCount / usersPageSize)
+                      }
+                      sx={{
+                        minWidth: { xs: "32px", sm: "36px" },
+                        p: { xs: 0.6, sm: 0.8 },
+                        fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                        fontWeight: 700,
+                        borderColor: isDark
+                          ? "rgba(148, 163, 184, 0.3)"
+                          : undefined,
+                        color: isDark ? "#E2E8F0" : undefined,
+                        "&:disabled": {
+                          opacity: 0.5,
+                        },
+                      }}
+                    >
+                      {">>"}
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
+
+      <Dialog open={editOpen} onClose={handleCloseEdit} fullWidth maxWidth="sm">
+        <DialogTitle
+          sx={{
+            fontWeight: 800,
+            bgcolor: isDark ? "#000000" : undefined,
+            color: isDark ? "#FFFFFF" : undefined,
+          }}
+        >
+          Edit User
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              label={t("invite.fullName")}
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              fullWidth
+              required
+            />
+            <TextField
+              label={t("invite.email")}
+              value={editEmail}
+              onChange={(e) => setEditEmail(e.target.value)}
+              fullWidth
+              type="email"
+              required
+            />
+            <TextField
+              label={t("invite.mobileNumber")}
+              value={editMobileNumber}
+              onChange={(e) =>
+                setEditMobileNumber(
+                  e.target.value.replace(/\D/g, "").slice(0, 10),
+                )
+              }
+              inputProps={{ maxLength: 10 }}
+              fullWidth
+              required
+            />
+            <TextField
+              label={t("invite.pincode")}
+              value={editPincode}
+              onChange={(e) =>
+                setEditPincode(
+                  e.target.value
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9 -]/g, "")
+                    .slice(0, 10),
+                )
+              }
+              fullWidth
+            />
+            <TextField
+              label={t("invite.address")}
+              value={editAddress}
+              onChange={(e) => setEditAddress(e.target.value)}
+              fullWidth
+              multiline
+              minRows={2}
+            />
+            <TextField
+              select
+              label={t("invite.classOptional")}
+              fullWidth
+              value={editClassId}
+              onChange={(e) =>
+                setEditClassId(
+                  e.target.value === "" ? "" : Number(e.target.value),
+                )
+              }
+            >
+              <MenuItem value="">{t("invite.defaultClass")}</MenuItem>
+              {classes.map((c: ClassItem) => (
+                <MenuItem key={c.id} value={c.id}>
+                  {c.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleCloseEdit} variant="text">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUpdateUser}
+            variant="contained"
+            disabled={editLoading}
+          >
+            {editLoading ? "Saving..." : "Save changes"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
 };
 
 export default CreateUser;

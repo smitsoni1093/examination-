@@ -12,10 +12,16 @@ type ClassRow = {
   createdAt?: string;
 };
 
+type RootState = {
+  theme?: {
+    mode?: string;
+  };
+};
+
 const ManageClasses = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const themeMode = useSelector((state: any) => state.theme?.mode || 'light');
+  const themeMode = useSelector((state: RootState) => state.theme?.mode || 'light');
   const isDark = themeMode === 'dark';
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [loading, setLoading] = useState(false);

@@ -1,310 +1,571 @@
-import { useState, useEffect } from 'react';
-import { Container, Typography, Box, TextField, Button, Alert, Paper, List, ListItem, ListItemText, Checkbox, Grid, Avatar, Chip, Stack, InputAdornment, MenuItem, FormControlLabel, Switch } from '@mui/material';
-import { Assignment, Quiz, DoneAll, Search, PlaylistAddCheck, ArrowBack } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import { adminApi } from '../../api/endpoints';
+import { useState, useEffect } from "react";
+import {
+  Container,
+  Typography,
+  Box,
+  TextField,
+  Button,
+  Alert,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  Checkbox,
+  Grid,
+  Avatar,
+  Chip,
+  Stack,
+  InputAdornment,
+  MenuItem,
+  FormControlLabel,
+  Switch,
+} from "@mui/material";
+import {
+  Assignment,
+  Quiz,
+  DoneAll,
+  Search,
+  PlaylistAddCheck,
+  ArrowBack,
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { adminApi } from "../../api/endpoints";
+
+type ClassItem = {
+  id: number;
+  name: string;
+};
+
+type InstructionItem = {
+  id: number;
+  text: string;
+  isActive: boolean;
+};
+
+type QuestionItem = {
+  id: number;
+  question_EN: string;
+};
+
+type TestPayload = {
+  name: string;
+  duration: number;
+  closingAt: string;
+  isGlobal: boolean;
+  instructionIds: number[];
+  classId?: number | null;
+};
+
+type MessageState = {
+  type: "success" | "error" | "";
+  text: string;
+};
 
 const CreateTest = () => {
-    const navigate = useNavigate();
-    const [name, setName] = useState('');
-    const [closingAt, setClosingAt] = useState('');
-    const [isGlobal, setIsGlobal] = useState(false);
-    const [classId, setClassId] = useState<number | ''>('');
-    const [classes, setClasses] = useState<any[]>([]);
-    const [instructionBank, setInstructionBank] = useState<any[]>([]);
-    const [questions, setQuestions] = useState<any[]>([]);
-    const [selectedQuestions, setSelectedQuestions] = useState<number[]>([]);
-    const [selectedInstructionIds, setSelectedInstructionIds] = useState<number[]>([]);
-    const [message, setMessage] = useState({ type: '', text: '' });
-    const [loading, setLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [closingAt, setClosingAt] = useState("");
+  const [isGlobal, setIsGlobal] = useState(false);
+  const [classId, setClassId] = useState<number | "">("");
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [instructionBank, setInstructionBank] = useState<InstructionItem[]>([]);
+  const [questions, setQuestions] = useState<QuestionItem[]>([]);
+  const [selectedQuestions, setSelectedQuestions] = useState<number[]>([]);
+  const [selectedInstructionIds, setSelectedInstructionIds] = useState<
+    number[]
+  >([]);
+  const [message, setMessage] = useState<MessageState>({ type: "", text: "" });
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
-    useEffect(() => {
-        fetchQuestions();
-    }, []);
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
 
-    const fetchClasses = async () => {
-        try {
-            const [classRes, instructionRes] = await Promise.all([
-                adminApi.getClasses(),
-                adminApi.getInstructions(),
-            ]);
-            setClasses(classRes.data);
-            setInstructionBank(Array.isArray(instructionRes.data) ? instructionRes.data : []);
-        } catch (err) {}
-    };
+  const fetchClasses = async () => {
+    try {
+      const [classRes, instructionRes] = await Promise.all([
+        adminApi.getClasses(),
+        adminApi.getInstructions(),
+      ]);
+      setClasses(Array.isArray(classRes.data) ? classRes.data : []);
+      setInstructionBank(
+        Array.isArray(instructionRes.data) ? instructionRes.data : [],
+      );
+    } catch (err: unknown) {
+      console.error(err);
+    }
+  };
 
-    useEffect(() => {
-        fetchClasses();
-    }, []);
+  useEffect(() => {
+    fetchClasses();
+  }, []);
 
-    const fetchQuestions = async () => {
-        try {
-            const res = await adminApi.getQuestions();
-            setQuestions(res.data);
-        } catch (err) {}
-    };
+  const fetchQuestions = async () => {
+    try {
+      const res = await adminApi.getQuestions();
+      setQuestions(Array.isArray(res.data) ? res.data : []);
+    } catch (err: unknown) {
+      console.error(err);
+    }
+  };
 
-    const handleToggle = (id: number) => {
-        const currentIndex = selectedQuestions.indexOf(id);
-        const newSelected = [...selectedQuestions];
-        if (currentIndex === -1) newSelected.push(id);
-        else newSelected.splice(currentIndex, 1);
-        setSelectedQuestions(newSelected);
-    };
+  const handleToggle = (id: number) => {
+    const currentIndex = selectedQuestions.indexOf(id);
+    const newSelected = [...selectedQuestions];
+    if (currentIndex === -1) newSelected.push(id);
+    else newSelected.splice(currentIndex, 1);
+    setSelectedQuestions(newSelected);
+  };
 
-    const toIsoEndOfDay = (dateOnly: string) => {
-        const [yearStr, monthStr, dayStr] = dateOnly.split('-');
-        const year = Number(yearStr);
-        const month = Number(monthStr) - 1;
-        const day = Number(dayStr);
-        if (!year || Number.isNaN(month) || !day) return null;
+  const toIsoEndOfDay = (dateOnly: string) => {
+    const [yearStr, monthStr, dayStr] = dateOnly.split("-");
+    const year = Number(yearStr);
+    const month = Number(monthStr) - 1;
+    const day = Number(dayStr);
+    if (!year || Number.isNaN(month) || !day) return null;
 
-        const localEndOfDay = new Date(year, month, day, 23, 59, 59, 999);
-        return localEndOfDay.toISOString();
-    };
+    const localEndOfDay = new Date(year, month, day, 23, 59, 59, 999);
+    return localEndOfDay.toISOString();
+  };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (selectedQuestions.length === 0) {
-            setMessage({ type: 'error', text: 'Evaluation requires at least one assessment question.' });
-            return;
-        }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedQuestions.length === 0) {
+      setMessage({
+        type: "error",
+        text: "Evaluation requires at least one assessment question.",
+      });
+      return;
+    }
 
-        if (!isGlobal && classId === '') {
-            setMessage({ type: 'error', text: 'Please select a class or enable All Classes.' });
-            return;
-        }
+    if (!isGlobal && classId === "") {
+      setMessage({
+        type: "error",
+        text: "Please select a class or enable All Classes.",
+      });
+      return;
+    }
 
-        if (!closingAt) {
-            setMessage({ type: 'error', text: 'Please set a last date of submission.' });
-            return;
-        }
+    if (!closingAt) {
+      setMessage({
+        type: "error",
+        text: "Please set a last date of submission.",
+      });
+      return;
+    }
 
-        const closingAtIso = toIsoEndOfDay(closingAt);
-        if (!closingAtIso) {
-            setMessage({ type: 'error', text: 'Please provide a valid last date of submission.' });
-            return;
-        }
+    const closingAtIso = toIsoEndOfDay(closingAt);
+    if (!closingAtIso) {
+      setMessage({
+        type: "error",
+        text: "Please provide a valid last date of submission.",
+      });
+      return;
+    }
 
-        if (new Date(closingAtIso).getTime() <= Date.now()) {
-            setMessage({ type: 'error', text: 'Last date of submission must be in the future.' });
-            return;
-        }
+    if (new Date(closingAtIso).getTime() <= Date.now()) {
+      setMessage({
+        type: "error",
+        text: "Last date of submission must be in the future.",
+      });
+      return;
+    }
 
-        setLoading(true);
-        try {
-            const payload: any = { name, duration: 0, closingAt: closingAtIso, isGlobal, instructionIds: selectedInstructionIds };
-            if (!isGlobal) payload.classId = classId === '' ? null : classId;
-            const testRes = await adminApi.createTest(payload);
-            const testId = testRes.data.id;
-            await adminApi.assignQuestions({ testId, questionIds: selectedQuestions });
-            
-            setMessage({ type: 'success', text: `Test '${name}' successfully deployed with ${selectedQuestions.length} questions.` });
-            setName(''); setClosingAt(''); setSelectedQuestions([]); setSelectedInstructionIds([]); setIsGlobal(false); setClassId('');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (err: any) {
-            setMessage({ type: 'error', text: err.message || 'Deployment terminal error' });
-        } finally {
-            setLoading(false);
-        }
-    };
+    setLoading(true);
+    try {
+      const payload: TestPayload = {
+        name,
+        duration: 0,
+        closingAt: closingAtIso,
+        isGlobal,
+        instructionIds: selectedInstructionIds,
+      };
+      if (!isGlobal) payload.classId = classId === "" ? null : classId;
+      const testRes = await adminApi.createTest(payload);
+      const testId = testRes.data.id;
+      await adminApi.assignQuestions({
+        testId,
+        questionIds: selectedQuestions,
+      });
 
-    const filteredQuestions = questions.filter(q => 
-        q.question_EN.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        q.id.toString().includes(searchTerm)
-    );
+      setMessage({
+        type: "success",
+        text: `Test '${name}' successfully deployed with ${selectedQuestions.length} questions.`,
+      });
+      setName("");
+      setClosingAt("");
+      setSelectedQuestions([]);
+      setSelectedInstructionIds([]);
+      setIsGlobal(false);
+      setClassId("");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err: unknown) {
+      const errorObj = err as {
+        message?: string;
+        response?: { data?: { message?: string } };
+      };
+      setMessage({
+        type: "error",
+        text:
+          errorObj.response?.data?.message ||
+          errorObj.message ||
+          "Deployment terminal error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAFC', pb: 10 }}>
-            {/* Page Header */}
-            <Box sx={{ bgcolor: '#FFFFFF', borderBottom: '1px solid #E2E8F0', py: 4, mb: 6 }}>
-                <Container maxWidth={false} sx={{ px: { xs: 3, md: 6, lg: 10 } }}>
-                    <Button 
-                        startIcon={<ArrowBack />} 
-                        onClick={() => navigate('/admin')}
-                        sx={{ mb: 2, color: '#64748B', fontWeight: 700 }}
-                    >
-                        Back to Dashboard
-                    </Button>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <Assignment sx={{ color: '#EC4899', mr: 1 }} />
-                        <Typography variant="overline" sx={{ fontWeight: 800, color: '#94A3B8', letterSpacing: 1.5 }}>Test Engineering</Typography>
-                    </Box>
-                    <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px', color: '#0F172A' }}>Build New Evaluation</Typography>
-                </Container>
-            </Box>
+  const filteredQuestions = questions.filter(
+    (q) =>
+      q.question_EN.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      q.id.toString().includes(searchTerm),
+  );
 
-            <Container maxWidth={false} sx={{ px: { xs: 3, md: 6, lg: 10 } }}>
-                {message.text && (
-                    <Alert 
-                        severity={message.type as 'success'|'error'} 
-                        sx={{ mb: 4, borderRadius: 3, fontWeight: 700, border: '1px solid currentColor' }}
-                        onClose={() => setMessage({ type: '', text: '' })}
-                    >
-                        {message.text}
-                    </Alert>
+  return (
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC", pb: 10 }}>
+      {/* Page Header */}
+      <Box
+        sx={{
+          bgcolor: "#FFFFFF",
+          borderBottom: "1px solid #E2E8F0",
+          py: 4,
+          mb: 6,
+        }}
+      >
+        <Container maxWidth={false} sx={{ px: { xs: 3, md: 6, lg: 10 } }}>
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate("/admin")}
+            sx={{ mb: 2, color: "#64748B", fontWeight: 700 }}
+          >
+            Back to Dashboard
+          </Button>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+            <Assignment sx={{ color: "#EC4899", mr: 1 }} />
+            <Typography
+              variant="overline"
+              sx={{ fontWeight: 800, color: "#94A3B8", letterSpacing: 1.5 }}
+            >
+              Test Engineering
+            </Typography>
+          </Box>
+          <Typography
+            variant="h3"
+            sx={{ fontWeight: 900, letterSpacing: "-1.5px", color: "#0F172A" }}
+          >
+            Build New Evaluation
+          </Typography>
+        </Container>
+      </Box>
+
+      <Container maxWidth={false} sx={{ px: { xs: 3, md: 6, lg: 10 } }}>
+        {message.text && (
+          <Alert
+            severity={message.type as "success" | "error"}
+            sx={{
+              mb: 4,
+              borderRadius: 3,
+              fontWeight: 700,
+              border: "1px solid currentColor",
+            }}
+            onClose={() => setMessage({ type: "", text: "" })}
+          >
+            {message.text}
+          </Alert>
+        )}
+
+        <Grid container spacing={5}>
+          {/* Configuration Section */}
+          <Grid item xs={12} lg={4}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 4,
+                borderRadius: 5,
+                border: "1px solid #E2E8F0",
+                bgcolor: "#FFFFFF",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
+                <Avatar
+                  sx={{
+                    bgcolor: "rgba(236, 72, 153, 0.1)",
+                    color: "#EC4899",
+                    mr: 2,
+                  }}
+                >
+                  <PlaylistAddCheck />
+                </Avatar>
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                  Basic Configuration
+                </Typography>
+              </Box>
+
+              <Box
+                component="form"
+                onSubmit={handleSubmit}
+                sx={{ display: "flex", gap: 3, flexDirection: "column" }}
+              >
+                <TextField
+                  label="Test Name"
+                  required
+                  fullWidth
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Midterm Physics 2024"
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
+                />
+                <TextField
+                  label="Last Date of Submission"
+                  type="date"
+                  required
+                  fullWidth
+                  value={closingAt}
+                  onChange={(e) => setClosingAt(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
+                />
+
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={isGlobal}
+                      onChange={(e) => setIsGlobal(e.target.checked)}
+                    />
+                  }
+                  label="All Classes"
+                />
+
+                {!isGlobal && (
+                  <TextField
+                    select
+                    label="Class"
+                    fullWidth
+                    value={classId}
+                    onChange={(e) =>
+                      setClassId(
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
+                  >
+                    <MenuItem value="">Select Class</MenuItem>
+                    {classes.map((c: ClassItem) => (
+                      <MenuItem key={c.id} value={c.id}>
+                        {c.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 )}
 
-                <Grid container spacing={5}>
-                    {/* Configuration Section */}
-                    <Grid item xs={12} lg={4}>
-                        <Paper elevation={0} sx={{ p: 4, borderRadius: 5, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                                <Avatar sx={{ bgcolor: 'rgba(236, 72, 153, 0.1)', color: '#EC4899', mr: 2 }}>
-                                    <PlaylistAddCheck />
-                                </Avatar>
-                                <Typography variant="h6" sx={{ fontWeight: 800 }}>Basic Configuration</Typography>
-                            </Box>
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: "#F8FAFC",
+                    borderRadius: 3,
+                    border: "1px dashed #E2E8F0",
+                    mt: 1,
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 800,
+                      color: "#64748B",
+                      display: "block",
+                      mb: 1,
+                    }}
+                  >
+                    SELECTION SUMMARY
+                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Quiz sx={{ fontSize: 18, color: "#EC4899" }} />
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      {selectedQuestions.length} Questions Selected
+                    </Typography>
+                  </Stack>
+                </Box>
 
-                            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 3, flexDirection: 'column' }}>
-                                <TextField 
-                                    label="Test Name" required fullWidth value={name} 
-                                    onChange={e => setName(e.target.value)} 
-                                    placeholder="e.g. Midterm Physics 2024"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                />
-                                <TextField 
-                                    label="Last Date of Submission" type="date" required fullWidth
-                                    value={closingAt} onChange={e => setClosingAt(e.target.value)}
-                                    InputLabelProps={{ shrink: true }}
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                />
+                <Box>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 800, color: "#334155", mb: 1 }}
+                  >
+                    Test Instructions
+                  </Typography>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      borderColor: "#E2E8F0",
+                      borderRadius: 2,
+                      maxHeight: 180,
+                      overflow: "auto",
+                    }}
+                  >
+                    <List sx={{ py: 0 }}>
+                      {instructionBank
+                        .filter((item: InstructionItem) => item.isActive)
+                        .map((item: InstructionItem) => {
+                          const checked = selectedInstructionIds.includes(
+                            item.id,
+                          );
+                          return (
+                            <ListItem
+                              key={item.id}
+                              divider
+                              onClick={() =>
+                                setSelectedInstructionIds((prev) =>
+                                  checked
+                                    ? prev.filter((id) => id !== item.id)
+                                    : [...prev, item.id],
+                                )
+                              }
+                              sx={{ cursor: "pointer" }}
+                            >
+                              <Checkbox checked={checked} />
+                              <ListItemText primary={item.text} />
+                            </ListItem>
+                          );
+                        })}
+                      {instructionBank.filter(
+                        (item: InstructionItem) => item.isActive,
+                      ).length === 0 && (
+                        <ListItem>
+                          <ListItemText primary="No active instructions found. Create them in Instruction Bank." />
+                        </ListItem>
+                      )}
+                    </List>
+                  </Paper>
+                </Box>
 
-                                <FormControlLabel
-                                    control={<Switch checked={isGlobal} onChange={(e) => setIsGlobal(e.target.checked)} />}
-                                    label="All Classes"
-                                />
+                <Button
+                  variant="contained"
+                  type="submit"
+                  fullWidth
+                  size="large"
+                  disabled={loading}
+                  startIcon={<DoneAll />}
+                  sx={{
+                    mt: 2,
+                    py: 1.8,
+                    borderRadius: 3,
+                    fontWeight: 800,
+                    bgcolor: "#EC4899",
+                    boxShadow: "0 10px 15px -3px rgba(236, 72, 153, 0.3)",
+                    "&:hover": { bgcolor: "#DB2777" },
+                  }}
+                >
+                  {loading ? "Deploying..." : "Deploy Evaluation"}
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
 
-                                {!isGlobal && (
-                                    <TextField
-                                        select
-                                        label="Class"
-                                        fullWidth
-                                        value={classId}
-                                        onChange={(e) => setClassId(e.target.value === '' ? '' : Number(e.target.value))}
-                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                                    >
-                                        <MenuItem value="">Select Class</MenuItem>
-                                        {classes.map((c: any) => (
-                                            <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-                                        ))}
-                                    </TextField>
-                                )}
+          {/* Question Repository Section */}
+          <Grid item xs={12} lg={8}>
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 5,
+                border: "1px solid #E2E8F0",
+                overflow: "hidden",
+                bgcolor: "#FFFFFF",
+              }}
+            >
+              <Box
+                sx={{
+                  px: 4,
+                  py: 3,
+                  borderBottom: "1px solid #E2E8F0",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 2,
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                  Assessment Repository
+                </Typography>
+                <TextField
+                  size="small"
+                  placeholder="Filter questions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search sx={{ color: "#94A3B8", fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    bgcolor: "#F8FAFC",
+                    borderRadius: 2,
+                    width: { xs: "100%", sm: 250 },
+                    "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+                  }}
+                />
+              </Box>
 
-                                <Box sx={{ p: 2, bgcolor: '#F8FAFC', borderRadius: 3, border: '1px dashed #E2E8F0', mt: 1 }}>
-                                    <Typography variant="caption" sx={{ fontWeight: 800, color: '#64748B', display: 'block', mb: 1 }}>SELECTION SUMMARY</Typography>
-                                    <Stack direction="row" spacing={1} alignItems="center">
-                                        <Quiz sx={{ fontSize: 18, color: '#EC4899' }} />
-                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{selectedQuestions.length} Questions Selected</Typography>
-                                    </Stack>
-                                </Box>
-
-                                <Box>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#334155', mb: 1 }}>
-                                        Test Instructions
-                                    </Typography>
-                                    <Paper variant="outlined" sx={{ borderColor: '#E2E8F0', borderRadius: 2, maxHeight: 180, overflow: 'auto' }}>
-                                        <List sx={{ py: 0 }}>
-                                            {instructionBank.filter((item: any) => item.isActive).map((item: any) => {
-                                                const checked = selectedInstructionIds.includes(item.id);
-                                                return (
-                                                    <ListItem
-                                                        key={item.id}
-                                                        divider
-                                                        onClick={() => setSelectedInstructionIds(prev => checked ? prev.filter(id => id !== item.id) : [...prev, item.id])}
-                                                        sx={{ cursor: 'pointer' }}
-                                                    >
-                                                        <Checkbox checked={checked} />
-                                                        <ListItemText primary={item.text} />
-                                                    </ListItem>
-                                                );
-                                            })}
-                                            {instructionBank.filter((item: any) => item.isActive).length === 0 && (
-                                                <ListItem>
-                                                    <ListItemText primary="No active instructions found. Create them in Instruction Bank." />
-                                                </ListItem>
-                                            )}
-                                        </List>
-                                    </Paper>
-                                </Box>
-
-                                <Button 
-                                    variant="contained" type="submit" fullWidth size="large" 
-                                    disabled={loading}
-                                    startIcon={<DoneAll />}
-                                    sx={{ 
-                                        mt: 2, py: 1.8, borderRadius: 3, fontWeight: 800, 
-                                        bgcolor: '#EC4899',
-                                        boxShadow: '0 10px 15px -3px rgba(236, 72, 153, 0.3)',
-                                        '&:hover': { bgcolor: '#DB2777' }
-                                    }}
-                                >
-                                    {loading ? 'Deploying...' : 'Deploy Evaluation'}
-                                </Button>
-                            </Box>
-                        </Paper>
-                    </Grid>
-
-                    {/* Question Repository Section */}
-                    <Grid item xs={12} lg={8}>
-                        <Paper elevation={0} sx={{ borderRadius: 5, border: '1px solid #E2E8F0', overflow: 'hidden', bgcolor: '#FFFFFF' }}>
-                            <Box sx={{ px: 4, py: 3, borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                                <Typography variant="h6" sx={{ fontWeight: 800 }}>Assessment Repository</Typography>
-                                <TextField 
-                                    size="small" placeholder="Filter questions..." 
-                                    value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Search sx={{ color: '#94A3B8', fontSize: 20 }} />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                    sx={{ bgcolor: '#F8FAFC', borderRadius: 2, width: { xs: '100%', sm: 250 }, '& .MuiOutlinedInput-notchedOutline': { border: 'none' } }}
-                                />
-                            </Box>
-
-                            <List sx={{ p: 0, maxHeight: 600, overflow: 'auto' }}>
-                                {filteredQuestions.map((q) => (
-                                    <ListItem 
-                                        key={q.id} 
-                                        divider
-                                        onClick={() => handleToggle(q.id)}
-                                        sx={{ 
-                                            px: 4, py: 2.5, cursor: 'pointer',
-                                            transition: 'background 0.2s',
-                                            '&:hover': { bgcolor: '#F8FAFC' }
-                                        }}
-                                    >
-                                        <Checkbox 
-                                            edge="start" 
-                                            checked={selectedQuestions.indexOf(q.id) !== -1} 
-                                            tabIndex={-1} 
-                                            disableRipple 
-                                            sx={{ color: '#EC4899', '&.Mui-checked': { color: '#EC4899' } }}
-                                        />
-                                        <ListItemText 
-                                            primary={q.question_EN} 
-                                            secondary={`Assessment ID: Q-${q.id.toString().padStart(4, '0')}`} 
-                                            primaryTypographyProps={{ sx: { fontWeight: 700, color: '#0F172A' } }}
-                                            secondaryTypographyProps={{ sx: { fontWeight: 600, color: '#94A3B8' } }}
-                                        />
-                                        <Chip label="MCQ" size="small" variant="outlined" sx={{ fontWeight: 700, color: '#64748B' }} />
-                                    </ListItem>
-                                ))}
-                                {filteredQuestions.length === 0 && (
-                                    <Box sx={{ p: 10, textAlign: 'center' }}>
-                                        <Typography color="text.secondary">No matching assessment items found.</Typography>
-                                    </Box>
-                                )}
-                            </List>
-                        </Paper>
-                    </Grid>
-                </Grid>
-            </Container>
-        </Box>
-    );
+              <List sx={{ p: 0, maxHeight: 600, overflow: "auto" }}>
+                {filteredQuestions.map((q: QuestionItem) => (
+                  <ListItem
+                    key={q.id}
+                    divider
+                    onClick={() => handleToggle(q.id)}
+                    sx={{
+                      px: 4,
+                      py: 2.5,
+                      cursor: "pointer",
+                      transition: "background 0.2s",
+                      "&:hover": { bgcolor: "#F8FAFC" },
+                    }}
+                  >
+                    <Checkbox
+                      edge="start"
+                      checked={selectedQuestions.indexOf(q.id) !== -1}
+                      tabIndex={-1}
+                      disableRipple
+                      sx={{
+                        color: "#EC4899",
+                        "&.Mui-checked": { color: "#EC4899" },
+                      }}
+                    />
+                    <ListItemText
+                      primary={q.question_EN}
+                      secondary={`Assessment ID: Q-${q.id.toString().padStart(4, "0")}`}
+                      primaryTypographyProps={{
+                        sx: { fontWeight: 700, color: "#0F172A" },
+                      }}
+                      secondaryTypographyProps={{
+                        sx: { fontWeight: 600, color: "#94A3B8" },
+                      }}
+                    />
+                    <Chip
+                      label="MCQ"
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontWeight: 700, color: "#64748B" }}
+                    />
+                  </ListItem>
+                ))}
+                {filteredQuestions.length === 0 && (
+                  <Box sx={{ p: 10, textAlign: "center" }}>
+                    <Typography color="text.secondary">
+                      No matching assessment items found.
+                    </Typography>
+                  </Box>
+                )}
+              </List>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
+  );
 };
 
 export default CreateTest;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { RootState } from "../../store/store";
 import {
   Container,
@@ -73,48 +73,43 @@ const QuestionBank = () => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [message, setMessage] = useState<MessageState>({ type: "", text: "" });
 
-  useEffect(() => {
-    initData();
-  }, []);
+  const fetchQuestionsPage = useCallback(
+    async (page: number, source: string, search: string) => {
+      const safePage = Math.max(page, 1);
+      const skip = (safePage - 1) * questionPageSize;
+      const sourceParam = source === "All Sources" ? "" : source;
 
-  const fetchQuestionsPage = async (
-    page: number,
-    source: string,
-    search: string,
-  ) => {
-    const safePage = Math.max(page, 1);
-    const skip = (safePage - 1) * questionPageSize;
-    const sourceParam = source === "All Sources" ? "" : source;
+      const res = await adminApi.getQuestionsPaged(
+        sourceParam,
+        search,
+        skip,
+        questionPageSize,
+      );
+      const items = Array.isArray(res.data?.items)
+        ? (res.data.items as Question[])
+        : Array.isArray(res.data)
+          ? (res.data as Question[])
+          : [];
+      const totalCount =
+        typeof res.data?.totalCount === "number"
+          ? res.data.totalCount
+          : items.length;
 
-    const res = await adminApi.getQuestionsPaged(
-      sourceParam,
-      search,
-      skip,
-      questionPageSize,
-    );
-    const items = Array.isArray(res.data?.items)
-      ? (res.data.items as Question[])
-      : Array.isArray(res.data)
-        ? (res.data as Question[])
-        : [];
-    const totalCount =
-      typeof res.data?.totalCount === "number"
-        ? res.data.totalCount
-        : items.length;
+      setQuestions(items);
+      setTotalQuestions(totalCount);
+      setSelectedIds([]);
 
-    setQuestions(items);
-    setTotalQuestions(totalCount);
-    setSelectedIds([]);
+      if (safePage > 1 && items.length === 0 && totalCount > 0) {
+        setQuestionPage(safePage - 1);
+        return;
+      }
 
-    if (safePage > 1 && items.length === 0 && totalCount > 0) {
-      setQuestionPage(safePage - 1);
-      return;
-    }
+      setQuestionPage(safePage);
+    },
+    [questionPageSize],
+  );
 
-    setQuestionPage(safePage);
-  };
-
-  const initData = async () => {
+  const initData = useCallback(async () => {
     setLoading(true);
     try {
       const sRes = await adminApi.getQuestionSources();
@@ -140,7 +135,11 @@ const QuestionBank = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchQuestionsPage, searchTerm, sourceFilter]);
+
+  useEffect(() => {
+    initData();
+  }, [initData]);
 
   const handleFilterChange = async (
     source: string,
@@ -356,7 +355,10 @@ const QuestionBank = () => {
       <Container maxWidth={false} sx={{ px: { xs: 4, md: 8, lg: 12 } }}>
         {message.text && (
           <Alert
-            severity={message.type as any}
+            severity={
+              (message.type as "success" | "error" | "warning" | "info") ||
+              "info"
+            }
             sx={{ mb: 4, borderRadius: 3, fontWeight: 700 }}
           >
             {message.text}
