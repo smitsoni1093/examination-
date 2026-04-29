@@ -186,23 +186,23 @@ const TestList = () => {
                 bgcolor: 'rgba(255, 255, 255, 0.8)', 
                 backdropFilter: 'blur(20px)',
                 borderBottom: '1px solid rgba(226, 232, 240, 0.8)', 
-                py: 4, mb: 6, position: 'sticky', top: 0, zIndex: 1100
+                py: { xs: 2.5, md: 4 }, mb: { xs: 4, md: 6 }, position: 'sticky', top: 0, zIndex: 1100
             }}>
                 <Container maxWidth={false} sx={{ px: { xs: 3, md: 6, lg: 10 } }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-end">
-                        <Box>
+                    <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', md: 'flex-end' }} spacing={{ xs: 2, md: 0 }}>
+                        <Box sx={{ width: '100%' }}>
                             <Button 
                                 startIcon={<ArrowBack />} 
                                 onClick={() => navigate('/admin')}
-                                sx={{ mb: 1.5, color: '#64748B', fontWeight: 700, '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}
+                                sx={{ mb: 1.5, color: '#64748B', fontWeight: 700, alignSelf: 'flex-start', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}
                             >
                                 Dashboard
                             </Button>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Avatar sx={{ bgcolor: 'rgba(236, 72, 153, 0.1)', color: '#EC4899', mr: 2, width: 32, height: 32 }}>
+                            <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 0 }, width: '100%' }}>
+                                <Avatar sx={{ bgcolor: 'rgba(236, 72, 153, 0.1)', color: '#EC4899', mr: { xs: 0, sm: 2 }, width: 32, height: 32 }}>
                                     <Assignment sx={{ fontSize: 20 }} />
                                 </Avatar>
-                                <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px', color: '#0F172A' }}>
+                                <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px', color: '#0F172A', fontSize: { xs: '1.6rem', sm: '2.5rem', md: '3rem' }, lineHeight: 1.05 }}>
                                     Evaluation <Box component="span" sx={{ color: '#94A3B8' }}>Registry</Box>
                                 </Typography>
                             </Box>
@@ -215,7 +215,8 @@ const TestList = () => {
                                 bgcolor: '#0F172A', fontWeight: 900, px: 4, py: 1.5, borderRadius: 3.5,
                                 boxShadow: '0 10px 15px -3px rgba(15, 23, 42, 0.2)',
                                 '&:hover': { bgcolor: '#1E293B', transform: 'translateY(-2px)' },
-                                transition: 'all 0.2s'
+                                transition: 'all 0.2s',
+                                width: { xs: '100%', md: 'auto' }
                             }}
                         >
                             Initialize Phase
@@ -239,13 +240,13 @@ const TestList = () => {
                         <CircularProgress sx={{ color: '#EC4899' }} />
                     </Box>
                 ) : (
-                    <Grid container spacing={4}>
+                    <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
                         {tests.map((test) => (
                             <Grid item xs={12} md={6} lg={4} key={test.id}>
                                 <Paper 
                                     elevation={0} 
                                     sx={{ 
-                                        p: 4, borderRadius: 6, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF',
+                                        p: { xs: 2.25, sm: 3, md: 4 }, borderRadius: 6, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF',
                                         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                                         opacity: test.isActive ? 1 : 0.7,
                                         '&:hover': { 
@@ -255,9 +256,9 @@ const TestList = () => {
                                         } 
                                     }}
                                 >
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                                        <Stack direction="row" spacing={2} alignItems="center">
-                                            <Avatar sx={{ bgcolor: test.isActive ? 'rgba(236, 72, 153, 0.08)' : '#F1F5F9', color: test.isActive ? '#EC4899' : '#94A3B8', borderRadius: 4, width: 52, height: 52 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                                        <Stack direction="row" spacing={2} alignItems="center" sx={{ flex: 1 }}>
+                                            <Avatar sx={{ bgcolor: test.isActive ? 'rgba(236, 72, 153, 0.08)' : '#F1F5F9', color: test.isActive ? '#EC4899' : '#94A3B8', borderRadius: 4, width: 52, height: 52, flexShrink: 0 }}>
                                                 {test.isActive ? <Visibility sx={{ fontSize: 28 }} /> : <VisibilityOff sx={{ fontSize: 28 }} />}
                                             </Avatar>
                                             <Box>
@@ -284,7 +285,7 @@ const TestList = () => {
                                                 />
                                             }
                                             label=""
-                                            sx={{ m: 0 }}
+                                            sx={{ m: 0, alignSelf: { xs: 'flex-start', sm: 'center' } }}
                                         />
                                     </Box>
                                     
@@ -334,7 +335,8 @@ const TestList = () => {
                                         sx={{ 
                                             bgcolor: '#0F172A', fontWeight: 900, borderRadius: 3, py: 1.8,
                                             '&:hover': { bgcolor: '#EC4899', boxShadow: '0 15px 25px -5px rgba(236, 72, 153, 0.3)' },
-                                            transition: 'all 0.3s'
+                                            transition: 'all 0.3s',
+                                            fontSize: { xs: '0.85rem', sm: '0.95rem' }
                                         }}
                                     >
                                         Configure Evaluation
@@ -353,6 +355,7 @@ const TestList = () => {
                                             borderColor: 'rgba(37, 99, 235, 0.35)',
                                             color: '#2563EB',
                                             '&:hover': { borderColor: '#2563EB', bgcolor: 'rgba(37, 99, 235, 0.06)' },
+                                            fontSize: { xs: '0.85rem', sm: '0.95rem' },
                                         }}
                                     >
                                         Edit Test Details
@@ -371,6 +374,7 @@ const TestList = () => {
                                             borderColor: 'rgba(239, 68, 68, 0.35)',
                                             color: '#EF4444',
                                             '&:hover': { borderColor: '#EF4444', bgcolor: 'rgba(239, 68, 68, 0.06)' },
+                                            fontSize: { xs: '0.85rem', sm: '0.95rem' },
                                         }}
                                     >
                                         Delete Test
@@ -382,7 +386,7 @@ const TestList = () => {
                 )}
 
                 {!loading && tests.length === 0 && (
-                    <Box sx={{ p: 15, textAlign: 'center', bgcolor: '#FFFFFF', borderRadius: 8, border: '2px dashed #E2E8F0' }}>
+                    <Box sx={{ p: { xs: 4, sm: 8, md: 15 }, textAlign: 'center', bgcolor: '#FFFFFF', borderRadius: 8, border: '2px dashed #E2E8F0' }}>
                         <Avatar sx={{ bgcolor: '#F8FAFC', color: '#E2E8F0', width: 100, height: 100, mx: 'auto', mb: 4 }}>
                             <Assignment sx={{ fontSize: 50 }} />
                         </Avatar>
@@ -403,12 +407,15 @@ const TestList = () => {
             <Dialog 
                 open={openDialog} 
                 onClose={() => setOpenDialog(false)} 
-                PaperProps={{ sx: { borderRadius: 8, p: 2, width: '100%', maxWidth: 480, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' } }}
+                fullScreen={false}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{ sx: { borderRadius: { xs: 0, sm: 8 }, p: { xs: 1.5, sm: 2 }, width: '100%', maxWidth: 480, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', m: { xs: 0, sm: 2 } } }}
             >
-                <DialogTitle sx={{ fontWeight: 900, fontSize: '1.75rem', letterSpacing: -1, pt: 4, px: 4 }}>
+                <DialogTitle sx={{ fontWeight: 900, fontSize: { xs: '1.35rem', sm: '1.75rem' }, letterSpacing: -1, pt: { xs: 2, sm: 4 }, px: { xs: 2, sm: 4 } }}>
                     New Phase <Box component="span" sx={{ color: '#EC4899' }}>Initialization</Box>
                 </DialogTitle>
-                <DialogContent sx={{ px: 4 }}>
+                <DialogContent sx={{ px: { xs: 2, sm: 4 } }}>
                     <Stack spacing={4} sx={{ mt: 2 }}>
                         <TextField 
                             label="Assessment Title" fullWidth autoFocus
@@ -418,7 +425,7 @@ const TestList = () => {
                         />
                     </Stack>
                 </DialogContent>
-                <DialogActions sx={{ p: 4, justifyContent: 'space-between' }}>
+                <DialogActions sx={{ p: { xs: 2, sm: 4 }, justifyContent: 'space-between', flexDirection: { xs: 'column-reverse', sm: 'row' }, gap: { xs: 1.5, sm: 0 } }}>
                     <Button onClick={() => setOpenDialog(false)} sx={{ fontWeight: 900, color: '#64748B' }}>Discard</Button>
                     <Button 
                         onClick={handleCreateTest} variant="contained" disabled={!newTest.name}
@@ -436,10 +443,12 @@ const TestList = () => {
             <Dialog
                 open={editOpen}
                 onClose={() => !editSaving && setEditOpen(false)}
-                PaperProps={{ sx: { borderRadius: 6, width: '100%', maxWidth: 560 } }}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{ sx: { borderRadius: { xs: 0, sm: 6 }, width: '100%', maxWidth: 560, m: { xs: 0, sm: 2 } } }}
             >
-                <DialogTitle sx={{ fontWeight: 900 }}>Edit Test Details</DialogTitle>
-                <DialogContent>
+                <DialogTitle sx={{ fontWeight: 900, px: { xs: 2, sm: 3 } }}>Edit Test Details</DialogTitle>
+                <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
                     <Stack spacing={2.5} sx={{ mt: 1 }}>
                         <TextField
                             label="Test Name"
@@ -460,7 +469,7 @@ const TestList = () => {
                                 component="label"
                                 variant="outlined"
                                 startIcon={<PhotoCamera />}
-                                sx={{ borderRadius: 2.5, fontWeight: 700 }}
+                                sx={{ borderRadius: 2.5, fontWeight: 700, width: { xs: '100%', sm: 'auto' } }}
                             >
                                 Upload Test Image
                                 <input type="file" accept="image/*" hidden onChange={handleEditImageUpload} />
@@ -538,6 +547,7 @@ const TestList = () => {
                                 />
                             }
                             label="All Classes"
+                            sx={{ alignSelf: 'flex-start' }}
                         />
                         {!editForm.isGlobal && (
                             <TextField
@@ -555,7 +565,7 @@ const TestList = () => {
                         )}
                     </Stack>
                 </DialogContent>
-                <DialogActions sx={{ p: 3 }}>
+                <DialogActions sx={{ p: { xs: 2, sm: 3 }, flexDirection: { xs: 'column-reverse', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
                     <Button onClick={() => setEditOpen(false)} disabled={editSaving}>Cancel</Button>
                     <Button variant="contained" onClick={handleSaveEdit} disabled={editSaving}>
                         {editSaving ? 'Saving...' : 'Save Changes'}

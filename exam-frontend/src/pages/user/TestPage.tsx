@@ -125,6 +125,7 @@ const TestPage = () => {
 
   const handleFinalSubmit = useCallback(async () => {
     if (submitting) return;
+
     setSubmitting(true);
     try {
       if (attemptId) {
@@ -139,6 +140,10 @@ const TestPage = () => {
       setSubmitting(false);
     }
   }, [submitting, testId, navigate, dispatch, attemptId]);
+
+  const handleFinishClick = () => {
+    setConfirmSubmit(true);
+  };
 
   if (!currentQ) return <Typography>Loading test...</Typography>;
 
@@ -255,7 +260,12 @@ const TestPage = () => {
             </Button>
             
             {currentIdx === questions.length - 1 ? (
-              <Button variant="contained" color="error" onClick={() => setConfirmSubmit(true)} sx={{ fontSize: '0.82rem', py: 0.8 }}>
+              <Button 
+                variant="contained" 
+                color="error" 
+                onClick={handleFinishClick}
+                sx={{ fontSize: '0.82rem', py: 0.8 }}
+              >
                 Submit Test
               </Button>
             ) : (
@@ -382,10 +392,18 @@ const TestPage = () => {
             )}
 
             <Box sx={{ mt: 4, mb: 2 }}>
-              <Button fullWidth variant="contained" color="error" onClick={() => setConfirmSubmit(true)} sx={{ fontSize: '0.8rem', py: 0.95 }}>
+              <Button 
+                fullWidth 
+                variant="contained" 
+                color="error" 
+                onClick={handleFinishClick}
+                sx={{ fontSize: '0.8rem', py: 0.95 }}
+              >
                 FINISH EXAM
               </Button>
             </Box>
+
+
           </Paper>
         </Grid>
       </Grid>

@@ -179,3 +179,95 @@ So yes:
 Actually I often recommend it.
 
 If you want to deploy React + .NET + keep SQL Server specifically, I can help plan that too.
+
+------------------------------------------------------------------------------------------------------------------------
+NEW
+------------------------------------------------------------------------------------------------------------------------
+Yes — that architecture is completely okay and actually a very common low-cost setup for first deployments.
+Your architecture:
+Frontend → Vercel (React)
+Backend → Render (.NET API)
+Database → Microsoft Azure SQL Database (your SQL Server data, managed via SQL Server Management Studio)
+✅ This will work.
+
+How request flow works
+User opens frontend on Vercel
+↓
+React calls your API hosted on Render
+↓
+.NET API connects to Microsoft Azure SQL Database
+↓
+Data returns back to frontend
+
+Why this setup is good
+Vercel
+
+
+Free frontend hosting
+
+
+Fast CDN
+
+
+Easy GitHub deployment
+
+
+Render
+
+
+Easy .NET deployment
+
+
+Simple CI/CD
+
+
+Low cost/free tier
+
+
+Microsoft Azure SQL
+
+
+Good for SQL Server apps
+
+
+Managed backups
+
+
+No server maintenance
+
+
+
+Things you must configure
+1. CORS in .NET backend
+Allow your Vercel domain:
+https://yourapp.vercel.app
+
+2. Update connection string
+Replace local DB:
+Server=localhost
+with Azure SQL connection string:
+Server=yourserver.database.windows.net;Database=yourdbname;User Id=yourusername;Password=yourpassword;
+
+3. Store secrets properly
+Use:
+
+
+Vercel environment variables
+
+
+Render environment variables
+
+
+Do not hardcode credentials.
+
+Possible downside
+Render free tier may sleep after inactivity → first API request may be slow.
+If your CRM/exam system gets real users later, upgrade Render plan.
+
+Estimated monthly cost
+Vercel → Free
+Render → Free / ~$7
+Microsoft Azure SQL S0 → ~$15
+Total:
+Around ₹1,200–₹2,000/month
+For your first deployment, this is a solid setup.

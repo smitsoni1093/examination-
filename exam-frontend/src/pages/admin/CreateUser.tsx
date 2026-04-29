@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Container, Typography, Box, TextField, Button, Alert, Paper, Grid, Avatar, Chip, MenuItem, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Checkbox, FormControlLabel, Pagination, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip } from '@mui/material';
+import { Container, Typography, Box, TextField, Button, Alert, Paper, Grid, Avatar, Chip, MenuItem, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Checkbox, FormControlLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip } from '@mui/material';
 import { PersonAdd, Group, UploadFile, ArrowBack, Edit as EditIcon, Delete as DeleteIcon, Download as DownloadIcon } from '@mui/icons-material';
 import { adminApi } from '../../api/endpoints';
 import { useTranslation } from 'react-i18next';
@@ -461,33 +461,33 @@ const CreateUser = () => {
             }}
         >
             {/* Page Header */}
-            <Box sx={{ bgcolor: isDark ? '#000000' : '#FFFFFF', borderBottom: '1px solid #E2E8F0', py: 4, mb: 6 }}>
-                <Container maxWidth={false} sx={{ px: { xs: 3, md: 6, lg: 10 } }}>
+            <Box sx={{ bgcolor: isDark ? '#000000' : '#FFFFFF', borderBottom: '1px solid #E2E8F0', py: { xs: 2, md: 4 }, mb: { xs: 3, md: 6 } }}>
+                <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 6, lg: 10 } }}>
                     <Button
                         startIcon={<ArrowBack />}
                         onClick={() => navigate('/admin')}
-                        sx={{ mb: 1, color: isDark ? '#E2E8F0' : '#64748B', fontWeight: 700 }}
+                        sx={{ mb: 2, color: isDark ? '#E2E8F0' : '#64748B', fontWeight: 700, fontSize: { xs: '0.75rem', sm: '0.9rem' } }}
                     >
                         Back to Dashboard
                     </Button>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <Group sx={{ color: '#6366F1', mr: 1 }} />
-                        <Typography variant="overline" sx={{ fontWeight: 800, color: '#94A3B8', letterSpacing: 1.5 }}>Administration</Typography>
+                        <Group sx={{ color: '#6366F1', mr: 1, fontSize: { xs: 20, sm: 24 } }} />
+                        <Typography variant="overline" sx={{ fontWeight: 800, color: '#94A3B8', letterSpacing: 1.5, fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>Administration</Typography>
                     </Box>
-                    <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px', color: isDark ? '#FFFFFF' : '#0F172A' }}>Candidate Management</Typography>
+                    <Typography variant="h3" sx={{ fontWeight: 900, letterSpacing: '-1.5px', color: isDark ? '#FFFFFF' : '#0F172A', fontSize: { xs: '1.5rem', sm: '2.5rem', md: '3rem' } }}>Candidate Management</Typography>
                 </Container>
             </Box>
 
-            <Container maxWidth={false} sx={{ px: { xs: 3, md: 6, lg: 10 } }}>
-                <Grid container spacing={5}>
+            <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 6, lg: 10 } }}>
+                <Grid container spacing={{ xs: 2, sm: 3, md: 5 }}>
                     {/* Form Section */}
-                    <Grid item xs={12} lg={4}>
-                        <Paper elevation={0} sx={{ p: 4, borderRadius: 5, border: '1px solid #E2E8F0', boxShadow: isDark ? '0 10px 32px rgba(0,0,0,0.65)' : '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                                <Avatar sx={{ bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366F1', mr: 2 }}>
-                                    <PersonAdd />
+                    <Grid item xs={12} md={6} lg={4}>
+                        <Paper elevation={0} sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: 5, border: '1px solid #E2E8F0', boxShadow: isDark ? '0 10px 32px rgba(0,0,0,0.65)' : '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 4 } }}>
+                                <Avatar sx={{ bgcolor: 'rgba(99, 102, 241, 0.1)', color: '#6366F1', mr: 2, width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 } }}>
+                                    <PersonAdd fontSize="small" />
                                 </Avatar>
-                                <Typography variant="h6" sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A' }}>Provision Account</Typography>
+                                <Typography variant="h6" sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' } }}>Provision Account</Typography>
                             </Box>
 
                             {message.text && (
@@ -500,16 +500,18 @@ const CreateUser = () => {
                                 </Alert>
                             )}
                             
-                            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 3, flexDirection: 'column' }}>
+                            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: { xs: 1.5, md: 3 }, flexDirection: 'column' }}>
                                 <TextField 
                                     label={t('invite.fullName')} required variant="outlined" fullWidth
-                                    value={name} onChange={e => setName(e.target.value)} 
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                    value={name} onChange={e => setName(e.target.value)}
+                                    size="small"
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
                                 />
                                 <TextField 
                                     label={t('invite.email')} required variant="outlined" fullWidth type="email"
-                                    value={email} onChange={e => setEmail(e.target.value)} 
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                    value={email} onChange={e => setEmail(e.target.value)}
+                                    size="small"
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
                                 />
                                 <TextField
                                     label={t('invite.mobileNumber')}
@@ -519,7 +521,8 @@ const CreateUser = () => {
                                     value={mobileNumber}
                                     onChange={e => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                                     inputProps={{ maxLength: 10 }}
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                    size="small"
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
                                 />
                                 <TextField
                                     label={t('invite.pincode')}
@@ -527,7 +530,8 @@ const CreateUser = () => {
                                     fullWidth
                                     value={pincode}
                                     onChange={e => setPincode(e.target.value.toUpperCase().replace(/[^A-Z0-9 -]/g, '').slice(0, 10))}
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                    size="small"
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
                                 />
                                 <TextField
                                     label={t('invite.address')}
@@ -537,7 +541,8 @@ const CreateUser = () => {
                                     minRows={2}
                                     value={address}
                                     onChange={e => setAddress(e.target.value)}
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                    size="small"
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
                                 />
                                 <TextField
                                     select
@@ -545,7 +550,8 @@ const CreateUser = () => {
                                     fullWidth
                                     value={classId}
                                     onChange={(e) => setClassId(e.target.value === '' ? '' : Number(e.target.value))}
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                    size="small"
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, fontSize: { xs: '0.85rem', md: '0.95rem' } } }}
                                 >
                                     <MenuItem value="">{t('invite.defaultClass')}</MenuItem>
                                     {classes.map((c: any) => (
@@ -555,13 +561,13 @@ const CreateUser = () => {
                                 <Button 
                                     variant="contained" 
                                     type="submit" 
-                                    size="large"
+                                    size="small"
                                     disabled={loading}
-                                    sx={{ mt: 2, py: 1.8, borderRadius: 3, fontWeight: 800, boxShadow: isDark ? '0 10px 18px rgba(0,0,0,0.7)' : '0 10px 15px -3px rgba(99, 102, 241, 0.3)' }}
+                                    sx={{ mt: { xs: 1, md: 2 }, py: { xs: 0.8, md: 1.8 }, px: 2, borderRadius: 3, fontWeight: 800, fontSize: { xs: '0.75rem', sm: '0.85rem', md: '0.95rem' }, boxShadow: isDark ? '0 10px 18px rgba(0,0,0,0.7)' : '0 10px 15px -3px rgba(99, 102, 241, 0.3)' }}
                                 >
                                     {loading ? t('invite.creatingUser') : t('invite.createUser')}
                                 </Button>
-                                <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700 }}>
+                                <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700, fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' } }}>
                                     {t('invite.rollNumberAuto')}
                                 </Typography>
                             </Box>
@@ -754,21 +760,21 @@ const CreateUser = () => {
                     </Grid>
 
                     {/* List Section */}
-                    <Grid item xs={12} lg={8}>
+                    <Grid item xs={12} md={6} lg={8}>
                         <Paper elevation={0} sx={{ borderRadius: 5, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-                            <Box sx={{ px: 4, py: 3, borderBottom: '1px solid #E2E8F0', bgcolor: isDark ? '#000000' : '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 800 }}>Active Candidates</Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+                            <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, md: 3 }, borderBottom: '1px solid #E2E8F0', bgcolor: isDark ? '#000000' : '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1.5, sm: 0 } }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800, fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' } }}>Active Candidates</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.2 }, flexWrap: 'wrap', justifyContent: { xs: 'center', sm: 'flex-end' } }}>
                                     <Button
                                         size="small"
                                         variant="outlined"
-                                        startIcon={<DownloadIcon />}
+                                        startIcon={<DownloadIcon fontSize="small" />}
                                         onClick={handleDownloadUsersExcel}
-                                        sx={{ fontWeight: 700, borderRadius: 2 }}
+                                        sx={{ fontWeight: 700, borderRadius: 2, fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.85rem' }, py: { xs: 0.4, sm: 0.6 }, px: { xs: 0.8, sm: 1.5 } }}
                                     >
                                         Download Excel
                                     </Button>
-                                    <Chip label={`${usersTotalCount} Total Users`} size="small" sx={{ fontWeight: 700, borderRadius: 2 }} />
+                                    <Chip label={`${usersTotalCount} Total Users`} size="small" sx={{ fontWeight: 700, borderRadius: 2, fontSize: { xs: '0.65rem', sm: '0.75rem' } }} />
                                 </Box>
                             </Box>
                             <TableContainer
@@ -780,17 +786,17 @@ const CreateUser = () => {
                                     overflowY: 'hidden'
                                 }}
                             >
-                                <Table sx={{ minWidth: 780 }}>
+                                <Table sx={{ minWidth: { xs: '100%', sm: 800, md: 1000 } }}>
                                     <TableHead sx={{ bgcolor: isDark ? '#000000' : '#F8FAFC' }}>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', width: 90 }}>NO.</TableCell>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569' }}>ROLL NO.</TableCell>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569' }}>CANDIDATE</TableCell>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569' }}>USERNAME</TableCell>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569' }}>MOBILE</TableCell>
-                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569' }}>PINCODE</TableCell>
-                                            <TableCell align="center" sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569' }}>ROLE</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569' }}>ACTIONS</TableCell>
+                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', width: { xs: 50, md: 90 }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>NO.</TableCell>
+                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', display: { xs: 'none', lg: 'table-cell' }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>ROLL NO.</TableCell>
+                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>CANDIDATE</TableCell>
+                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', display: { xs: 'none', md: 'table-cell' }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>USERNAME</TableCell>
+                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', display: { xs: 'none', lg: 'table-cell' }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>MOBILE</TableCell>
+                                            <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', display: { xs: 'none', md: 'table-cell' }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>PINCODE</TableCell>
+                                            <TableCell align="center" sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', display: { xs: 'none', sm: 'table-cell' }, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>ROLE</TableCell>
+                                            <TableCell align="right" sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#475569', fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>ACTIONS</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -801,37 +807,28 @@ const CreateUser = () => {
                                                     key={u.id || idx}
                                                     sx={{ '&:hover': { bgcolor: isDark ? '#111111' : '#F1F5F9' }, transition: 'background 0.2s' }}
                                                 >
-                                                    <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#334155' }}>{serial}</TableCell>
-                                                    <TableCell>
-                                                        <Typography sx={{ fontWeight: 700, color: isDark ? '#FFFFFF' : '#334155' }}>{u.rollNumber || '-'}</Typography>
-                                                    </TableCell>
-                                                    <TableCell sx={{ py: 2.2 }}>
-                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                            <Avatar sx={{ width: 34, height: 34, bgcolor: isDark ? '#111111' : '#6366F1', fontSize: '0.9rem', fontWeight: 800, color: '#FFFFFF' }}>
+                                                    <TableCell sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#334155', py: { xs: 1, md: 2.2 }, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>{serial}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 700, color: isDark ? '#FFFFFF' : '#334155', display: { xs: 'none', lg: 'table-cell' }, py: { xs: 1, md: 2.2 }, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>{u.rollNumber || '-'}</TableCell>
+                                                    <TableCell sx={{ py: { xs: 1.2, md: 2.2 } }}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
+                                                            <Avatar sx={{ width: { xs: 28, sm: 34 }, height: { xs: 28, sm: 34 }, bgcolor: isDark ? '#111111' : '#6366F1', fontSize: { xs: '0.8rem', sm: '0.9rem' }, fontWeight: 800, color: '#FFFFFF' }}>
                                                                 {(u.name || '?').charAt(0).toUpperCase()}
                                                             </Avatar>
-                                                            <Typography sx={{ fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A' }}>{u.name}</Typography>
+                                                            <Typography sx={{ fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A', fontSize: { xs: '0.75rem', sm: '0.85rem', md: '0.95rem' } }}>{u.name}</Typography>
                                                         </Box>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Typography sx={{ fontWeight: 700, color: isDark ? '#FFFFFF' : '#334155' }}>{u.username}</Typography>
+                                                    <TableCell sx={{ fontWeight: 700, color: isDark ? '#FFFFFF' : '#334155', display: { xs: 'none', md: 'table-cell' }, py: { xs: 1, md: 2.2 }, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>{u.username}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 600, color: isDark ? '#E2E8F0' : '#64748B', display: { xs: 'none', lg: 'table-cell' }, py: { xs: 1, md: 2.2 }, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>{u.mobileNumber || '-'}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 600, color: isDark ? '#E2E8F0' : '#64748B', display: { xs: 'none', md: 'table-cell' }, py: { xs: 1, md: 2.2 }, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>{u.pincode || '-'}</TableCell>
+                                                    <TableCell align="center" sx={{ display: { xs: 'none', sm: 'table-cell' }, py: { xs: 1, md: 2.2 } }}>
+                                                        <Chip label="User" size="small" sx={{ fontWeight: 700, borderRadius: 1.5, bgcolor: isDark ? '#000000' : '#F1F5F9', color: isDark ? '#FFFFFF' : undefined, fontSize: { xs: '0.6rem', sm: '0.75rem' } }} />
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Typography sx={{ fontWeight: 600, color: isDark ? '#E2E8F0' : '#64748B' }}>{u.mobileNumber || '-'}</Typography>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Typography sx={{ fontWeight: 600, color: isDark ? '#E2E8F0' : '#64748B' }}>{u.pincode || '-'}</Typography>
-                                                    </TableCell>
-                                                    <TableCell align="center">
-                                                        <Chip label="User" size="small" sx={{ fontWeight: 700, borderRadius: 1.5, bgcolor: isDark ? '#000000' : '#F1F5F9', color: isDark ? '#FFFFFF' : undefined }} />
-                                                    </TableCell>
-                                                    <TableCell align="right">
+                                                    <TableCell align="right" sx={{ py: { xs: 1, md: 2.2 } }}>
                                                         <Box
                                                             sx={{
                                                                 display: 'inline-flex',
-                                                                gap: 1,
-                                                                flexWrap: 'nowrap',
-                                                                whiteSpace: 'nowrap',
+                                                                gap: { xs: 0.5, sm: 1 },
+                                                                flexWrap: 'wrap',
                                                             }}
                                                         >
                                                             <Tooltip title="Edit">
@@ -840,8 +837,9 @@ const CreateUser = () => {
                                                                         size="small"
                                                                         color="primary"
                                                                         onClick={() => handleOpenEdit(u)}
+                                                                        sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}
                                                                     >
-                                                                        <EditIcon fontSize="small" />
+                                                                        <EditIcon fontSize="inherit" />
                                                                     </IconButton>
                                                                 </span>
                                                             </Tooltip>
@@ -852,8 +850,9 @@ const CreateUser = () => {
                                                                         color="error"
                                                                         onClick={() => handleDeleteUser(u)}
                                                                         disabled={deleteLoadingId === u.id}
+                                                                        sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}
                                                                     >
-                                                                        <DeleteIcon fontSize="small" />
+                                                                        <DeleteIcon fontSize="inherit" />
                                                                     </IconButton>
                                                                 </span>
                                                             </Tooltip>
@@ -865,8 +864,8 @@ const CreateUser = () => {
                                         {users.length === 0 && (
                                             <TableRow>
                                                 <TableCell colSpan={8}>
-                                                    <Box sx={{ p: 8, textAlign: 'center' }}>
-                                                        <Typography sx={{ color: isDark ? '#CBD5E1' : 'text.secondary' }}>No students provisioned in the system.</Typography>
+                                                    <Box sx={{ p: { xs: 4, md: 8 }, textAlign: 'center' }}>
+                                                        <Typography sx={{ color: isDark ? '#CBD5E1' : 'text.secondary', fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>No students provisioned in the system.</Typography>
                                                     </Box>
                                                 </TableCell>
                                             </TableRow>
@@ -875,14 +874,131 @@ const CreateUser = () => {
                                 </Table>
                             </TableContainer>
                             {usersTotalCount > usersPageSize && (
-                                <Box sx={{ px: 4, py: 2.5, borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'center' }}>
-                                    <Pagination
-                                        color="primary"
-                                        shape="rounded"
-                                        page={usersPage}
-                                        count={Math.max(1, Math.ceil(usersTotalCount / usersPageSize))}
-                                        onChange={(_, page) => setUsersPage(page)}
-                                    />
+                                <Box
+                                    sx={{
+                                        px: { xs: 2, sm: 3, md: 4 },
+                                        py: { xs: 2, sm: 2.5, md: 2.5 },
+                                        borderTop: '1px solid #E2E8F0',
+                                        display: 'flex',
+                                        flexDirection: { xs: 'column', sm: 'row' },
+                                        justifyContent: { xs: 'center', sm: 'space-between' },
+                                        alignItems: 'center',
+                                        gap: { xs: 2, sm: 2, md: 3 },
+                                        bgcolor: isDark ? '#000000' : '#FFFFFF',
+                                    }}
+                                >
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
+                                            color: isDark ? '#CBD5E1' : '#64748B',
+                                            fontWeight: 600,
+                                            fontSize: { xs: '0.8rem', sm: '0.85rem', md: '0.9rem' },
+                                        }}
+                                    >
+                                        Showing {Math.min((usersPage - 1) * usersPageSize + 1, usersTotalCount)} - {Math.min(usersPage * usersPageSize, usersTotalCount)} of {usersTotalCount}
+                                    </Typography>
+
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: { xs: 0.8, sm: 1.2, md: 1.5 },
+                                            flexWrap: 'wrap',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            onClick={() => setUsersPage(1)}
+                                            disabled={usersPage === 1}
+                                            sx={{
+                                                minWidth: { xs: '32px', sm: '36px' },
+                                                p: { xs: 0.6, sm: 0.8 },
+                                                fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                                fontWeight: 700,
+                                                borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
+                                                color: isDark ? '#E2E8F0' : undefined,
+                                                '&:disabled': {
+                                                    opacity: 0.5,
+                                                },
+                                            }}
+                                        >
+                                            {'<<'}
+                                        </Button>
+
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            onClick={() => setUsersPage(Math.max(1, usersPage - 1))}
+                                            disabled={usersPage === 1}
+                                            sx={{
+                                                minWidth: { xs: '32px', sm: '36px' },
+                                                p: { xs: 0.6, sm: 0.8 },
+                                                fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                                fontWeight: 700,
+                                                borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
+                                                color: isDark ? '#E2E8F0' : undefined,
+                                                '&:disabled': {
+                                                    opacity: 0.5,
+                                                },
+                                            }}
+                                        >
+                                            {'<'}
+                                        </Button>
+
+                                        <Typography
+                                            sx={{
+                                                minWidth: 'max-content',
+                                                color: isDark ? '#E2E8F0' : '#0F172A',
+                                                fontWeight: 700,
+                                                fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
+                                                px: { xs: 1, sm: 1.5, md: 2 },
+                                            }}
+                                        >
+                                            page {usersPage} of {Math.max(1, Math.ceil(usersTotalCount / usersPageSize))}
+                                        </Typography>
+
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            onClick={() => setUsersPage(Math.min(Math.ceil(usersTotalCount / usersPageSize), usersPage + 1))}
+                                            disabled={usersPage === Math.ceil(usersTotalCount / usersPageSize)}
+                                            sx={{
+                                                minWidth: { xs: '32px', sm: '36px' },
+                                                p: { xs: 0.6, sm: 0.8 },
+                                                fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                                fontWeight: 700,
+                                                borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
+                                                color: isDark ? '#E2E8F0' : undefined,
+                                                '&:disabled': {
+                                                    opacity: 0.5,
+                                                },
+                                            }}
+                                        >
+                                            {'>'}
+                                        </Button>
+
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            onClick={() => setUsersPage(Math.ceil(usersTotalCount / usersPageSize))}
+                                            disabled={usersPage === Math.ceil(usersTotalCount / usersPageSize)}
+                                            sx={{
+                                                minWidth: { xs: '32px', sm: '36px' },
+                                                p: { xs: 0.6, sm: 0.8 },
+                                                fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                                fontWeight: 700,
+                                                borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
+                                                color: isDark ? '#E2E8F0' : undefined,
+                                                '&:disabled': {
+                                                    opacity: 0.5,
+                                                },
+                                            }}
+                                        >
+                                            {'>>'}
+                                        </Button>
+                                    </Box>
                                 </Box>
                             )}
                         </Paper>

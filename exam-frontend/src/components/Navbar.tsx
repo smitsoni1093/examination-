@@ -1,6 +1,7 @@
-import { AppBar, Toolbar, Typography, Button, Select, MenuItem, Box, Avatar, IconButton, Container, Stack, Switch } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Select, MenuItem, Box, Avatar, IconButton, Container, Stack, Switch, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { alpha } from '@mui/material/styles';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +17,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const hideLanguagePicker =
     location.pathname === '/login' ||
     location.pathname.startsWith('/user/test/');
@@ -29,6 +31,19 @@ const Navbar = () => {
   const handleLogout = () => {
     dispatch(logout());
     navigate(role === 'Admin' || role === 'SuperAdmin' ? '/admin/login' : '/login');
+  };
+
+  const openLogoutConfirm = () => {
+    setLogoutConfirmOpen(true);
+  };
+
+  const closeLogoutConfirm = () => {
+    setLogoutConfirmOpen(false);
+  };
+
+  const confirmLogout = () => {
+    setLogoutConfirmOpen(false);
+    handleLogout();
   };
 
   const handleLanguageChange = async (lang: string) => {
@@ -75,8 +90,8 @@ const Navbar = () => {
         justifyContent: 'center',
       }}
     >
-      <Container maxWidth={false} sx={{ px: { xs: 2, md: 4, lg: 6 } }}>
-          <Toolbar disableGutters sx={{ minHeight: 'inherit', gap: 1 }}>
+      <Container maxWidth={false} sx={{ px: { xs: 1.5, sm: 2, md: 4, lg: 6 } }}>
+          <Toolbar disableGutters sx={{ minHeight: 'inherit', gap: { xs: 0.8, sm: 1.2, md: 1 } }}>
             {/* Logo Section */}
             <Box 
               sx={{ 
@@ -91,16 +106,16 @@ const Navbar = () => {
             >
               <Box sx={{ 
                 background: 'linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%)',
-                width: { xs: 36, md: 40 },
-                height: { xs: 36, md: 40 },
+                width: { xs: 32, sm: 36, md: 40 },
+                height: { xs: 32, sm: 36, md: 40 },
                 borderRadius: '11px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                mr: 1.5,
+                mr: { xs: 1, sm: 1.5 },
                 boxShadow: '0 8px 16px rgba(2, 132, 199, 0.28)'
               }}>
-                <Typography sx={{ color: 'white', fontWeight: 900, fontSize: '1.1rem' }}>E</Typography>
+                <Typography sx={{ color: 'white', fontWeight: 900, fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' } }}>E</Typography>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                 <Typography
@@ -108,7 +123,7 @@ const Navbar = () => {
                   sx={{
                     fontWeight: 900,
                     letterSpacing: '-0.03em',
-                    fontSize: { xs: '1.1rem', md: '1.3rem' },
+                    fontSize: { xs: '0.95rem', sm: '1.1rem', md: '1.3rem' },
                     display: 'flex',
                     alignItems: 'center',
                     color: themeMode === 'dark' ? '#F8FAFC' : '#0F172A',
@@ -117,21 +132,22 @@ const Navbar = () => {
                 >
                   Exam<Box component="span" sx={{ color: '#2563EB', ml: 0.5 }}>Platform</Box>
                 </Typography>
-                <Typography sx={{ fontSize: '0.66rem', color: themeMode === 'dark' ? '#94A3B8' : '#64748B', letterSpacing: 0.65, textTransform: 'uppercase', display: { xs: 'none', md: 'block' } }}>
+                <Typography sx={{ fontSize: { xs: '0.55rem', md: '0.66rem' }, color: themeMode === 'dark' ? '#94A3B8' : '#64748B', letterSpacing: 0.65, textTransform: 'uppercase', display: { xs: 'none', md: 'block' } }}>
                   Secure Assessment Suite
                 </Typography>
               </Box>
             </Box>
 
             {/* Actions Section */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 3 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.6, sm: 1.2, md: 3 } }}>
                 <Box
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
                     bgcolor: themeMode === 'dark' ? '#000000' : '#FFFFFF',
                     borderRadius: '14px',
-                    px: { xs: 0.7, md: 1 },
+                    px: { xs: 0.5, sm: 0.7, md: 1 },
+                    py: 0.5,
                     border: `1px solid ${themeMode === 'dark' ? alpha('#E2E8F0', 0.18) : alpha('#1E293B', 0.16)}`,
                     boxShadow: themeMode === 'dark' ? '0 8px 18px rgba(0, 0, 0, 0.6)' : '0 8px 18px rgba(15, 23, 42, 0.08)',
                     transition: 'all 0.2s ease',
@@ -141,13 +157,13 @@ const Navbar = () => {
                     },
                   }}
                 >
-                  <LightMode sx={{ fontSize: 16, color: themeMode === 'dark' ? '#64748B' : '#F59E0B' }} />
+                  <LightMode sx={{ fontSize: { xs: 14, sm: 16 }, color: themeMode === 'dark' ? '#64748B' : '#F59E0B' }} />
                   <Switch
                     checked={themeMode === 'dark'}
                     onChange={onThemeToggle}
                     size="small"
                     sx={{
-                      mx: 0.2,
+                      mx: { xs: 0.1, sm: 0.2 },
                       '& .MuiSwitch-switchBase.Mui-checked': { color: '#38BDF8' },
                       '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#0EA5E9' },
                       '& .MuiSwitch-track': {
@@ -156,7 +172,7 @@ const Navbar = () => {
                       },
                     }}
                   />
-                  <DarkMode sx={{ fontSize: 16, color: themeMode === 'dark' ? '#F8FAFC' : '#64748B' }} />
+                  <DarkMode sx={{ fontSize: { xs: 14, sm: 16 }, color: themeMode === 'dark' ? '#F8FAFC' : '#64748B' }} />
                 </Box>
 
                 {!hideLanguagePicker && (
@@ -165,7 +181,7 @@ const Navbar = () => {
                   alignItems: 'center', 
                   bgcolor: themeMode === 'dark' ? '#000000' : '#FFFFFF', 
                   borderRadius: '14px', 
-                  px: { xs: 1, md: 1.5 },
+                  px: { xs: 0.6, sm: 1, md: 1.5 },
                   border: `1px solid ${themeMode === 'dark' ? alpha('#E2E8F0', 0.18) : alpha('#1E293B', 0.16)}`,
                   boxShadow: themeMode === 'dark' ? '0 8px 18px rgba(0, 0, 0, 0.6)' : '0 8px 18px rgba(15, 23, 42, 0.08)',
                   transition: 'all 0.2s ease',
@@ -174,7 +190,7 @@ const Navbar = () => {
                     boxShadow: '0 10px 22px rgba(2, 132, 199, 0.16)'
                   }
                   }}>
-                    <Language sx={{ fontSize: 17, mr: 0.5, color: themeMode === 'dark' ? '#93C5FD' : '#0369A1', display: { xs: 'none', sm: 'block' } }} />
+                    <Language sx={{ fontSize: { xs: 15, sm: 17 }, mr: { xs: 0.3, sm: 0.5 }, color: themeMode === 'dark' ? '#93C5FD' : '#0369A1', display: { xs: 'none', sm: 'block' } }} />
                     <Select
                       value={currentLang}
                       onChange={onLanguageSelect}
@@ -182,17 +198,17 @@ const Navbar = () => {
                       IconComponent={KeyboardArrowDown}
                       displayEmpty
                       renderValue={(value) => (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.4, sm: 0.8 } }}>
                           <Box
                             component="span"
                             sx={{
                               display: { xs: 'none', sm: 'inline-flex' },
                               alignItems: 'center',
                               justifyContent: 'center',
-                              minWidth: 26,
-                              height: 20,
+                              minWidth: 24,
+                              height: 18,
                               borderRadius: '999px',
-                              fontSize: '0.62rem',
+                              fontSize: '0.55rem',
                               fontWeight: 900,
                               letterSpacing: 0.4,
                               color: '#0C4A6E',
@@ -202,7 +218,7 @@ const Navbar = () => {
                           >
                             {String(value).toUpperCase()}
                           </Box>
-                          <Typography sx={{ fontSize: { xs: '0.76rem', md: '0.84rem' }, fontWeight: 800, color: '#0F172A' }}>
+                          <Typography sx={{ fontSize: { xs: '0.7rem', sm: '0.78rem', md: '0.84rem' }, fontWeight: 800, color: themeMode === 'dark' ? '#E2E8F0' : '#0F172A', whiteSpace: 'nowrap' }}>
                             {languageLabels[value] || languageLabels.en}
                           </Typography>
                         </Box>
@@ -234,12 +250,12 @@ const Navbar = () => {
                         },
                       }}
                       sx={{ 
-                        minWidth: { xs: 116, sm: 154 },
+                        minWidth: { xs: 80, sm: 120, md: 154 },
                         '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                        '& .MuiSelect-icon': { color: themeMode === 'dark' ? '#93C5FD' : '#0369A1', right: 6 },
-                        '& .MuiSelect-select': { py: 0.95, pr: 4, pl: 0.2 },
+                        '& .MuiSelect-icon': { color: themeMode === 'dark' ? '#93C5FD' : '#0369A1', right: { xs: 4, sm: 6 } },
+                        '& .MuiSelect-select': { py: { xs: 0.7, sm: 0.95 }, pr: { xs: 3, sm: 4 }, pl: { xs: 0.15, sm: 0.2 } },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                        fontSize: { xs: '0.78rem', md: '0.84rem' },
+                        fontSize: { xs: '0.7rem', sm: '0.78rem', md: '0.84rem' },
                         fontWeight: 700,
                         color: themeMode === 'dark' ? '#E2E8F0' : '#1E293B'
                       }}
@@ -252,91 +268,119 @@ const Navbar = () => {
                 )}
 
                 {token ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 } }}>
-                    {/* User Profile Pill */}
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 1.1,
-                      px: 0.6,
-                      py: 0.45,
-                      pr: { xs: 0.6, sm: 1.4 },
-                      bgcolor: themeMode === 'dark' ? '#000000' : '#FFFFFF',
-                      borderRadius: '999px',
-                      border: `1px solid ${themeMode === 'dark' ? alpha('#E2E8F0', 0.2) : alpha('#1E293B', 0.12)}`,
-                      boxShadow: themeMode === 'dark' ? '0 4px 14px rgba(0, 0, 0, 0.6)' : '0 4px 14px rgba(15, 23, 42, 0.06)'
-                    }}>
-                        <Avatar sx={{ 
-                          bgcolor: alpha('#0EA5E9', 0.16), 
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.6, sm: 1.2, md: 2 } }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: { xs: 0.7, sm: 1.1 },
+                        px: { xs: 0.5, sm: 0.6, md: 0.6 },
+                        py: { xs: 0.4, sm: 0.45 },
+                        pr: { xs: 0.5, sm: 0.8, md: 1.4 },
+                        bgcolor: themeMode === 'dark' ? '#000000' : '#FFFFFF',
+                        borderRadius: '999px',
+                        border: `1px solid ${themeMode === 'dark' ? alpha('#E2E8F0', 0.2) : alpha('#1E293B', 0.12)}`,
+                        boxShadow: themeMode === 'dark' ? '0 4px 14px rgba(0, 0, 0, 0.6)' : '0 4px 14px rgba(15, 23, 42, 0.06)',
+                      }}
+                    >
+                      <Avatar
+                        sx={{
+                          bgcolor: alpha('#0EA5E9', 0.16),
                           color: '#0369A1',
-                          width: 34, 
-                          height: 34,
-                          fontSize: '0.9rem',
+                          width: { xs: 30, sm: 34 },
+                          height: { xs: 30, sm: 34 },
+                          fontSize: { xs: '0.8rem', sm: '0.9rem' },
                           fontWeight: 800,
-                          border: `1px solid ${alpha('#0EA5E9', 0.22)}`
-                        }}>
-                          {name?.charAt(0) || 'U'}
-                        </Avatar>
-                        <Box sx={{ display: { xs: 'none', sm: 'block' }, pr: 0.2 }}>
-                            <Typography variant="caption" display="block" sx={{ fontWeight: 800, color: themeMode === 'dark' ? '#F8FAFC' : '#1E293B', lineHeight: 1.1 }}>{name}</Typography>
-                            <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.1 }}>
-                              <VerifiedUser sx={{ fontSize: 12, color: '#0284C7' }} />
-                              <Typography variant="caption" sx={{ color: '#0369A1', fontWeight: 700, fontSize: '0.64rem', textTransform: 'uppercase', letterSpacing: 0.3 }}>
-                                {role}
-                              </Typography>
-                            </Stack>
-                        </Box>
+                          border: `1px solid ${alpha('#0EA5E9', 0.22)}`,
+                        }}
+                      >
+                        {name?.charAt(0) || 'U'}
+                      </Avatar>
+                      <Box sx={{ display: { xs: 'none', sm: 'block' }, pr: 0.2 }}>
+                        <Typography variant="caption" display="block" sx={{ fontWeight: 800, color: themeMode === 'dark' ? '#F8FAFC' : '#1E293B', lineHeight: 1.1 }}>
+                          {name}
+                        </Typography>
+                        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.1 }}>
+                          <VerifiedUser sx={{ fontSize: 12, color: '#0284C7' }} />
+                          <Typography variant="caption" sx={{ color: '#0369A1', fontWeight: 700, fontSize: '0.64rem', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                            {role}
+                          </Typography>
+                        </Stack>
+                      </Box>
                     </Box>
 
-                    <Button 
-                        variant="contained" 
-                        size="medium" 
-                        color="error" 
-                        onClick={handleLogout}
-                        startIcon={<Logout sx={{ fontSize: '1.1rem !important' }} />}
-                        sx={{ 
-                          borderRadius: '12px',
-                          fontWeight: 700, 
-                          px: 2.1,
-                          textTransform: 'none',
-                          boxShadow: '0 8px 16px rgba(239, 68, 68, 0.18)',
-                          display: { xs: 'none', md: 'flex' },
-                          '&:hover': { boxShadow: '0 10px 20px rgba(239, 68, 68, 0.28)' }
-                        }}
+                    <Button
+                      variant="contained"
+                      size="medium"
+                      color="error"
+                      onClick={openLogoutConfirm}
+                      startIcon={<Logout sx={{ fontSize: { xs: '0.95rem !important', sm: '1.1rem !important' } }} />}
+                      sx={{
+                        borderRadius: '12px',
+                        fontWeight: 700,
+                        px: { xs: 1.4, sm: 2.1 },
+                        py: { xs: 0.6, sm: 0.8 },
+                        fontSize: { xs: '0.75rem', sm: '0.9rem' },
+                        textTransform: 'none',
+                        boxShadow: '0 8px 16px rgba(239, 68, 68, 0.18)',
+                        display: { xs: 'none', md: 'flex' },
+                        '&:hover': { boxShadow: '0 10px 20px rgba(239, 68, 68, 0.28)' },
+                      }}
                     >
-                        {t('navbar.logout')}
+                      {t('navbar.logout')}
                     </Button>
-                    <IconButton 
-                      onClick={handleLogout} 
-                      color="error" 
+
+                    <IconButton
+                      onClick={openLogoutConfirm}
+                      color="error"
+                      size="small"
                       sx={{
                         display: { xs: 'flex', md: 'none' },
                         bgcolor: alpha('#EF4444', 0.1),
                         border: `1px solid ${alpha('#EF4444', 0.22)}`,
                       }}
                     >
-                      <Logout />
+                      <Logout sx={{ fontSize: '1rem' }} />
                     </IconButton>
-                </Box>
+                  </Box>
                 ) : (
-                    <Button 
-                      variant="contained" 
-                      onClick={() => navigate('/login')}
-                      sx={{
-                        borderRadius: '12px',
-                        fontWeight: 700,
-                        px: 2.6,
-                        textTransform: 'none',
-                        background: 'linear-gradient(135deg, #0284C7, #2563EB)',
-                        boxShadow: '0 10px 20px rgba(37, 99, 235, 0.26)',
-                      }}
-                    >
-                      {t('auth.login')}
-                    </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate('/login')}
+                    size="small"
+                    sx={{
+                      borderRadius: '12px',
+                      fontWeight: 700,
+                      px: { xs: 1.8, sm: 2.6 },
+                      py: { xs: 0.6, sm: 0.8 },
+                      fontSize: { xs: '0.8rem', sm: '0.9rem' },
+                      textTransform: 'none',
+                      background: 'linear-gradient(135deg, #0284C7, #2563EB)',
+                      boxShadow: '0 10px 20px rgba(37, 99, 235, 0.26)',
+                    }}
+                  >
+                    {t('auth.login')}
+                  </Button>
                 )}
             </Box>
           </Toolbar>
       </Container>
+      <Dialog open={logoutConfirmOpen} onClose={closeLogoutConfirm} PaperProps={{ sx: { borderRadius: 4 } }}>
+        <DialogTitle sx={{ fontWeight: 900 }}>Confirm logout</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: '#475569', fontWeight: 600 }}>
+            Are you sure you want to logout? You will need to sign in again to continue.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={closeLogoutConfirm} variant="outlined">
+            Cancel
+          </Button>
+          <Button onClick={confirmLogout} variant="contained" color="error">
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppBar>
   );
 };

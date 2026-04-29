@@ -332,7 +332,7 @@ const UserLogin = () => {
 
                 {lookupComplete && accounts.length > 0 && (
                   <Box sx={{ pt: 1 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 800, color: isDark ? '#E2E8F0' : '#0F172A' }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 800, color: isDark ? '#E2E8F0' : '#0F172A', fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                       {t('auth.selectAccountTitle')}
                     </Typography>
                     <Stack spacing={1.5}>
@@ -346,20 +346,20 @@ const UserLogin = () => {
                             background: isDark ? 'rgba(2, 6, 23, 0.95)' : '#FFFFFF',
                           }}
                         >
-                          <CardContent sx={{ p: 2.25, '&:last-child': { pb: 2.25 } }}>
-                            <Stack direction="row" spacing={1.5} alignItems="flex-start" justifyContent="space-between">
-                              <Box>
-                                <Typography sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A' }}>{account.name}</Typography>
-                                <Typography variant="body2" sx={{ color: isDark ? '#CBD5E1' : '#475569', mt: 0.25 }}>
+                          <CardContent sx={{ p: { xs: 1.8, sm: 2.25 }, '&:last-child': { pb: { xs: 1.8, sm: 2.25 } } }}>
+                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1.2, sm: 1.5 }} alignItems={{ xs: 'stretch', sm: 'flex-start' }} justifyContent="space-between">
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography sx={{ fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', fontSize: { xs: '0.95rem', sm: '1rem' }, overflowWrap: 'break-word' }}>{account.name}</Typography>
+                                <Typography variant="body2" sx={{ color: isDark ? '#CBD5E1' : '#475569', mt: 0.25, fontSize: { xs: '0.8rem', sm: '0.85rem' }, overflowWrap: 'break-word' }}>
                                   {account.role}{account.className ? ` • ${account.className}` : ''}
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: isDark ? '#94A3B8' : '#64748B', mt: 0.5 }}>
+                                <Typography variant="body2" sx={{ color: isDark ? '#94A3B8' : '#64748B', mt: 0.5, fontSize: { xs: '0.8rem', sm: '0.85rem' }, overflowWrap: 'break-word' }}>
                                   {t('auth.username')}: {account.username || t('common.noData')}
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: isDark ? '#94A3B8' : '#64748B', mt: 0.6 }}>
+                                <Typography variant="body2" sx={{ color: isDark ? '#94A3B8' : '#64748B', mt: 0.6, fontSize: { xs: '0.8rem', sm: '0.85rem' }, overflowWrap: 'break-word' }}>
                                   {t('user.email')}: {account.email || t('common.noData')}
                                 </Typography>
-                                <Typography variant="caption" sx={{ color: isDark ? '#94A3B8' : '#64748B', display: 'block', mt: 0.8 }}>
+                                <Typography variant="caption" sx={{ color: isDark ? '#94A3B8' : '#64748B', display: 'block', mt: 0.8, fontSize: { xs: '0.75rem', sm: '0.8rem' }, overflowWrap: 'break-word' }}>
                                   {t('auth.mobileNumber')}: {account.mobileNumber || maskedMobile}
                                 </Typography>
                               </Box>
@@ -370,10 +370,15 @@ const UserLogin = () => {
                                 onClick={() => handleSelectAccount(account.userId)}
                                 disabled={loading}
                                 sx={{
-                                  whiteSpace: 'nowrap',
+                                  alignSelf: { xs: 'flex-start', sm: 'center' },
+                                  whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                                  width: { xs: '100%', sm: 'auto' },
+                                  minHeight: 40,
                                   borderRadius: 2.5,
                                   fontWeight: 800,
-                                  px: 2.25,
+                                  px: { xs: 1.5, sm: 2.25 },
+                                  py: { xs: 0.8, sm: 1 },
+                                  fontSize: { xs: '0.8rem', sm: '0.9rem' },
                                   background: 'linear-gradient(135deg, #0F172A 0%, #2563EB 100%)',
                                 }}
                               >

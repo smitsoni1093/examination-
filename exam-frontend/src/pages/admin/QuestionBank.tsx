@@ -278,7 +278,7 @@ const QuestionBank = () => {
                                     </InputAdornment>
                                 ),
                             }}
-                            sx={{ minWidth: 350, bgcolor: isDark ? '#000000' : '#F8FAFC', borderRadius: 3, '& .MuiOutlinedInput-notchedOutline': { border: 'none' } }}
+                            sx={{ flex: { xs: '1 1 100%', md: '0 0 auto' }, minWidth: { xs: '100%', sm: 240, md: 350 }, bgcolor: isDark ? '#000000' : '#F8FAFC', borderRadius: 3, '& .MuiOutlinedInput-notchedOutline': { border: 'none' } }}
                         />
 
                         <TextField
@@ -291,7 +291,7 @@ const QuestionBank = () => {
                                 setSourceFilter(nextSource);
                                 handleFilterChange(nextSource, searchTerm, 1);
                             }}
-                            sx={{ minWidth: 250, '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                            sx={{ minWidth: { xs: 160, sm: 220, md: 250 }, '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
                         >
                             <MenuItem value="All Sources" sx={{ fontWeight: 700 }}>All Import Sources</MenuItem>
                             {sources.map(s => (
@@ -316,8 +316,8 @@ const QuestionBank = () => {
                             <CircularProgress sx={{ color: '#6366F1' }} />
                         </Box>
                     ) : (
-                        <TableContainer sx={{ maxHeight: 650 }}>
-                            <Table stickyHeader>
+                        <TableContainer sx={{ maxHeight: 650, overflowX: 'auto' }}>
+                            <Table stickyHeader sx={{ minWidth: { xs: 700, sm: 900 } }}>
                                     <TableHead>
                                     <TableRow>
                                         <TableCell padding="checkbox" sx={{ bgcolor: isDark ? '#000000' : '#F8FAFC' }}>
@@ -331,8 +331,8 @@ const QuestionBank = () => {
                                             />
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 900, color: isDark ? '#FFFFFF' : '#64748B', bgcolor: isDark ? '#000000' : '#F8FAFC' }}>ASSESSMENT ITEM</TableCell>
-                                        <TableCell sx={{ fontWeight: 900, color: isDark ? '#FFFFFF' : '#64748B', bgcolor: isDark ? '#000000' : '#F8FAFC' }}>SOURCE ORIGIN</TableCell>
-                                        <TableCell sx={{ fontWeight: 900, color: isDark ? '#FFFFFF' : '#64748B', bgcolor: isDark ? '#000000' : '#F8FAFC' }}>INDEX DATE</TableCell>
+                                        <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, fontWeight: 900, color: isDark ? '#FFFFFF' : '#64748B', bgcolor: isDark ? '#000000' : '#F8FAFC' }}>SOURCE ORIGIN</TableCell>
+                                        <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, fontWeight: 900, color: isDark ? '#FFFFFF' : '#64748B', bgcolor: isDark ? '#000000' : '#F8FAFC' }}>INDEX DATE</TableCell>
                                         <TableCell align="right" sx={{ fontWeight: 900, color: isDark ? '#FFFFFF' : '#64748B', bgcolor: isDark ? '#000000' : '#F8FAFC' }}>ACTIONS</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -351,7 +351,7 @@ const QuestionBank = () => {
                                                         <Chip label="MCQ" size="small" sx={{ height: 16, fontSize: 9, fontWeight: 900, bgcolor: isDark ? '#000000' : '#F1F5F9', color: isDark ? '#FFFFFF' : '#64748B' }} />
                                                     </Stack>
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                                                     <Chip
                                                         icon={<Storage sx={{ fontSize: '14px !important' }} />}
                                                         label={q.sourceFileName || 'Manual Entry'}
@@ -359,7 +359,7 @@ const QuestionBank = () => {
                                                         sx={{ fontWeight: 700, bgcolor: isDark ? '#000000' : 'rgba(99, 102, 241, 0.05)', color: isDark ? '#FFFFFF' : '#6366F1', border: '1px solid rgba(99, 102, 241, 0.1)' }}
                                                     />
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                                                     <Typography variant="body2" sx={{ color: isDark ? '#CBD5E1' : '#64748B', fontWeight: 600 }}>
                                                         {new Date(q.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                                     </Typography>
@@ -386,14 +386,123 @@ const QuestionBank = () => {
                     )}
 
                     {totalQuestions > questionPageSize && (
-                        <Box sx={{ px: 4, py: 2.5, borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'center', bgcolor: isDark ? '#000000' : undefined }}>
-                            <Pagination
-                                color="primary"
-                                shape="rounded"
-                                page={questionPage}
-                                count={Math.max(1, Math.ceil(totalQuestions / questionPageSize))}
-                                onChange={(_, page) => handleFilterChange(sourceFilter, searchTerm, page)}
-                            />
+                        <Box
+                            sx={{
+                                px: { xs: 2, sm: 3, md: 3 },
+                                py: { xs: 2, sm: 2.5, md: 2.5 },
+                                borderTop: '1px solid #E2E8F0',
+                                display: 'flex',
+                                flexDirection: { xs: 'column', sm: 'row' },
+                                justifyContent: { xs: 'center', sm: 'space-between' },
+                                alignItems: 'center',
+                                gap: { xs: 2, sm: 2, md: 3 },
+                                bgcolor: isDark ? '#000000' : '#FFFFFF',
+                            }}
+                        >
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    color: isDark ? '#CBD5E1' : '#64748B',
+                                    fontWeight: 600,
+                                    fontSize: { xs: '0.8rem', sm: '0.85rem', md: '0.9rem' },
+                                }}
+                            >
+                                Showing {Math.min((questionPage - 1) * questionPageSize + 1, totalQuestions)} - {Math.min(questionPage * questionPageSize, totalQuestions)} of {totalQuestions}
+                            </Typography>
+
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: { xs: 0.8, sm: 1.2, md: 1.5 },
+                                    flexWrap: 'wrap',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    onClick={() => handleFilterChange(sourceFilter, searchTerm, 1)}
+                                    disabled={questionPage === 1}
+                                    sx={{
+                                        minWidth: { xs: '32px', sm: '36px' },
+                                        p: { xs: 0.6, sm: 0.8 },
+                                        fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                        fontWeight: 700,
+                                        borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
+                                        color: isDark ? '#E2E8F0' : undefined,
+                                        '&:disabled': { opacity: 0.5 },
+                                    }}
+                                >
+                                    {'<<'}
+                                </Button>
+
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    onClick={() => handleFilterChange(sourceFilter, searchTerm, Math.max(1, questionPage - 1))}
+                                    disabled={questionPage === 1}
+                                    sx={{
+                                        minWidth: { xs: '32px', sm: '36px' },
+                                        p: { xs: 0.6, sm: 0.8 },
+                                        fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                        fontWeight: 700,
+                                        borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
+                                        color: isDark ? '#E2E8F0' : undefined,
+                                        '&:disabled': { opacity: 0.5 },
+                                    }}
+                                >
+                                    {'<'}
+                                </Button>
+
+                                <Typography
+                                    sx={{
+                                        minWidth: 'max-content',
+                                        color: isDark ? '#E2E8F0' : '#0F172A',
+                                        fontWeight: 700,
+                                        fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
+                                        px: { xs: 1, sm: 1.5, md: 2 },
+                                    }}
+                                >
+                                    page {questionPage} of {Math.max(1, Math.ceil(totalQuestions / questionPageSize))}
+                                </Typography>
+
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    onClick={() => handleFilterChange(sourceFilter, searchTerm, Math.min(Math.max(1, Math.ceil(totalQuestions / questionPageSize)), questionPage + 1))}
+                                    disabled={questionPage === Math.ceil(totalQuestions / questionPageSize)}
+                                    sx={{
+                                        minWidth: { xs: '32px', sm: '36px' },
+                                        p: { xs: 0.6, sm: 0.8 },
+                                        fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                        fontWeight: 700,
+                                        borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
+                                        color: isDark ? '#E2E8F0' : undefined,
+                                        '&:disabled': { opacity: 0.5 },
+                                    }}
+                                >
+                                    {'>'}
+                                </Button>
+
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    onClick={() => handleFilterChange(sourceFilter, searchTerm, Math.max(1, Math.ceil(totalQuestions / questionPageSize)))}
+                                    disabled={questionPage === Math.ceil(totalQuestions / questionPageSize)}
+                                    sx={{
+                                        minWidth: { xs: '32px', sm: '36px' },
+                                        p: { xs: 0.6, sm: 0.8 },
+                                        fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                        fontWeight: 700,
+                                        borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : undefined,
+                                        color: isDark ? '#E2E8F0' : undefined,
+                                        '&:disabled': { opacity: 0.5 },
+                                    }}
+                                >
+                                    {'>>'}
+                                </Button>
+                            </Box>
                         </Box>
                     )}
                 </Paper>
