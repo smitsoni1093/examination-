@@ -5,7 +5,7 @@ import axios from 'axios';
 //     ? `http://${window.location.hostname}:5121/api`
 //     : 'http://localhost:5121/api';
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ;
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://examination-api-xe91.onrender.com/api'; 
 
 const api = axios.create({
   baseURL: apiBaseUrl,
