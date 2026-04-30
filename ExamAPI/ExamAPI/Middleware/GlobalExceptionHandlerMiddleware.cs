@@ -37,7 +37,14 @@ namespace ExamAPI.Middleware
 
             if (exception is ApiException apiEx)
             {
-                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                context.Response.StatusCode = apiEx.MessageKey switch
+                {
+                    "MOBILE_NOT_REGISTERED" => (int)HttpStatusCode.NotFound,
+                    "NOT_FOUND" => (int)HttpStatusCode.NotFound,
+                    "UNAUTHORIZED" => (int)HttpStatusCode.Unauthorized,
+                    "FORBIDDEN" => (int)HttpStatusCode.Forbidden,
+                    _ => (int)HttpStatusCode.BadRequest
+                };
                 response.Success = false;
                 response.MessageKey = apiEx.MessageKey;
                 response.Message = apiEx.Message;

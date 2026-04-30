@@ -126,10 +126,14 @@ app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 // ── Auto-migrate on startup ───────────────────────────────────────────────────
-// using (var scope = app.Services.CreateScope())
-// {
-//     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-//     db.Database.Migrate();
-// }
+var skipDatabaseMigration = app.Configuration.GetValue<bool?>("SkipDatabaseMigration") ??
+                            string.Equals(Environment.GetEnvironmentVariable("SKIP_DB_MIGRATION"), "true", StringComparison.OrdinalIgnoreCase);
+
+if (!skipDatabaseMigration)
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 app.Run();

@@ -296,11 +296,6 @@ C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\E
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\ExamAPI.sourcelink.json
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets.development.json
-C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets\msbuild.ExamAPI.Microsoft.AspNetCore.StaticWebAssets.props
-C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets\msbuild.build.ExamAPI.props
-C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.ExamAPI.props
-C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.ExamAPI.props
-C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets.pack.json
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\scopedcss\bundle\ExamAPI.styles.css
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\ExamAPI.csproj.Up2Date
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\ExamAPI.dll
@@ -308,3 +303,11 @@ C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\r
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\ExamAPI.pdb
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\ExamAPI.genruntimeconfig.cache
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\ref\ExamAPI.dll
+C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\bin\Debug\net8.0\ExamAPI.staticwebassets.endpoints.json
+C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\rjimswa.dswa.cache.json
+C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
+C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
+C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets.build.json.cache
+C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets.build.endpoints.json
+C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\swae.build.ex.cache
