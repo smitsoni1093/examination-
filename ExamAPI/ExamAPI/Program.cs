@@ -135,11 +135,23 @@
 // app.Run();
 var builder = WebApplication.CreateBuilder(args);
 
+// ✅ Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+        policy.WithOrigins("https://online-exam-vert.vercel.app")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// ✅ Use CORS (IMPORTANT)
+app.UseCors("AllowFrontend");
 
 app.UseSwagger();
 app.UseSwaggerUI();
