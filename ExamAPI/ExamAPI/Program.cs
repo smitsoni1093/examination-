@@ -141,8 +141,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
         policy.WithOrigins("https://online-exam-vert.vercel.app")
               .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+              .AllowAnyMethod());
 });
 
 builder.Services.AddControllers();
