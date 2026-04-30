@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-const runtimeDefaultBaseUrl =
-  typeof window !== 'undefined'
-    ? `http://${window.location.hostname}:5121/api`
-    : 'http://localhost:5121/api';
+// const runtimeDefaultBaseUrl =
+//   typeof window !== 'undefined'
+//     ? `http://${window.location.hostname}:5121/api`
+//     : 'http://localhost:5121/api';
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || runtimeDefaultBaseUrl;
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://examination-api-xe91.onrender.com';
 
 const api = axios.create({
   baseURL: apiBaseUrl,
