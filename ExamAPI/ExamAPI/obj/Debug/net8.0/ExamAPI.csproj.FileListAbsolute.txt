@@ -311,3 +311,4 @@ C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\r
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\swae.build.ex.cache
+C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\bin\Debug\net8.0\appsettings.Production.json
