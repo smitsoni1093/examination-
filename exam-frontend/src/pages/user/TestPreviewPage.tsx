@@ -17,7 +17,6 @@ import {
   Paper,
   Radio,
   RadioGroup,
-  Slide,
   Typography,
 } from "@mui/material";
 import { ArrowBackRounded } from "@mui/icons-material";
@@ -52,8 +51,12 @@ const TestPreviewPage = () => {
   const [draftOption, setDraftOption] = useState<number | "">("");
   const [submitting, setSubmitting] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
-  const [showScrollToSubmit, setShowScrollToSubmit] = useState(false);
-  const submitSectionRef = useRef<HTMLDivElement | null>(null);
+  const [submitSliderX, setSubmitSliderX] = useState(0);
+  const [draggingSubmitSlider, setDraggingSubmitSlider] = useState(false);
+  const submitSliderTrackRef = useRef<HTMLDivElement | null>(null);
+  const dragStartClientXRef = useRef(0);
+  const dragStartSliderXRef = useRef(0);
+  const submitKnobSize = 54;
 
   useEffect(() => {
     const loadData = async () => {
@@ -113,17 +116,43 @@ const TestPreviewPage = () => {
   }, [location.search, questions.length]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScroll = window.scrollY + window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-      const nearBottom = documentHeight - currentScroll < 240;
-      setShowScrollToSubmit(!nearBottom);
+    if (!draggingSubmitSlider) return;
+
+    const getSliderMax = () => {
+      const trackWidth = submitSliderTrackRef.current?.clientWidth || 0;
+      return Math.max(0, trackWidth - submitKnobSize - 6);
     };
 
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    const onPointerMove = (event: PointerEvent) => {
+      const delta = event.clientX - dragStartClientXRef.current;
+      const next = dragStartSliderXRef.current + delta;
+      const clamped = Math.min(Math.max(next, 0), getSliderMax());
+      setSubmitSliderX(clamped);
+    };
 
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onPointerUp = () => {
+      const max = getSliderMax();
+      const reachedEnd = max > 0 && submitSliderX >= max * 0.9;
+      setDraggingSubmitSlider(false);
+      setSubmitSliderX(0);
+      if (reachedEnd) {
+        setConfirmSubmit(true);
+      }
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+  }, [draggingSubmitSlider, submitSliderX]);
+
+  useEffect(() => {
+    const resetSliderOnResize = () => setSubmitSliderX(0);
+    window.addEventListener("resize", resetSliderOnResize);
+    return () => window.removeEventListener("resize", resetSliderOnResize);
   }, []);
 
   const currentQuestion = questions[selectedIdx];
@@ -635,62 +664,81 @@ const TestPreviewPage = () => {
       </Grid>
 
       <Box
-        ref={submitSectionRef}
         sx={{
           mt: 3,
           p: 2,
           borderRadius: 3,
           border: "1px solid rgba(148, 163, 184, 0.3)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 2,
-          flexWrap: "wrap",
         }}
       >
         <Typography
           variant="body2"
-          sx={{ color: isDark ? "#CBD5E1" : "#475569" }}
+          sx={{ color: isDark ? "#CBD5E1" : "#475569", mb: 1.2 }}
         >
-          Final step: review done. Use this single button to submit your test.
+          Slide the round button from left to right to ask for final submit.
         </Typography>
-        <Button
-          variant="contained"
-          color="error"
-          size="large"
-          onClick={() => setConfirmSubmit(true)}
-          sx={{ px: 3, fontWeight: 800 }}
-        >
-          Submit Final Test
-        </Button>
-      </Box>
 
-      <Slide direction="up" in={showScrollToSubmit} mountOnEnter unmountOnExit>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={() =>
-            submitSectionRef.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            })
-          }
+        <Box
+          ref={submitSliderTrackRef}
           sx={{
-            position: "fixed",
-            right: 20,
-            bottom: 24,
-            zIndex: 1300,
+            position: "relative",
+            height: 62,
             borderRadius: 999,
-            px: 2.2,
-            py: 1,
-            boxShadow: "0 14px 28px rgba(220, 38, 38, 0.35)",
-            fontWeight: 800,
-            textTransform: "none",
+            border: "1px solid rgba(148, 163, 184, 0.35)",
+            bgcolor: isDark ? "rgba(255,255,255,0.04)" : "#F8FAFC",
+            overflow: "hidden",
+            touchAction: "pan-y",
           }}
         >
-          Scroll to Submit
-        </Button>
-      </Slide>
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: isDark ? "#E2E8F0" : "#334155",
+              fontWeight: 700,
+              fontSize: "0.9rem",
+              letterSpacing: 0.2,
+              pointerEvents: "none",
+            }}
+          >
+            Slide to Submit Final Test
+          </Box>
+
+          <Box
+            role="button"
+            aria-label="Slide to submit"
+            onPointerDown={(event) => {
+              dragStartClientXRef.current = event.clientX;
+              dragStartSliderXRef.current = submitSliderX;
+              setDraggingSubmitSlider(true);
+            }}
+            sx={{
+              position: "absolute",
+              top: 4,
+              left: 4,
+              width: submitKnobSize,
+              height: submitKnobSize,
+              borderRadius: "50%",
+              display: "grid",
+              placeItems: "center",
+              transform: `translateX(${submitSliderX}px)`,
+              transition: draggingSubmitSlider ? "none" : "transform 180ms ease",
+              bgcolor: "#DC2626",
+              color: "#FFFFFF",
+              fontWeight: 900,
+              boxShadow: "0 10px 24px rgba(220, 38, 38, 0.35)",
+              cursor: "grab",
+              userSelect: "none",
+              touchAction: "none",
+            }}
+          >
+            »
+          </Box>
+        </Box>
+      </Box>
 
       <Dialog open={confirmSubmit} onClose={() => setConfirmSubmit(false)}>
         <DialogTitle sx={{ fontWeight: 800 }}>Submit test now?</DialogTitle>
