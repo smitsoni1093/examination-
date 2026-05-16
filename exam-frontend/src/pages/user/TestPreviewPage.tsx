@@ -51,9 +51,13 @@ const TestPreviewPage = () => {
   const [draftOption, setDraftOption] = useState<number | "">("");
   const [submitting, setSubmitting] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [questionMapFilter, setQuestionMapFilter] = useState<
+    "answered" | "unanswered"
+  >("answered");
   const [submitSliderX, setSubmitSliderX] = useState(0);
   const [draggingSubmitSlider, setDraggingSubmitSlider] = useState(false);
   const submitSliderTrackRef = useRef<HTMLDivElement | null>(null);
+  const reviewSectionRef = useRef<HTMLDivElement | null>(null);
   const dragStartClientXRef = useRef(0);
   const dragStartSliderXRef = useRef(0);
   const submitKnobSize = 54;
@@ -112,6 +116,12 @@ const TestPreviewPage = () => {
 
     if (Number.isInteger(qParam) && qParam >= 1 && qParam <= questions.length) {
       setSelectedIdx(qParam - 1);
+      window.requestAnimationFrame(() => {
+        reviewSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
     }
   }, [location.search, questions.length]);
 
@@ -173,6 +183,33 @@ const TestPreviewPage = () => {
       return acc;
     },
     { answered: 0, skipped: 0, unanswered: 0 },
+  );
+
+  const filteredQuestions = questions.filter((question) => {
+    const answer = savedAnswers[question.id];
+    if (questionMapFilter === "answered") {
+      return answer?.status === "answered";
+    }
+
+    return answer?.status !== "answered";
+  });
+
+  const handleQuestionSelect = useCallback(
+    (index: number) => {
+      setSelectedIdx(index);
+      const answer = savedAnswers[questions[index].id];
+      setDraftOption(
+        answer?.status === "answered" ? answer.selectedOption || "" : "",
+      );
+
+      window.requestAnimationFrame(() => {
+        reviewSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    },
+    [questions, savedAnswers],
   );
 
   const persistAnswer = useCallback(
@@ -426,37 +463,77 @@ const TestPreviewPage = () => {
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 800 }}>
               Question Map
             </Typography>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1.5 }}>
               <Chip
+                clickable
                 size="small"
-                label="Answered"
+                label={`Answered (${counts.answered})`}
+                color={questionMapFilter === "answered" ? "primary" : "default"}
+                variant={
+                  questionMapFilter === "answered" ? "filled" : "outlined"
+                }
+                onClick={() => setQuestionMapFilter("answered")}
                 sx={{
-                  bgcolor: isDark ? "rgba(16,185,129,0.18)" : "#ECFDF5",
-                  color: isDark ? "#A7F3D0" : "#065F46",
-                  border: "1px solid rgba(16,185,129,0.4)",
+                  fontWeight: 700,
+                  borderColor: "rgba(16,185,129,0.4)",
+                  bgcolor:
+                    questionMapFilter === "answered"
+                      ? "#2563EB"
+                      : isDark
+                        ? "rgba(16,185,129,0.16)"
+                        : "#ECFDF5",
+                  color:
+                    questionMapFilter === "answered"
+                      ? "#FFFFFF"
+                      : isDark
+                        ? "#A7F3D0"
+                        : "#065F46",
                 }}
               />
               <Chip
+                clickable
                 size="small"
-                label="Skipped"
+                label={`Unanswered (${counts.unanswered + counts.skipped})`}
+                color={
+                  questionMapFilter === "unanswered" ? "primary" : "default"
+                }
+                variant={
+                  questionMapFilter === "unanswered" ? "filled" : "outlined"
+                }
+                onClick={() => setQuestionMapFilter("unanswered")}
                 sx={{
-                  bgcolor: isDark ? "rgba(245,158,11,0.2)" : "#FFFBEB",
-                  color: isDark ? "#FDE68A" : "#92400E",
-                  border: "1px solid rgba(245,158,11,0.45)",
-                }}
-              />
-              <Chip
-                size="small"
-                label="Unanswered"
-                sx={{
-                  bgcolor: isDark ? "rgba(239,68,68,0.18)" : "#FEF2F2",
-                  color: isDark ? "#FCA5A5" : "#991B1B",
-                  border: "1px solid rgba(239,68,68,0.4)",
+                  fontWeight: 700,
+                  borderColor: "rgba(239,68,68,0.4)",
+                  bgcolor:
+                    questionMapFilter === "unanswered"
+                      ? "#2563EB"
+                      : isDark
+                        ? "rgba(239,68,68,0.14)"
+                        : "#FEF2F2",
+                  color:
+                    questionMapFilter === "unanswered"
+                      ? "#FFFFFF"
+                      : isDark
+                        ? "#FCA5A5"
+                        : "#991B1B",
                 }}
               />
             </Box>
+            <Typography
+              variant="caption"
+              sx={{
+                display: "block",
+                mb: 2,
+                color: isDark ? "#94A3B8" : "#64748B",
+              }}
+            >
+              Unanswered includes skipped questions.
+            </Typography>
             <Grid container spacing={1}>
-              {questions.map((question, index) => {
+              {filteredQuestions.map((question) => {
+                const index = questions.findIndex(
+                  (item) => item.id === question.id,
+                );
                 const answer = savedAnswers[question.id];
                 const isSelected = index === selectedIdx;
                 const isAnswered = answer?.status === "answered";
@@ -471,14 +548,7 @@ const TestPreviewPage = () => {
                   <Grid item xs={3} sm={2} md={1.5} key={question.id}>
                     <Button
                       fullWidth
-                      onClick={() => {
-                        setSelectedIdx(index);
-                        setDraftOption(
-                          answer?.status === "answered"
-                            ? answer.selectedOption || ""
-                            : "",
-                        );
-                      }}
+                      onClick={() => handleQuestionSelect(index)}
                       sx={{
                         minHeight: 56,
                         aspectRatio: "1 / 1",
@@ -552,7 +622,7 @@ const TestPreviewPage = () => {
         </Grid>
 
         <Grid item xs={12} lg={5}>
-          <Paper sx={{ p: 3.2, borderRadius: 4 }}>
+          <Paper ref={reviewSectionRef} sx={{ p: 3.2, borderRadius: 4 }}>
             <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
               Review Question
             </Typography>
