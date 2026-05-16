@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Container,
@@ -29,6 +29,7 @@ import { userApi } from "../../api/endpoints";
 
 const TestPage = () => {
   const { testId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const themeMode = useSelector(
@@ -115,6 +116,17 @@ const TestPage = () => {
     }
   }, [currentIdx]);
 
+  useEffect(() => {
+    if (!questions.length) return;
+
+    const params = new URLSearchParams(location.search);
+    const qParam = Number(params.get("q"));
+
+    if (Number.isInteger(qParam) && qParam >= 1 && qParam <= questions.length) {
+      setCurrentIdx(qParam - 1);
+    }
+  }, [location.search, questions.length]);
+
   const currentQ = questions[currentIdx];
   const lang = "EN";
   const currentAnswerEntry = currentQ ? savedAnswers[currentQ.id] : undefined;
@@ -198,7 +210,7 @@ const TestPage = () => {
   };
 
   const handlePreview = () => {
-    navigate(`/user/test/${testId}/preview`);
+    navigate(`/user/test/${testId}/preview?q=${currentIdx + 1}`);
   };
 
   const handleFinalSubmit = useCallback(async () => {

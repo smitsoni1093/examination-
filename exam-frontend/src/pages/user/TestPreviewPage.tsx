@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Alert,
@@ -17,6 +17,7 @@ import {
   Paper,
   Radio,
   RadioGroup,
+  Slide,
   Typography,
 } from "@mui/material";
 import { ArrowBackRounded } from "@mui/icons-material";
@@ -35,6 +36,7 @@ const lang = "EN";
 
 const TestPreviewPage = () => {
   const { testId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const themeMode = useSelector(
@@ -50,6 +52,8 @@ const TestPreviewPage = () => {
   const [draftOption, setDraftOption] = useState<number | "">("");
   const [submitting, setSubmitting] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [showScrollToSubmit, setShowScrollToSubmit] = useState(false);
+  const submitSectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -96,6 +100,31 @@ const TestPreviewPage = () => {
         : "",
     );
   }, [questions, savedAnswers, selectedIdx]);
+
+  useEffect(() => {
+    if (!questions.length) return;
+
+    const params = new URLSearchParams(location.search);
+    const qParam = Number(params.get("q"));
+
+    if (Number.isInteger(qParam) && qParam >= 1 && qParam <= questions.length) {
+      setSelectedIdx(qParam - 1);
+    }
+  }, [location.search, questions.length]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScroll = window.scrollY + window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const nearBottom = documentHeight - currentScroll < 240;
+      setShowScrollToSubmit(!nearBottom);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const currentQuestion = questions[selectedIdx];
   const currentAnswer = currentQuestion
@@ -368,10 +397,46 @@ const TestPreviewPage = () => {
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 800 }}>
               Question Map
             </Typography>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+              <Chip
+                size="small"
+                label="Answered"
+                sx={{
+                  bgcolor: isDark ? "rgba(16,185,129,0.18)" : "#ECFDF5",
+                  color: isDark ? "#A7F3D0" : "#065F46",
+                  border: "1px solid rgba(16,185,129,0.4)",
+                }}
+              />
+              <Chip
+                size="small"
+                label="Skipped"
+                sx={{
+                  bgcolor: isDark ? "rgba(245,158,11,0.2)" : "#FFFBEB",
+                  color: isDark ? "#FDE68A" : "#92400E",
+                  border: "1px solid rgba(245,158,11,0.45)",
+                }}
+              />
+              <Chip
+                size="small"
+                label="Unanswered"
+                sx={{
+                  bgcolor: isDark ? "rgba(239,68,68,0.18)" : "#FEF2F2",
+                  color: isDark ? "#FCA5A5" : "#991B1B",
+                  border: "1px solid rgba(239,68,68,0.4)",
+                }}
+              />
+            </Box>
             <Grid container spacing={1}>
               {questions.map((question, index) => {
                 const answer = savedAnswers[question.id];
                 const isSelected = index === selectedIdx;
+                const isAnswered = answer?.status === "answered";
+                const isSkipped = answer?.status === "skipped";
+                const buttonLabel = isAnswered
+                  ? `✓ ${index + 1}`
+                  : isSkipped
+                    ? `S ${index + 1}`
+                    : `${index + 1}`;
 
                 return (
                   <Grid item xs={3} sm={2} md={1.5} key={question.id}>
@@ -395,17 +460,37 @@ const TestPreviewPage = () => {
                         justifyContent: "center",
                         border: isSelected
                           ? "2px solid #2563EB"
-                          : "1px solid rgba(148, 163, 184, 0.35)",
+                          : isAnswered
+                            ? "1px solid rgba(16, 185, 129, 0.45)"
+                            : isSkipped
+                              ? "1px solid rgba(245, 158, 11, 0.55)"
+                              : "1px solid rgba(239, 68, 68, 0.4)",
                         bgcolor: isSelected
                           ? "#2563EB"
-                          : isDark
-                            ? "rgba(255,255,255,0.03)"
-                            : "#FFFFFF",
+                          : isAnswered
+                            ? isDark
+                              ? "rgba(16,185,129,0.16)"
+                              : "#ECFDF5"
+                            : isSkipped
+                              ? isDark
+                                ? "rgba(245,158,11,0.16)"
+                                : "#FFFBEB"
+                              : isDark
+                                ? "rgba(239,68,68,0.14)"
+                                : "#FEF2F2",
                         color: isSelected
                           ? "#FFFFFF"
-                          : isDark
-                            ? "#FFFFFF"
-                            : "#0F172A",
+                          : isAnswered
+                            ? isDark
+                              ? "#A7F3D0"
+                              : "#065F46"
+                            : isSkipped
+                              ? isDark
+                                ? "#FDE68A"
+                                : "#92400E"
+                              : isDark
+                                ? "#FCA5A5"
+                                : "#991B1B",
                         boxShadow: isSelected
                           ? "0 12px 24px rgba(37, 99, 235, 0.16)"
                           : "none",
@@ -414,13 +499,21 @@ const TestPreviewPage = () => {
                         "&:hover": {
                           bgcolor: isSelected
                             ? "#1D4ED8"
-                            : isDark
-                              ? "rgba(255,255,255,0.06)"
-                              : "#F8FAFC",
+                            : isAnswered
+                              ? isDark
+                                ? "rgba(16,185,129,0.24)"
+                                : "#D1FAE5"
+                              : isSkipped
+                                ? isDark
+                                  ? "rgba(245,158,11,0.22)"
+                                  : "#FEF3C7"
+                                : isDark
+                                  ? "rgba(239,68,68,0.2)"
+                                  : "#FEE2E2",
                         },
                       }}
                     >
-                      {index + 1}
+                      {buttonLabel}
                     </Button>
                   </Grid>
                 );
@@ -530,21 +623,74 @@ const TestPreviewPage = () => {
             <Box sx={{ display: "flex", gap: 1.2, flexWrap: "wrap", mt: 3 }}>
               <Button
                 variant="outlined"
-                onClick={() => navigate(`/user/test/${testId}`)}
+                onClick={() =>
+                  navigate(`/user/test/${testId}?q=${selectedIdx + 1}`)
+                }
               >
                 Back to Test
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={() => setConfirmSubmit(true)}
-              >
-                Submit Test
               </Button>
             </Box>
           </Paper>
         </Grid>
       </Grid>
+
+      <Box
+        ref={submitSectionRef}
+        sx={{
+          mt: 3,
+          p: 2,
+          borderRadius: 3,
+          border: "1px solid rgba(148, 163, 184, 0.3)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 2,
+          flexWrap: "wrap",
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{ color: isDark ? "#CBD5E1" : "#475569" }}
+        >
+          Final step: review done. Use this single button to submit your test.
+        </Typography>
+        <Button
+          variant="contained"
+          color="error"
+          size="large"
+          onClick={() => setConfirmSubmit(true)}
+          sx={{ px: 3, fontWeight: 800 }}
+        >
+          Submit Final Test
+        </Button>
+      </Box>
+
+      <Slide direction="up" in={showScrollToSubmit} mountOnEnter unmountOnExit>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={() =>
+            submitSectionRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            })
+          }
+          sx={{
+            position: "fixed",
+            right: 20,
+            bottom: 24,
+            zIndex: 1300,
+            borderRadius: 999,
+            px: 2.2,
+            py: 1,
+            boxShadow: "0 14px 28px rgba(220, 38, 38, 0.35)",
+            fontWeight: 800,
+            textTransform: "none",
+          }}
+        >
+          Scroll to Submit
+        </Button>
+      </Slide>
 
       <Dialog open={confirmSubmit} onClose={() => setConfirmSubmit(false)}>
         <DialogTitle sx={{ fontWeight: 800 }}>Submit test now?</DialogTitle>
