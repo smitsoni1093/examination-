@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import { ArrowBackRounded } from '@mui/icons-material';
 import type { RootState } from '../../store/store';
-import { saveAnswer, clearTest, setTest, setAttemptId } from '../../store/examSlice';
+import { saveAnswer, clearTest, setTest, setAttemptId, skipAnswer } from '../../store/examSlice';
 import { userApi } from '../../api/endpoints';
 
 const TestPage = () => {
@@ -43,14 +43,17 @@ const TestPage = () => {
         dispatch(setAttemptId(res.data.attemptId));
 
         // Jump to last saved index or first unanswered
-        const answers: Record<number, number> = res.data.savedAnswers || {};
+        const answers = res.data.savedAnswers || {};
         const qs: any[] = res.data.questions || [];
         const lastIdx: number | null = res.data.lastQuestionIndex ?? null;
 
         if (typeof lastIdx === 'number' && lastIdx >= 0 && lastIdx < qs.length) {
           setCurrentIdx(lastIdx);
         } else {
-          const firstUnanswered = qs.findIndex((q: any) => !answers[q.id]);
+          const firstUnanswered = qs.findIndex((q: any) => {
+            const answer = answers[q.id];
+            return !answer || answer.status !== 'answered';
+          });
           setCurrentIdx(firstUnanswered === -1 ? 0 : firstUnanswered);
         }
 
@@ -88,10 +91,25 @@ const TestPage = () => {
 
   const currentQ = questions[currentIdx];
   const lang = 'EN';
-  const currentAnswer = savedAnswers[currentQ?.id] || 0;
+  const currentAnswerEntry = currentQ ? savedAnswers[currentQ.id] : undefined;
+  const currentAnswer = currentAnswerEntry?.status === 'answered' ? (currentAnswerEntry.selectedOption || 0) : 0;
   const navigatorPageCount = Math.max(1, Math.ceil(questions.length / navigatorPageSize));
   const navigatorStart = (navigatorPage - 1) * navigatorPageSize;
   const navigatorQuestions = questions.slice(navigatorStart, navigatorStart + navigatorPageSize);
+  const answerCounts = questions.reduce(
+    (acc, question) => {
+      const answer = savedAnswers[question.id];
+      if (answer?.status === 'answered') {
+        acc.answered += 1;
+      } else if (answer?.status === 'skipped') {
+        acc.skipped += 1;
+      } else {
+        acc.unanswered += 1;
+      }
+      return acc;
+    },
+    { answered: 0, skipped: 0, unanswered: 0 }
+  );
 
   const persistAnswer = useCallback(async (questionId: number, selectedOption: number, questionIndex: number) => {
     if (attemptId) {
@@ -121,6 +139,24 @@ const TestPage = () => {
     } catch (err) {
       console.error('Auto-save failed', err);
     }
+  };
+
+  const handleSkipQuestion = async () => {
+    dispatch(skipAnswer({ questionId: currentQ.id }));
+
+    try {
+      await persistAnswer(currentQ.id, 0, currentIdx);
+    } catch (err) {
+      console.error('Skip save failed', err);
+    }
+
+    if (currentIdx < questions.length - 1) {
+      setCurrentIdx(prev => prev + 1);
+    }
+  };
+
+  const handlePreview = () => {
+    navigate(`/user/test/${testId}/preview`);
   };
 
   const handleFinalSubmit = useCallback(async () => {
@@ -198,7 +234,12 @@ const TestPage = () => {
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ color: isDark ? '#FFFFFF' : undefined }}>{testName}</Typography>
+        <Box>
+          <Typography variant="h5" sx={{ color: isDark ? '#FFFFFF' : undefined }}>{testName}</Typography>
+          <Typography variant="body2" sx={{ mt: 0.5, color: isDark ? '#CBD5E1' : '#475569' }}>
+            Review unanswered and skipped questions in preview before final submission.
+          </Typography>
+        </Box>
       </Box>
 
       <Grid container spacing={3}>
@@ -247,6 +288,17 @@ const TestPage = () => {
                 ))}
               </RadioGroup>
             </FormControl>
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 2, mt: 3, flexWrap: 'wrap' }}>
+              <Button
+                variant="outlined"
+                color="warning"
+                onClick={handleSkipQuestion}
+                sx={{ fontSize: '0.82rem', py: 0.8 }}
+              >
+                Skip Question
+              </Button>
+            </Box>
           </Paper>
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
@@ -260,14 +312,23 @@ const TestPage = () => {
             </Button>
             
             {currentIdx === questions.length - 1 ? (
-              <Button 
-                variant="contained" 
-                color="error" 
-                onClick={handleFinishClick}
-                sx={{ fontSize: '0.82rem', py: 0.8 }}
-              >
-                Submit Test
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <Button
+                  variant="outlined"
+                  onClick={handlePreview}
+                  sx={{ fontSize: '0.82rem', py: 0.8 }}
+                >
+                  Preview Test
+                </Button>
+                <Button 
+                  variant="contained" 
+                  color="error" 
+                  onClick={handleFinishClick}
+                  sx={{ fontSize: '0.82rem', py: 0.8 }}
+                >
+                  Submit Test
+                </Button>
+              </Box>
             ) : (
               <Button 
                 variant="contained" 
@@ -287,9 +348,15 @@ const TestPage = () => {
             <Grid container spacing={1} sx={{ mt: 1 }}>
               {navigatorQuestions.map((q, localIdx) => {
                 const idx = navigatorStart + localIdx;
-                const isAnswered = !!savedAnswers[q.id];
+                const answerEntry = savedAnswers[q.id];
+                const isAnswered = answerEntry?.status === 'answered';
+                const isSkipped = answerEntry?.status === 'skipped';
                 const isActive = idx === currentIdx;
-                const buttonLabel = isAnswered && !isActive ? `✓ ${idx + 1}` : `${idx + 1}`;
+                const buttonLabel = isAnswered && !isActive
+                  ? `✓ ${idx + 1}`
+                  : isSkipped && !isActive
+                    ? `S ${idx + 1}`
+                    : `${idx + 1}`;
                 
                 return (
                   <Grid item xs={3} key={q.id}>
@@ -307,11 +374,15 @@ const TestPage = () => {
                               ? '#111111'
                               : isAnswered
                                 ? '#000000'
-                                : '#000000')
+                                : isSkipped
+                                  ? 'rgba(250, 204, 21, 0.16)'
+                                  : '#000000')
                           : (isActive
                               ? '#2563EB'
                               : isAnswered
                                 ? '#10B981'
+                                : isSkipped
+                                  ? '#FDE68A'
                                 : '#FFFFFF'),
                         color: isDark
                           ? (isActive
@@ -338,17 +409,21 @@ const TestPage = () => {
                             : (isActive ? '#1D4ED8' : isAnswered ? '#059669' : '#F8FAFC'),
                         },
                       }}
+                                  : isSkipped
+                                    ? '#FACC15'
                       onClick={() => setCurrentIdx(idx)}
                     >
                       {buttonLabel}
                     </Button>
                   </Grid>
+                                  : isSkipped
+                                    ? '#F59E0B'
                 );
-              })}
+                          boxShadow: isDark && isAnswered && !isActive ? '0 0 0 1px rgba(16, 185, 129, 0.55)' : undefined,
             </Grid>
 
-            {navigatorPageCount > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.75, mt: 2 }}>
+                              ? (isActive ? '#1F1F1F' : isAnswered ? '#111111' : isSkipped ? 'rgba(250, 204, 21, 0.22)' : '#111111')
+                              : (isActive ? '#1D4ED8' : isAnswered ? '#059669' : isSkipped ? '#FDE68A' : '#F8FAFC'),
                 <Button
                   size="small"
                   variant="outlined"
@@ -410,7 +485,13 @@ const TestPage = () => {
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmSubmit} onClose={() => setConfirmSubmit(false)}>
-        <DialogTitle sx={{ bgcolor: isDark ? '#000000' : undefined, color: isDark ? '#FFFFFF' : undefined }}>Are you sure you want to submit the test?</DialogTitle>
+        <DialogTitle sx={{ bgcolor: isDark ? '#000000' : undefined, color: isDark ? '#FFFFFF' : undefined }}>Submit without preview?</DialogTitle>
+        <Box sx={{ px: 3, pb: 1.5 }}>
+          <Typography variant="body2" sx={{ color: isDark ? '#CBD5E1' : 'text.secondary' }}>
+            You have {answerCounts.unanswered} unanswered and {answerCounts.skipped} skipped questions.
+            You can still submit now, or cancel and open the preview first.
+          </Typography>
+        </Box>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={() => setConfirmSubmit(false)}>Cancel</Button>
           <Button onClick={handleFinalSubmit} variant="contained" color="error" disabled={submitting}>
