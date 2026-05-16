@@ -725,7 +725,9 @@ const TestPreviewPage = () => {
               display: "grid",
               placeItems: "center",
               transform: `translateX(${submitSliderX}px)`,
-              transition: draggingSubmitSlider ? "none" : "transform 180ms ease",
+              transition: draggingSubmitSlider
+                ? "none"
+                : "transform 180ms ease",
               bgcolor: "#DC2626",
               color: "#FFFFFF",
               fontWeight: 900,
