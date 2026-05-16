@@ -368,35 +368,13 @@ const TestPreviewPage = () => {
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 800 }}>
               Question Map
             </Typography>
-            <Grid container spacing={1.2}>
+            <Grid container spacing={1}>
               {questions.map((question, index) => {
                 const answer = savedAnswers[question.id];
-                const status = answer?.status || "unanswered";
                 const isSelected = index === selectedIdx;
-                const palette =
-                  status === "answered"
-                    ? {
-                        bg: "#DCFCE7",
-                        border: "#22C55E",
-                        fg: "#166534",
-                        label: "Answered",
-                      }
-                    : status === "skipped"
-                      ? {
-                          bg: "#FEF3C7",
-                          border: "#F59E0B",
-                          fg: "#92400E",
-                          label: "Skipped",
-                        }
-                      : {
-                          bg: "#FEE2E2",
-                          border: "#EF4444",
-                          fg: "#991B1B",
-                          label: "Unanswered",
-                        };
 
                 return (
-                  <Grid item xs={6} sm={4} md={3} key={question.id}>
+                  <Grid item xs={3} sm={2} md={1.5} key={question.id}>
                     <Button
                       fullWidth
                       onClick={() => {
@@ -408,46 +386,41 @@ const TestPreviewPage = () => {
                         );
                       }}
                       sx={{
-                        minHeight: 88,
+                        minHeight: 56,
+                        aspectRatio: "1 / 1",
                         borderRadius: 3,
-                        p: 1.2,
+                        p: 0,
                         textTransform: "none",
-                        alignItems: "flex-start",
-                        justifyContent: "flex-start",
-                        border: `1px solid ${palette.border}`,
-                        bgcolor: isSelected ? "#2563EB" : palette.bg,
-                        color: isSelected ? "#FFFFFF" : palette.fg,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: isSelected
+                          ? "2px solid #2563EB"
+                          : "1px solid rgba(148, 163, 184, 0.35)",
+                        bgcolor: isSelected
+                          ? "#2563EB"
+                          : isDark
+                            ? "rgba(255,255,255,0.03)"
+                            : "#FFFFFF",
+                        color: isSelected
+                          ? "#FFFFFF"
+                          : isDark
+                            ? "#FFFFFF"
+                            : "#0F172A",
                         boxShadow: isSelected
-                          ? "0 12px 24px rgba(37, 99, 235, 0.18)"
+                          ? "0 12px 24px rgba(37, 99, 235, 0.16)"
                           : "none",
+                        fontSize: "0.95rem",
+                        fontWeight: 800,
                         "&:hover": {
-                          bgcolor: isSelected ? "#1D4ED8" : palette.bg,
+                          bgcolor: isSelected
+                            ? "#1D4ED8"
+                            : isDark
+                              ? "rgba(255,255,255,0.06)"
+                              : "#F8FAFC",
                         },
                       }}
                     >
-                      <Box sx={{ width: "100%", textAlign: "left" }}>
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ fontWeight: 800 }}
-                        >
-                          Q{index + 1}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ display: "block", mt: 0.3, opacity: 0.9 }}
-                        >
-                          {palette.label}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ mt: 0.8, fontSize: "0.8rem", lineHeight: 1.4 }}
-                        >
-                          {(question as any)[`question_${lang}`].slice(0, 60)}
-                          {(question as any)[`question_${lang}`].length > 60
-                            ? "..."
-                            : ""}
-                        </Typography>
-                      </Box>
+                      {index + 1}
                     </Button>
                   </Grid>
                 );
