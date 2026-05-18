@@ -42,7 +42,6 @@ import { adminApi } from "../../api/endpoints";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import type { RootState } from "../../store/store";
 
 type CandidateUser = {
   id: number;
@@ -134,9 +133,10 @@ const initialImportMapping: UserImportMapping = {
 const CreateUser = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const themeMode = useSelector(
-    (state: RootState) => state.theme?.mode || "light",
-  );
+  const themeMode = useSelector((state: unknown) => {
+    const typedState = state as { theme?: { mode?: "light" | "dark" } };
+    return typedState.theme?.mode || "light";
+  });
   const isDark = themeMode === "dark";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
