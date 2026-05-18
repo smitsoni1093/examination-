@@ -26,6 +26,7 @@ import {
   TableRow,
   IconButton,
   Tooltip,
+  InputAdornment,
 } from "@mui/material";
 import {
   PersonAdd,
@@ -35,6 +36,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Download as DownloadIcon,
+  Search as SearchIcon,
 } from "@mui/icons-material";
 import { adminApi } from "../../api/endpoints";
 import { useTranslation } from "react-i18next";
@@ -147,6 +149,8 @@ const CreateUser = () => {
   const [usersPage, setUsersPage] = useState(1);
   const [usersPageSize] = useState(10);
   const [usersTotalCount, setUsersTotalCount] = useState(0);
+  const [userSearchInput, setUserSearchInput] = useState("");
+  const [userSearchTerm, setUserSearchTerm] = useState("");
   const [message, setMessage] = useState({ type: "", text: "" });
   const [loading, setLoading] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -178,9 +182,9 @@ const CreateUser = () => {
   const [editClassId, setEditClassId] = useState<number | "">("");
 
   const fetchUsers = useCallback(
-    async (page = usersPage) => {
+    async (page = 1, search = "") => {
       try {
-        const res = await adminApi.getUsersPaged(page, usersPageSize);
+        const res = await adminApi.getUsersPaged(page, usersPageSize, search);
         const items = Array.isArray(res.data?.items) ? res.data.items : [];
         const normalized: CandidateUser[] = items.map(
           (u: CandidateUser & { mobile?: string; phoneNumber?: string }) => ({
@@ -213,12 +217,21 @@ const CreateUser = () => {
         console.error(err);
       }
     },
-    [usersPage, usersPageSize],
+    [usersPageSize],
   );
 
   useEffect(() => {
-    fetchUsers(usersPage);
-  }, [usersPage, fetchUsers]);
+    const timer = window.setTimeout(() => {
+      setUsersPage(1);
+      setUserSearchTerm(userSearchInput.trim());
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [userSearchInput]);
+
+  useEffect(() => {
+    fetchUsers(usersPage, userSearchTerm);
+  }, [usersPage, userSearchTerm, fetchUsers]);
 
   const fetchClasses = useCallback(async () => {
     try {
@@ -264,7 +277,7 @@ const CreateUser = () => {
       setPincode("");
       setAddress("");
       setClassId("");
-      fetchUsers(usersPage);
+      fetchUsers(usersPage, userSearchTerm);
     } catch (err: unknown) {
       const errorObj = err as ApiError;
       const messageKey = errorObj.response?.data?.messageKey;
@@ -426,7 +439,7 @@ const CreateUser = () => {
         type: "success",
         text: `Import complete: ${res.data.successCount} created, ${res.data.failedCount} failed.`,
       });
-      fetchUsers(usersPage);
+      fetchUsers(usersPage, userSearchTerm);
     } catch (err: unknown) {
       const errorObj = err as ApiError;
       setImportError(
@@ -492,7 +505,7 @@ const CreateUser = () => {
       });
       setMessage({ type: "success", text: "User updated successfully." });
       handleCloseEdit();
-      fetchUsers(usersPage);
+      fetchUsers(usersPage, userSearchTerm);
     } catch (err: unknown) {
       const errorObj = err as ApiError;
       const backendMessage = errorObj.response?.data?.message;
@@ -515,7 +528,7 @@ const CreateUser = () => {
     try {
       await adminApi.deleteUser(user.id);
       setMessage({ type: "success", text: "User deleted successfully." });
-      fetchUsers();
+      fetchUsers(usersPage, userSearchTerm);
     } catch (err: unknown) {
       const errorObj = err as ApiError;
       const backendMessage = errorObj.response?.data?.message;
@@ -530,7 +543,7 @@ const CreateUser = () => {
 
   const handleDownloadUsersExcel = async () => {
     try {
-      const res = await adminApi.downloadUsersExcel();
+      const res = await adminApi.downloadUsersExcel(userSearchTerm);
       const blob = new Blob([res.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
@@ -1243,8 +1256,29 @@ const CreateUser = () => {
                     gap: { xs: 1, sm: 1.2 },
                     flexWrap: "wrap",
                     justifyContent: { xs: "center", sm: "flex-end" },
+                    width: { xs: "100%", sm: "auto" },
                   }}
                 >
+                  <TextField
+                    size="small"
+                    value={userSearchInput}
+                    onChange={(e) => setUserSearchInput(e.target.value)}
+                    placeholder="Search users by name, username, email, mobile, roll no, pincode, address, or class"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      minWidth: { xs: "100%", sm: 360 },
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: 2,
+                        bgcolor: isDark ? "#000000" : "#FFFFFF",
+                      },
+                    }}
+                  />
                   <Button
                     size="small"
                     variant="outlined"
@@ -1549,7 +1583,9 @@ const CreateUser = () => {
                                 fontSize: { xs: "0.8rem", sm: "0.9rem" },
                               }}
                             >
-                              No students provisioned in the system.
+                              {userSearchTerm
+                                ? "No users match your search."
+                                : "No students provisioned in the system."}
                             </Typography>
                           </Box>
                         </TableCell>

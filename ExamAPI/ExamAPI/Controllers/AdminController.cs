@@ -43,18 +43,18 @@ namespace ExamAPI.Controllers
         }
 
         [HttpGet("users")]
-        public async Task<IActionResult> GetUsers()
+        public async Task<IActionResult> GetUsers([FromQuery] string? search)
         {
             var adminId = GetAdminId();
-            var users = await _adminService.GetUsersAsync(adminId);
+            var users = await _adminService.GetUsersAsync(adminId, search);
             return Ok(users.Select(u => new { u.Id, u.Name, u.Username, u.Email, u.MobileNumber, u.RollNumber, u.Pincode, u.Address, u.ClassId }));
         }
 
         [HttpGet("users/export")]
-        public async Task<IActionResult> ExportUsersExcel()
+        public async Task<IActionResult> ExportUsersExcel([FromQuery] string? search)
         {
             var adminId = GetAdminId();
-            var users = await _adminService.GetUsersAsync(adminId);
+            var users = await _adminService.GetUsersAsync(adminId, search);
 
             using var package = new ExcelPackage();
             var sheet = package.Workbook.Worksheets.Add("Users");
@@ -107,13 +107,13 @@ namespace ExamAPI.Controllers
         }
 
         [HttpGet("users/paged")]
-        public async Task<IActionResult> GetUsersPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetUsersPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null)
         {
             var adminId = GetAdminId();
             var safePage = Math.Max(page, 1);
             var safePageSize = Math.Clamp(pageSize, 1, 100);
 
-            var (items, totalCount) = await _adminService.GetUsersPageAsync(adminId, safePage, safePageSize);
+            var (items, totalCount) = await _adminService.GetUsersPageAsync(adminId, safePage, safePageSize, search);
             var totalPages = (int)Math.Ceiling(totalCount / (double)safePageSize);
 
             return Ok(new

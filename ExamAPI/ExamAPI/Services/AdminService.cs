@@ -381,20 +381,55 @@ namespace ExamAPI.Services
                 || message.Contains("RollNumber", StringComparison.OrdinalIgnoreCase);
         }
 
-        public Task<List<User>> GetUsersAsync() => GetUsersAsync(null);
+        public Task<List<User>> GetUsersAsync() => GetUsersAsync(null, null);
 
-        public async Task<List<User>> GetUsersAsync(int? adminId) =>
-            await _db.Users
-                .Where(u => u.Role == "User" && (adminId == null || u.AdminId == adminId))
-                .ToListAsync();
+        public async Task<List<User>> GetUsersAsync(int? adminId, string? search = null)
+        {
+            var query = _db.Users
+                .Where(u => u.Role == "User" && (adminId == null || u.AdminId == adminId));
 
-        public async Task<(List<User> Items, int TotalCount)> GetUsersPageAsync(int? adminId, int page, int pageSize)
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var normalizedSearch = search.Trim().ToLowerInvariant();
+                query = query.Where(u =>
+                    u.Id.ToString().Contains(normalizedSearch) ||
+                    u.Name.ToLower().Contains(normalizedSearch) ||
+                    u.Username.ToLower().Contains(normalizedSearch) ||
+                    u.Email.ToLower().Contains(normalizedSearch) ||
+                    (u.MobileNumber != null && u.MobileNumber.ToLower().Contains(normalizedSearch)) ||
+                    (u.RollNumber != null && u.RollNumber.ToLower().Contains(normalizedSearch)) ||
+                    (u.Pincode != null && u.Pincode.ToLower().Contains(normalizedSearch)) ||
+                    (u.Address != null && u.Address.ToLower().Contains(normalizedSearch)) ||
+                    (u.ClassId != null && u.ClassId.Value.ToString().Contains(normalizedSearch)) ||
+                    (u.Class != null && u.Class.Name.ToLower().Contains(normalizedSearch)));
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<(List<User> Items, int TotalCount)> GetUsersPageAsync(int? adminId, int page, int pageSize, string? search = null)
         {
             var safePage = Math.Max(page, 1);
             var safePageSize = Math.Max(pageSize, 1);
 
             var query = _db.Users
                 .Where(u => u.Role == "User" && (adminId == null || u.AdminId == adminId));
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var normalizedSearch = search.Trim().ToLowerInvariant();
+                query = query.Where(u =>
+                    u.Id.ToString().Contains(normalizedSearch) ||
+                    u.Name.ToLower().Contains(normalizedSearch) ||
+                    u.Username.ToLower().Contains(normalizedSearch) ||
+                    u.Email.ToLower().Contains(normalizedSearch) ||
+                    (u.MobileNumber != null && u.MobileNumber.ToLower().Contains(normalizedSearch)) ||
+                    (u.RollNumber != null && u.RollNumber.ToLower().Contains(normalizedSearch)) ||
+                    (u.Pincode != null && u.Pincode.ToLower().Contains(normalizedSearch)) ||
+                    (u.Address != null && u.Address.ToLower().Contains(normalizedSearch)) ||
+                    (u.ClassId != null && u.ClassId.Value.ToString().Contains(normalizedSearch)) ||
+                    (u.Class != null && u.Class.Name.ToLower().Contains(normalizedSearch)));
+            }
 
             var totalCount = await query.CountAsync();
             var items = await query

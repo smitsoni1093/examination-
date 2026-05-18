@@ -38,8 +38,10 @@ export const authApi = {
 
 export const adminApi = {
   getUsers: () => api.get('/admin/users'),
-  downloadUsersExcel: () => api.get('/admin/users/export', { responseType: 'blob' }),
-  getUsersPaged: (page: number, pageSize: number) => api.get(`/admin/users/paged?page=${page}&pageSize=${pageSize}`),
+  downloadUsersExcel: (search?: string) =>
+    api.get(`/admin/users/export?search=${encodeURIComponent(search || '')}`, { responseType: 'blob' }),
+  getUsersPaged: (page: number, pageSize: number, search?: string) =>
+    api.get(`/admin/users/paged?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search || '')}`),
   createUser: (data: any) => api.post('/admin/create-user', data),
   updateUser: (id: number, data: any) => api.put(`/admin/users/${id}`, data),
   deleteUser: (id: number) => api.delete(`/admin/users/${id}`),
