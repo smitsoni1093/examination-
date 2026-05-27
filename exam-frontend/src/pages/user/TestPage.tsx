@@ -23,6 +23,7 @@ import {
   clearTest,
   setTest,
   setAttemptId,
+  setCurrentQuestionIndex,
   skipAnswer,
 } from "../../store/examSlice";
 import { userApi } from "../../api/endpoints";
@@ -77,12 +78,15 @@ const TestPage = () => {
           lastIdx < qs.length
         ) {
           setCurrentIdx(lastIdx);
+          dispatch(setCurrentQuestionIndex(lastIdx));
         } else {
           const firstUnanswered = qs.findIndex((q: any) => {
             const answer = answers[q.id];
             return !answer || answer.status !== "answered";
           });
-          setCurrentIdx(firstUnanswered === -1 ? 0 : firstUnanswered);
+          const nextIdx = firstUnanswered === -1 ? 0 : firstUnanswered;
+          setCurrentIdx(nextIdx);
+          dispatch(setCurrentQuestionIndex(nextIdx));
         }
       } catch (err) {
         // If no attempt exists (direct navigation), fall back to legacy test load
@@ -114,6 +118,7 @@ const TestPage = () => {
     if (pageFromIndex !== navigatorPage) {
       setNavigatorPage(pageFromIndex);
     }
+    dispatch(setCurrentQuestionIndex(currentIdx));
   }, [currentIdx]);
 
   useEffect(() => {
@@ -123,9 +128,11 @@ const TestPage = () => {
     const qParam = Number(params.get("q"));
 
     if (Number.isInteger(qParam) && qParam >= 1 && qParam <= questions.length) {
-      setCurrentIdx(qParam - 1);
+      const nextIdx = qParam - 1;
+      setCurrentIdx(nextIdx);
+      dispatch(setCurrentQuestionIndex(nextIdx));
     }
-  }, [location.search, questions.length]);
+  }, [location.search, questions.length, dispatch]);
 
   const currentQ = questions[currentIdx];
   const lang = "EN";

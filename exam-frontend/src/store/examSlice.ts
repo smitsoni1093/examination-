@@ -35,6 +35,7 @@ interface ExamState {
   duration: number; // minutes
   questions: Question[];
   savedAnswers: Record<number, SavedAnswerState>;
+  currentQuestionIndex: number;
 }
 
 const createEmptyAnswer = (): SavedAnswerState => ({ status: "unanswered" });
@@ -96,6 +97,7 @@ const initialState: ExamState = {
   duration: 0,
   questions: [],
   savedAnswers: {},
+  currentQuestionIndex: 0,
 };
 
 const examSlice = createSlice({
@@ -113,6 +115,9 @@ const examSlice = createSlice({
     },
     setAttemptId: (state, action: PayloadAction<number | null>) => {
       state.attemptId = action.payload;
+    },
+    setCurrentQuestionIndex: (state, action: PayloadAction<number>) => {
+      state.currentQuestionIndex = action.payload;
     },
     saveAnswer: (
       state,
@@ -138,6 +143,7 @@ const examSlice = createSlice({
 export const {
   setTest,
   setAttemptId,
+  setCurrentQuestionIndex,
   saveAnswer,
   clearTest,
   clearAnswer,
