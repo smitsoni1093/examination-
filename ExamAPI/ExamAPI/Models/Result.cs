@@ -15,6 +15,7 @@ namespace ExamAPI.Models
         public int TotalQuestions { get; set; }
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
         public bool IsPublished { get; set; } = false;
+        public bool ShowDetailedAnswers { get; set; } = false;
         public DateTime? PublishedAt { get; set; }
     }
 }

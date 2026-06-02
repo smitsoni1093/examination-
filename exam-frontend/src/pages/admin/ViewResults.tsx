@@ -15,6 +15,10 @@ import {
   LinearProgress,
   Button,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from "@mui/material";
 import {
   Assessment,
@@ -48,6 +52,7 @@ type ResultItem = {
   totalQuestions: number;
   submittedAt: string;
   isPublished?: boolean;
+  showDetailedAnswers?: boolean;
   publishedAt?: string | null;
 };
 
@@ -74,6 +79,12 @@ const ViewResults = () => {
   const [selectedResults, setSelectedResults] = useState<Set<string>>(
     new Set(),
   );
+  const [releaseDialogTarget, setReleaseDialogTarget] = useState<{
+    kind: "single" | "bulk";
+    userId: number;
+    testId: number;
+    label: string;
+  } | null>(null);
   const pageSize = 10;
 
   useEffect(() => {
@@ -148,15 +159,20 @@ const ViewResults = () => {
     }
   }, [page, totalPages]);
 
-  const handleReleaseResult = async (userId: number, testId: number) => {
+  const handleReleaseResult = async (
+    userId: number,
+    testId: number,
+    showDetailedAnswers: boolean,
+  ) => {
     try {
-      await adminApi.releaseResult(userId, testId);
+      await adminApi.releaseResult(userId, testId, showDetailedAnswers);
       setResults((prev) =>
         prev.map((item) => {
           if (item.userId === userId && item.testId === testId) {
             return {
               ...item,
               isPublished: true,
+              showDetailedAnswers,
               publishedAt: new Date().toISOString(),
             };
           }
@@ -169,7 +185,7 @@ const ViewResults = () => {
     }
   };
 
-  const handleBulkRelease = async () => {
+  const handleBulkRelease = async (showDetailedAnswers: boolean) => {
     try {
       const itemsToRelease = pagedResults.filter((item) => {
         const key = `${item.userId}-${item.testId}`;
@@ -177,7 +193,11 @@ const ViewResults = () => {
       });
 
       for (const item of itemsToRelease) {
-        await adminApi.releaseResult(item.userId, item.testId);
+        await adminApi.releaseResult(
+          item.userId,
+          item.testId,
+          showDetailedAnswers,
+        );
       }
 
       setResults((prev) =>
@@ -386,7 +406,14 @@ const ViewResults = () => {
               {selectedResults.size > 0 && unreleaseCount > 0 && (
                 <Button
                   variant="contained"
-                  onClick={handleBulkRelease}
+                  onClick={() =>
+                    setReleaseDialogTarget({
+                      kind: "bulk",
+                      userId: -1,
+                      testId: -1,
+                      label: `${unreleaseCount} selected result${unreleaseCount > 1 ? "s" : ""}`,
+                    })
+                  }
                   sx={{
                     borderRadius: 2,
                     fontWeight: 700,
@@ -902,7 +929,12 @@ const ViewResults = () => {
                             variant="contained"
                             size="small"
                             onClick={() =>
-                              handleReleaseResult(row.userId, row.testId)
+                              setReleaseDialogTarget({
+                                kind: "single",
+                                userId: row.userId,
+                                testId: row.testId,
+                                label: `${row.userName ?? "Candidate"} • ${row.testName ?? "Test"}`,
+                              })
                             }
                             sx={{
                               borderRadius: 1,
@@ -922,13 +954,21 @@ const ViewResults = () => {
                         )}
                         {row.isPublished && (
                           <Chip
-                            label="Released"
+                            label={
+                              row.showDetailedAnswers
+                                ? "Detailed"
+                                : "Marks Only"
+                            }
                             size="small"
                             sx={{
                               fontSize: { xs: "0.6rem", sm: "0.7rem" },
                               fontWeight: 700,
-                              bgcolor: "rgba(16, 185, 129, 0.12)",
-                              color: "#047857",
+                              bgcolor: row.showDetailedAnswers
+                                ? "rgba(37, 99, 235, 0.12)"
+                                : "rgba(16, 185, 129, 0.12)",
+                              color: row.showDetailedAnswers
+                                ? "#1D4ED8"
+                                : "#047857",
                             }}
                           />
                         )}
@@ -1114,6 +1154,73 @@ const ViewResults = () => {
                 {">>"}
               </Button>
             </Box>
+
+            <Dialog
+              open={Boolean(releaseDialogTarget)}
+              onClose={() => setReleaseDialogTarget(null)}
+              fullWidth
+              maxWidth="xs"
+            >
+              <DialogTitle sx={{ fontWeight: 800 }}>
+                Release result mode
+              </DialogTitle>
+              <DialogContent dividers>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  {releaseDialogTarget?.label}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 1.5, color: "text.secondary" }}
+                >
+                  Choose whether the user should see only marks or the full
+                  answer review with right and wrong answers.
+                </Typography>
+              </DialogContent>
+              <DialogActions sx={{ p: 2, flexWrap: "wrap" }}>
+                <Button onClick={() => setReleaseDialogTarget(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={async () => {
+                    if (!releaseDialogTarget) return;
+                    const target = releaseDialogTarget;
+                    setReleaseDialogTarget(null);
+                    if (target.kind === "bulk") {
+                      await handleBulkRelease(false);
+                      return;
+                    }
+                    await handleReleaseResult(
+                      target.userId,
+                      target.testId,
+                      false,
+                    );
+                  }}
+                >
+                  Release Marks Only
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={async () => {
+                    if (!releaseDialogTarget) return;
+                    const target = releaseDialogTarget;
+                    setReleaseDialogTarget(null);
+                    if (target.kind === "bulk") {
+                      await handleBulkRelease(true);
+                      return;
+                    }
+                    await handleReleaseResult(
+                      target.userId,
+                      target.testId,
+                      true,
+                    );
+                  }}
+                  sx={{ bgcolor: "#2563EB", "&:hover": { bgcolor: "#1D4ED8" } }}
+                >
+                  Release with Answers
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Box>
         )}
       </Container>

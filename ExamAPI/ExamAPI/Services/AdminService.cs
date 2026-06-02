@@ -1761,12 +1761,13 @@ namespace ExamAPI.Services
                     r.TotalQuestions,
                     r.SubmittedAt,
                     r.IsPublished,
+                    r.ShowDetailedAnswers,
                     r.PublishedAt
                 ))
                 .ToListAsync();
         }
 
-        public async Task ReleaseResultAsync(int adminId, int userId, int testId)
+        public async Task ReleaseResultAsync(int adminId, int userId, int testId, bool showDetailedAnswers)
         {
             var result = await _db.Results
                 .Include(r => r.Test)
@@ -1782,6 +1783,7 @@ namespace ExamAPI.Services
                 return;
 
             result.IsPublished = true;
+            result.ShowDetailedAnswers = showDetailedAnswers;
             result.PublishedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();

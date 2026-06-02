@@ -255,8 +255,24 @@ namespace ExamAPI.Services
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.TestId == dto.TestId);
 
             if (existing != null)
-                return new ResultDto(existing.UserId, existing.User.Name, existing.TestId,
-                    existing.Test.Name, existing.Score, existing.TotalQuestions, existing.SubmittedAt);
+            {
+                var existingItems = existing.ShowDetailedAnswers
+                    ? await BuildAnswerReviewItemsAsync(userId, dto.TestId)
+                    : null;
+
+                return new ResultDto(
+                    existing.UserId,
+                    existing.User.Name,
+                    existing.TestId,
+                    existing.Test.Name,
+                    existing.Score,
+                    existing.TotalQuestions,
+                    existing.SubmittedAt,
+                    existing.IsPublished,
+                    existing.ShowDetailedAnswers,
+                    existing.PublishedAt,
+                    existingItems);
+            }
 
             // Fetch questions with correct answers
             var testQuestions = await _db.TestQuestions
@@ -284,14 +300,25 @@ namespace ExamAPI.Services
                 TotalQuestions = testQuestions.Count,
                 SubmittedAt = DateTime.UtcNow,
                 IsPublished = false,
+                ShowDetailedAnswers = false,
                 PublishedAt = null
             };
 
             _db.Results.Add(result);
             await _db.SaveChangesAsync();
 
-            return new ResultDto(userId, user!.Name, dto.TestId, test!.Name,
-                score, testQuestions.Count, result.SubmittedAt);
+            return new ResultDto(
+                userId,
+                user!.Name,
+                dto.TestId,
+                test!.Name,
+                score,
+                testQuestions.Count,
+                result.SubmittedAt,
+                result.IsPublished,
+                result.ShowDetailedAnswers,
+                result.PublishedAt,
+                null);
         }
 
         /// <summary>Get the result for a user's test</summary>
@@ -308,15 +335,73 @@ namespace ExamAPI.Services
             if (unpublishedExists)
                 throw new InvalidOperationException("Result is pending admin release.");
 
-            return await _db.Results
+            var publishedResult = await _db.Results
                 .Include(r => r.User)
                 .Include(r => r.Test)
                 .Where(r => r.UserId == userId && r.TestId == testId && r.IsPublished)
-                .Select(r => new ResultDto(
-                    r.UserId, r.User.Name, r.TestId, r.Test.Name,
-                    r.Score, r.TotalQuestions, r.SubmittedAt,
-                    r.IsPublished, r.PublishedAt))
                 .FirstOrDefaultAsync();
+
+            if (publishedResult == null) return null;
+
+            var items = publishedResult.ShowDetailedAnswers
+                ? await BuildAnswerReviewItemsAsync(userId, testId)
+                : null;
+
+            return new ResultDto(
+                publishedResult.UserId,
+                publishedResult.User.Name,
+                publishedResult.TestId,
+                publishedResult.Test.Name,
+                publishedResult.Score,
+                publishedResult.TotalQuestions,
+                publishedResult.SubmittedAt,
+                publishedResult.IsPublished,
+                publishedResult.ShowDetailedAnswers,
+                publishedResult.PublishedAt,
+                items);
+        }
+
+        private async Task<List<AdminAnswerReviewItemDto>> BuildAnswerReviewItemsAsync(int userId, int testId)
+        {
+            var attempt = await _db.TestAttempts
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId && a.IsSubmitted);
+
+            Dictionary<int, int> answers = new();
+
+            if (attempt != null)
+            {
+                answers = await _db.StudentAnswers
+                    .AsNoTracking()
+                    .Where(a => a.AttemptId == attempt.Id)
+                    .ToDictionaryAsync(a => a.QuestionId, a => a.SelectedOption);
+            }
+            else
+            {
+                answers = await _db.UserAnswers
+                    .AsNoTracking()
+                    .Where(a => a.UserId == userId && a.TestId == testId)
+                    .ToDictionaryAsync(a => a.QuestionId, a => a.SelectedOption);
+            }
+
+            return await _db.TestQuestions
+                .AsNoTracking()
+                .Where(tq => tq.TestId == testId)
+                .OrderBy(tq => tq.OrderIndex)
+                .Select(tq => new { tq.OrderIndex, Question = tq.Question })
+                .Select(x => new AdminAnswerReviewItemDto(
+                    x.Question.Id,
+                    x.OrderIndex,
+                    x.Question.Question_EN,
+                    x.Question.Option1_EN,
+                    x.Question.Option2_EN,
+                    x.Question.Option3_EN,
+                    x.Question.Option4_EN,
+                    x.Question.CorrectOption,
+                    answers.ContainsKey(x.Question.Id) ? answers[x.Question.Id] : 0,
+                    answers.ContainsKey(x.Question.Id) && answers[x.Question.Id] == x.Question.CorrectOption
+                ))
+                .ToListAsync();
         }
 
         /// <summary>Update user's preferred language</summary>

@@ -278,10 +278,12 @@ namespace ExamAPI.DTOs
         int TotalQuestions,
         DateTime SubmittedAt,
         bool IsPublished = false,
-        DateTime? PublishedAt = null
+        bool ShowDetailedAnswers = false,
+        DateTime? PublishedAt = null,
+        List<AdminAnswerReviewItemDto>? Items = null
     );
 
-    public record ReleaseResultDto(int UserId, int TestId);
+    public record ReleaseResultDto(int UserId, int TestId, bool ShowDetailedAnswers = false);
 
     public record AdminAnswerReviewItemDto(
         int QuestionId,

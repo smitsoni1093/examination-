@@ -123,8 +123,12 @@ export const adminApi = {
   getResults: () => api.get("/admin/results"),
   getAnswerReview: (userId: number, testId: number) =>
     api.get(`/admin/results/answers?userId=${userId}&testId=${testId}`),
-  releaseResult: (userId: number, testId: number) =>
-    api.post("/admin/results/release", { userId, testId }),
+  releaseResult: (
+    userId: number,
+    testId: number,
+    showDetailedAnswers = false,
+  ) =>
+    api.post("/admin/results/release", { userId, testId, showDetailedAnswers }),
 };
 
 export const superAdminApi = {

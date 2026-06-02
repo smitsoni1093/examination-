@@ -441,7 +441,7 @@ namespace ExamAPI.Controllers
             try
             {
                 var adminId = GetAdminId();
-                await _adminService.ReleaseResultAsync(adminId, dto.UserId, dto.TestId);
+                await _adminService.ReleaseResultAsync(adminId, dto.UserId, dto.TestId, dto.ShowDetailedAnswers);
                 return Ok(new { message = "Result released successfully." });
             }
             catch (UnauthorizedAccessException ex) { return Unauthorized(new { message = ex.Message }); }
