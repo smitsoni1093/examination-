@@ -530,7 +530,7 @@ const TestPreviewPage = () => {
               Showing {questionMapQuestions.length} of{" "}
               {filteredQuestions.length} questions.
             </Typography>
-            <Grid container spacing={1}>
+            <Grid container spacing={0.75}>
               {questionMapQuestions.map((question) => {
                 const index = questions.findIndex(
                   (item) => item.id === question.id,
@@ -546,13 +546,14 @@ const TestPreviewPage = () => {
                     : `${index + 1}`;
 
                 return (
-                  <Grid item xs={3} key={question.id}>
+                  <Grid item xs={4} sm={3} md={2} key={question.id}>
                     <Button
                       fullWidth
                       onClick={() => handleQuestionSelect(index)}
                       sx={{
                         minWidth: 0,
-                        p: 0.7,
+                        p: 0.55,
+                        minHeight: 34,
                         borderRadius: 2,
                         textTransform: "none",
                         alignItems: "center",
@@ -593,8 +594,9 @@ const TestPreviewPage = () => {
                         boxShadow: isSelected
                           ? "0 12px 24px rgba(37, 99, 235, 0.16)"
                           : "none",
-                        fontSize: "0.74rem",
+                        fontSize: isMobile ? "0.66rem" : "0.72rem",
                         fontWeight: 700,
+                        lineHeight: 1,
                         "&:hover": {
                           bgcolor: isSelected
                             ? "#1D4ED8"
