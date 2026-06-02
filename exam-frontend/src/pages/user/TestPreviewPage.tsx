@@ -14,7 +14,6 @@ import {
   FormControl,
   FormControlLabel,
   Grid,
-  Pagination,
   Paper,
   Radio,
   RadioGroup,
@@ -547,15 +546,14 @@ const TestPreviewPage = () => {
                     : `${index + 1}`;
 
                 return (
-                  <Grid item xs={4} sm={3} md={2} key={question.id}>
+                  <Grid item xs={3} key={question.id}>
                     <Button
                       fullWidth
                       onClick={() => handleQuestionSelect(index)}
                       sx={{
-                        minHeight: 56,
-                        aspectRatio: "1 / 1",
-                        borderRadius: 3,
-                        p: 0,
+                        minWidth: 0,
+                        p: 0.7,
+                        borderRadius: 2,
                         textTransform: "none",
                         alignItems: "center",
                         justifyContent: "center",
@@ -595,8 +593,8 @@ const TestPreviewPage = () => {
                         boxShadow: isSelected
                           ? "0 12px 24px rgba(37, 99, 235, 0.16)"
                           : "none",
-                        fontSize: "0.95rem",
-                        fontWeight: 800,
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
                         "&:hover": {
                           bgcolor: isSelected
                             ? "#1D4ED8"
@@ -624,27 +622,98 @@ const TestPreviewPage = () => {
               sx={{
                 display: "flex",
                 justifyContent: "center",
-                mt: 2.5,
+                alignItems: "center",
+                gap: 0.75,
+                mt: 2,
                 overflowX: "auto",
               }}
             >
-              <Pagination
-                count={questionMapPageCount}
-                page={questionMapPage}
-                onChange={(_, page) => setQuestionMapPage(page)}
-                color="primary"
-                shape="rounded"
-                size={isMobile ? "small" : "medium"}
-                siblingCount={isMobile ? 0 : 1}
-                boundaryCount={isMobile ? 0 : 1}
-                showFirstButton={!isMobile}
-                showLastButton={!isMobile}
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setQuestionMapPage(1)}
+                disabled={questionMapPage === 1}
                 sx={{
-                  "& .MuiPagination-ul": {
-                    flexWrap: isMobile ? "nowrap" : "wrap",
-                  },
+                  minWidth: 32,
+                  px: 0.6,
+                  fontSize: isMobile ? "0.68rem" : "0.72rem",
+                  lineHeight: 1,
+                  color: isDark ? "#FFFFFF" : undefined,
+                  borderColor: isDark ? "rgba(148, 163, 184, 0.45)" : undefined,
+                  bgcolor: isDark ? "#000000" : undefined,
                 }}
-              />
+              >
+                {"<<"}
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() =>
+                  setQuestionMapPage((prev) => Math.max(1, prev - 1))
+                }
+                disabled={questionMapPage === 1}
+                sx={{
+                  minWidth: 32,
+                  px: 0.6,
+                  fontSize: isMobile ? "0.68rem" : "0.72rem",
+                  lineHeight: 1,
+                  color: isDark ? "#FFFFFF" : undefined,
+                  borderColor: isDark ? "rgba(148, 163, 184, 0.45)" : undefined,
+                  bgcolor: isDark ? "#000000" : undefined,
+                }}
+              >
+                {"<"}
+              </Button>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 800,
+                  px: 0.4,
+                  fontSize: isMobile ? "0.68rem" : "0.72rem",
+                  color: isDark ? "#FFFFFF" : undefined,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Page {questionMapPage} of {questionMapPageCount}
+              </Typography>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() =>
+                  setQuestionMapPage((prev) =>
+                    Math.min(questionMapPageCount, prev + 1),
+                  )
+                }
+                disabled={questionMapPage === questionMapPageCount}
+                sx={{
+                  minWidth: 32,
+                  px: 0.6,
+                  fontSize: isMobile ? "0.68rem" : "0.72rem",
+                  lineHeight: 1,
+                  color: isDark ? "#FFFFFF" : undefined,
+                  borderColor: isDark ? "rgba(148, 163, 184, 0.45)" : undefined,
+                  bgcolor: isDark ? "#000000" : undefined,
+                }}
+              >
+                {">"}
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setQuestionMapPage(questionMapPageCount)}
+                disabled={questionMapPage === questionMapPageCount}
+                sx={{
+                  minWidth: 32,
+                  px: 0.6,
+                  fontSize: isMobile ? "0.68rem" : "0.72rem",
+                  lineHeight: 1,
+                  color: isDark ? "#FFFFFF" : undefined,
+                  borderColor: isDark ? "rgba(148, 163, 184, 0.45)" : undefined,
+                  bgcolor: isDark ? "#000000" : undefined,
+                }}
+              >
+                {">>"}
+              </Button>
             </Box>
           </Paper>
         </Grid>
