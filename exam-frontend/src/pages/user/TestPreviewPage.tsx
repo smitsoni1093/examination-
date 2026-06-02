@@ -374,7 +374,7 @@ const TestPreviewPage = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4} md={3}>
+        <Grid item xs={12} sm={4} md={4}>
           <Paper sx={{ p: 2.2, borderRadius: 3 }}>
             <Typography
               variant="caption"
@@ -387,7 +387,7 @@ const TestPreviewPage = () => {
             </Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={4} md={3}>
+        <Grid item xs={12} sm={4} md={4}>
           <Paper
             sx={{
               p: 2.2,
@@ -406,6 +406,28 @@ const TestPreviewPage = () => {
               sx={{ fontWeight: 800, mt: 0.5, color: "#059669" }}
             >
               {counts.answered}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={4} md={4}>
+          <Paper
+            sx={{
+              p: 2.2,
+              borderRadius: 3,
+              border: "1px solid rgba(239, 68, 68, 0.25)",
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{ color: "#B91C1C", fontWeight: 700 }}
+            >
+              Unanswered
+            </Typography>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: 800, mt: 0.5, color: "#DC2626" }}
+            >
+              {counts.unanswered}
             </Typography>
           </Paper>
         </Grid>
