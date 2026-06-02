@@ -457,9 +457,18 @@ const TestPreviewPage = () => {
         </Grid>
       </Grid>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} lg={7}>
-          <Paper sx={{ p: 3, borderRadius: 4 }}>
+      <Grid container spacing={3} alignItems="stretch">
+        <Grid item xs={12} lg={6}>
+          <Paper
+            sx={{
+              p: 3.2,
+              borderRadius: 4,
+              height: "100%",
+              minHeight: { lg: 760 },
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 800 }}>
               Question Map
             </Typography>
@@ -720,8 +729,16 @@ const TestPreviewPage = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} lg={5}>
-          <Paper ref={reviewSectionRef} sx={{ p: 3.2, borderRadius: 4 }}>
+        <Grid item xs={12} lg={6}>
+          <Paper
+            ref={reviewSectionRef}
+            sx={{
+              p: 3.2,
+              borderRadius: 4,
+              height: "100%",
+              minHeight: { lg: 760 },
+            }}
+          >
             <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
               Review Question
             </Typography>
