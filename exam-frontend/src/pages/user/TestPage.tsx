@@ -24,7 +24,6 @@ import {
   setTest,
   setAttemptId,
   setCurrentQuestionIndex,
-  skipAnswer,
 } from "../../store/examSlice";
 import { userApi } from "../../api/endpoints";
 
@@ -155,14 +154,12 @@ const TestPage = () => {
       const answer = savedAnswers[question.id];
       if (answer?.status === "answered") {
         acc.answered += 1;
-      } else if (answer?.status === "skipped") {
-        acc.skipped += 1;
       } else {
         acc.unanswered += 1;
       }
       return acc;
     },
-    { answered: 0, skipped: 0, unanswered: 0 },
+    { answered: 0, unanswered: 0 },
   );
 
   const persistAnswer = useCallback(
@@ -199,20 +196,6 @@ const TestPage = () => {
       await persistAnswer(currentQ.id, optionNo, currentIdx);
     } catch (err) {
       console.error("Auto-save failed", err);
-    }
-  };
-
-  const handleSkipQuestion = async () => {
-    dispatch(skipAnswer({ questionId: currentQ.id }));
-
-    try {
-      await persistAnswer(currentQ.id, 0, currentIdx);
-    } catch (err) {
-      console.error("Skip save failed", err);
-    }
-
-    if (currentIdx < questions.length - 1) {
-      setCurrentIdx((prev) => prev + 1);
     }
   };
 
@@ -313,8 +296,7 @@ const TestPage = () => {
             variant="body2"
             sx={{ mt: 0.5, color: isDark ? "#CBD5E1" : "#475569" }}
           >
-            Review unanswered and skipped questions in preview before final
-            submission.
+            Review unanswered questions in preview before final submission.
           </Typography>
         </Box>
       </Box>
@@ -396,16 +378,7 @@ const TestPage = () => {
                 mt: 3,
                 flexWrap: "wrap",
               }}
-            >
-              <Button
-                variant="outlined"
-                color="warning"
-                onClick={handleSkipQuestion}
-                sx={{ fontSize: "0.82rem", py: 0.8 }}
-              >
-                Skip Question
-              </Button>
-            </Box>
+            ></Box>
           </Paper>
 
           <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
@@ -704,9 +677,8 @@ const TestPage = () => {
             variant="body2"
             sx={{ color: isDark ? "#CBD5E1" : "text.secondary" }}
           >
-            You have {answerCounts.unanswered} unanswered and{" "}
-            {answerCounts.skipped} skipped questions. You can still submit now,
-            or cancel and open the preview first.
+            You have {answerCounts.unanswered} unanswered questions. You can
+            still submit now, or cancel and open the preview first.
           </Typography>
         </Box>
         <DialogActions sx={{ p: 3 }}>
