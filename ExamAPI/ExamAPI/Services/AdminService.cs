@@ -1779,12 +1779,14 @@ namespace ExamAPI.Services
             if (result.Test.AdminId != adminId)
                 throw new UnauthorizedAccessException("You are not allowed to release this result.");
 
-            if (result.IsPublished)
-                return;
+            if (!result.IsPublished)
+            {
+                result.IsPublished = true;
+                result.PublishedAt = DateTime.UtcNow;
+            }
 
-            result.IsPublished = true;
-            result.ShowDetailedAnswers = showDetailedAnswers;
-            result.PublishedAt = DateTime.UtcNow;
+            // Allow an already released marks-only result to be upgraded to detailed mode.
+            result.ShowDetailedAnswers = result.ShowDetailedAnswers || showDetailedAnswers;
 
             await _db.SaveChangesAsync();
         }
