@@ -214,8 +214,18 @@ namespace ExamAPI.Services
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.TestId == attempt.TestId);
 
             if (existingResult != null)
-                return new ResultDto(existingResult.UserId, existingResult.User.Name, existingResult.TestId,
-                    existingResult.Test.Name, existingResult.Score, existingResult.TotalQuestions, existingResult.SubmittedAt);
+                return new ResultDto(
+                    existingResult.UserId,
+                    existingResult.User.Name,
+                    existingResult.TestId,
+                    existingResult.Test.Name,
+                    existingResult.Score,
+                    existingResult.TotalQuestions,
+                    existingResult.SubmittedAt,
+                    existingResult.IsPublished,
+                    existingResult.ShowDetailedAnswers,
+                    existingResult.PublishedAt,
+                    null);
 
             var testQuestions = await _db.TestQuestions
                 .Include(tq => tq.Question)
@@ -252,8 +262,18 @@ namespace ExamAPI.Services
 
             await _db.SaveChangesAsync();
 
-            return new ResultDto(userId, user!.Name, attempt.TestId, test!.Name,
-                score, testQuestions.Count, result.SubmittedAt);
+            return new ResultDto(
+                userId,
+                user!.Name,
+                attempt.TestId,
+                test!.Name,
+                score,
+                testQuestions.Count,
+                result.SubmittedAt,
+                result.IsPublished,
+                result.ShowDetailedAnswers,
+                result.PublishedAt,
+                null);
         }
     }
 }

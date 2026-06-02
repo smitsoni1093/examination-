@@ -91,7 +91,9 @@ namespace ExamAPI.Services
                     r.TotalQuestions,
                     r.SubmittedAt,
                     r.IsPublished,
-                    r.PublishedAt))
+                    false,
+                    r.PublishedAt,
+                    null))
                 .ToListAsync();
         }
     }

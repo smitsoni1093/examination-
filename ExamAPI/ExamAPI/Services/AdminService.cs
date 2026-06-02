@@ -1750,8 +1750,11 @@ namespace ExamAPI.Services
                 .AsQueryable();
             if (adminId != null) query = query.Where(r => r.Test.AdminId == adminId || r.User.AdminId == adminId);
 
-            return await query
+            var results = await query
                 .OrderByDescending(r => r.SubmittedAt)
+                .ToListAsync();
+
+            return results
                 .Select(r => new ResultDto(
                     r.UserId,
                     r.User.Name,
@@ -1762,9 +1765,9 @@ namespace ExamAPI.Services
                     r.SubmittedAt,
                     r.IsPublished,
                     r.ShowDetailedAnswers,
-                    r.PublishedAt
-                ))
-                .ToListAsync();
+                    r.PublishedAt,
+                    null))
+                .ToList();
         }
 
         public async Task ReleaseResultAsync(int adminId, int userId, int testId, bool showDetailedAnswers)
