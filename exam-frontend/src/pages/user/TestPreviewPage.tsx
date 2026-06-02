@@ -14,10 +14,13 @@ import {
   FormControl,
   FormControlLabel,
   Grid,
+  Pagination,
   Paper,
   Radio,
   RadioGroup,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { ArrowBackRounded } from "@mui/icons-material";
 import type { RootState } from "../../store/store";
@@ -38,6 +41,8 @@ const TestPreviewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const themeMode = useSelector(
     (state: RootState) => state.theme?.mode || "light",
   );
@@ -54,6 +59,7 @@ const TestPreviewPage = () => {
   const [questionMapFilter, setQuestionMapFilter] = useState<
     "answered" | "unanswered"
   >("answered");
+  const [questionMapPage, setQuestionMapPage] = useState(1);
   const [submitSliderX, setSubmitSliderX] = useState(0);
   const [draggingSubmitSlider, setDraggingSubmitSlider] = useState(false);
   const submitSliderTrackRef = useRef<HTMLDivElement | null>(null);
@@ -61,6 +67,7 @@ const TestPreviewPage = () => {
   const dragStartClientXRef = useRef(0);
   const dragStartSliderXRef = useRef(0);
   const submitKnobSize = 54;
+  const questionMapPageSize = 30;
 
   useEffect(() => {
     const loadData = async () => {
@@ -191,6 +198,24 @@ const TestPreviewPage = () => {
 
     return answer?.status !== "answered";
   });
+
+  const questionMapPageCount = Math.max(
+    1,
+    Math.ceil(filteredQuestions.length / questionMapPageSize),
+  );
+  const questionMapStart = (questionMapPage - 1) * questionMapPageSize;
+  const questionMapQuestions = filteredQuestions.slice(
+    questionMapStart,
+    questionMapStart + questionMapPageSize,
+  );
+
+  useEffect(() => {
+    setQuestionMapPage(1);
+  }, [questionMapFilter]);
+
+  useEffect(() => {
+    setQuestionMapPage((prev) => Math.min(prev, questionMapPageCount));
+  }, [questionMapPageCount]);
 
   const handleQuestionSelect = useCallback(
     (index: number) => {
@@ -503,10 +528,11 @@ const TestPreviewPage = () => {
                 color: isDark ? "#94A3B8" : "#64748B",
               }}
             >
-              Unanswered includes skipped questions.
+              Showing {questionMapQuestions.length} of{" "}
+              {filteredQuestions.length} questions.
             </Typography>
             <Grid container spacing={1}>
-              {filteredQuestions.map((question) => {
+              {questionMapQuestions.map((question) => {
                 const index = questions.findIndex(
                   (item) => item.id === question.id,
                 );
@@ -521,7 +547,7 @@ const TestPreviewPage = () => {
                     : `${index + 1}`;
 
                 return (
-                  <Grid item xs={3} sm={2} md={1.5} key={question.id}>
+                  <Grid item xs={4} sm={3} md={2} key={question.id}>
                     <Button
                       fullWidth
                       onClick={() => handleQuestionSelect(index)}
@@ -594,6 +620,32 @@ const TestPreviewPage = () => {
                 );
               })}
             </Grid>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                mt: 2.5,
+                overflowX: "auto",
+              }}
+            >
+              <Pagination
+                count={questionMapPageCount}
+                page={questionMapPage}
+                onChange={(_, page) => setQuestionMapPage(page)}
+                color="primary"
+                shape="rounded"
+                size={isMobile ? "small" : "medium"}
+                siblingCount={isMobile ? 0 : 1}
+                boundaryCount={isMobile ? 0 : 1}
+                showFirstButton={!isMobile}
+                showLastButton={!isMobile}
+                sx={{
+                  "& .MuiPagination-ul": {
+                    flexWrap: isMobile ? "nowrap" : "wrap",
+                  },
+                }}
+              />
+            </Box>
           </Paper>
         </Grid>
 
