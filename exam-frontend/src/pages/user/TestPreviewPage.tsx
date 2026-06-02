@@ -29,7 +29,6 @@ import {
   saveAnswer,
   setAttemptId,
   setTest,
-  skipAnswer,
 } from "../../store/examSlice";
 import { userApi } from "../../api/endpoints";
 
@@ -289,19 +288,6 @@ const TestPreviewPage = () => {
     }
   };
 
-  const handleSkipQuestion = async () => {
-    if (!currentQuestion) return;
-
-    dispatch(skipAnswer({ questionId: currentQuestion.id }));
-    setDraftOption("");
-
-    try {
-      await persistAnswer(currentQuestion.id, 0, selectedIdx);
-    } catch (err) {
-      console.error("Preview skip failed", err);
-    }
-  };
-
   const handleFinalSubmit = useCallback(async () => {
     if (submitting) return;
 
@@ -539,7 +525,20 @@ const TestPreviewPage = () => {
               Showing {questionMapQuestions.length} of{" "}
               {filteredQuestions.length} questions.
             </Typography>
-            <Grid container spacing={0.75}>
+            <Box
+              sx={{
+                flex: 1,
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "repeat(3, minmax(0, 1fr))",
+                  sm: "repeat(4, minmax(0, 1fr))",
+                  md: "repeat(6, minmax(0, 1fr))",
+                },
+                gap: 0.75,
+                alignContent: "start",
+                mb: 1.5,
+              }}
+            >
               {questionMapQuestions.map((question) => {
                 const index = questions.findIndex(
                   (item) => item.id === question.id,
@@ -555,80 +554,85 @@ const TestPreviewPage = () => {
                     : `${index + 1}`;
 
                 return (
-                  <Grid item xs={4} sm={3} md={2} key={question.id}>
-                    <Button
-                      fullWidth
-                      onClick={() => handleQuestionSelect(index)}
-                      sx={{
-                        minWidth: 0,
-                        p: 0.55,
-                        minHeight: 34,
-                        borderRadius: 2,
-                        textTransform: "none",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        border: isSelected
-                          ? "2px solid #2563EB"
-                          : isAnswered
-                            ? "1px solid rgba(16, 185, 129, 0.45)"
-                            : isSkipped
-                              ? "1px solid rgba(245, 158, 11, 0.55)"
-                              : "1px solid rgba(239, 68, 68, 0.4)",
+                  <Button
+                    key={question.id}
+                    fullWidth
+                    onClick={() => handleQuestionSelect(index)}
+                    sx={{
+                      minWidth: 0,
+                      width: "100%",
+                      aspectRatio: "1 / 1",
+                      minHeight: {
+                        xs: 44,
+                        sm: 50,
+                        md: 58,
+                      },
+                      p: 0,
+                      borderRadius: 2,
+                      textTransform: "none",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: isSelected
+                        ? "2px solid #2563EB"
+                        : isAnswered
+                          ? "1px solid rgba(16, 185, 129, 0.45)"
+                          : isSkipped
+                            ? "1px solid rgba(245, 158, 11, 0.55)"
+                            : "1px solid rgba(239, 68, 68, 0.4)",
+                      bgcolor: isSelected
+                        ? "#2563EB"
+                        : isAnswered
+                          ? isDark
+                            ? "rgba(16,185,129,0.16)"
+                            : "#ECFDF5"
+                          : isSkipped
+                            ? isDark
+                              ? "rgba(245,158,11,0.16)"
+                              : "#FFFBEB"
+                            : isDark
+                              ? "rgba(239,68,68,0.14)"
+                              : "#FEF2F2",
+                      color: isSelected
+                        ? "#FFFFFF"
+                        : isAnswered
+                          ? isDark
+                            ? "#A7F3D0"
+                            : "#065F46"
+                          : isSkipped
+                            ? isDark
+                              ? "#FDE68A"
+                              : "#92400E"
+                            : isDark
+                              ? "#FCA5A5"
+                              : "#991B1B",
+                      boxShadow: isSelected
+                        ? "0 12px 24px rgba(37, 99, 235, 0.16)"
+                        : "none",
+                      fontSize: isMobile ? "0.66rem" : "0.72rem",
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      "&:hover": {
                         bgcolor: isSelected
-                          ? "#2563EB"
+                          ? "#1D4ED8"
                           : isAnswered
                             ? isDark
-                              ? "rgba(16,185,129,0.16)"
-                              : "#ECFDF5"
+                              ? "rgba(16,185,129,0.24)"
+                              : "#D1FAE5"
                             : isSkipped
                               ? isDark
-                                ? "rgba(245,158,11,0.16)"
-                                : "#FFFBEB"
+                                ? "rgba(245,158,11,0.22)"
+                                : "#FEEBC7"
                               : isDark
-                                ? "rgba(239,68,68,0.14)"
-                                : "#FEF2F2",
-                        color: isSelected
-                          ? "#FFFFFF"
-                          : isAnswered
-                            ? isDark
-                              ? "#A7F3D0"
-                              : "#065F46"
-                            : isSkipped
-                              ? isDark
-                                ? "#FDE68A"
-                                : "#92400E"
-                              : isDark
-                                ? "#FCA5A5"
-                                : "#991B1B",
-                        boxShadow: isSelected
-                          ? "0 12px 24px rgba(37, 99, 235, 0.16)"
-                          : "none",
-                        fontSize: isMobile ? "0.66rem" : "0.72rem",
-                        fontWeight: 700,
-                        lineHeight: 1,
-                        "&:hover": {
-                          bgcolor: isSelected
-                            ? "#1D4ED8"
-                            : isAnswered
-                              ? isDark
-                                ? "rgba(16,185,129,0.24)"
-                                : "#D1FAE5"
-                              : isSkipped
-                                ? isDark
-                                  ? "rgba(245,158,11,0.22)"
-                                  : "#FEF3C7"
-                                : isDark
-                                  ? "rgba(239,68,68,0.2)"
-                                  : "#FEE2E2",
-                        },
-                      }}
-                    >
-                      {buttonLabel}
-                    </Button>
-                  </Grid>
+                                ? "rgba(239,68,68,0.2)"
+                                : "#FEE2E2",
+                      },
+                    }}
+                  >
+                    {buttonLabel}
+                  </Button>
                 );
               })}
-            </Grid>
+            </Box>
             <Box
               sx={{
                 display: "flex",
@@ -746,8 +750,7 @@ const TestPreviewPage = () => {
               variant="body2"
               sx={{ color: isDark ? "#CBD5E1" : "#64748B", mb: 2 }}
             >
-              Use the buttons below to save, skip, or clear the selected
-              question.
+              Use the buttons below to save or clear the selected question.
             </Typography>
 
             <Box sx={{ mb: 2 }}>
@@ -811,36 +814,36 @@ const TestPreviewPage = () => {
               </RadioGroup>
             </FormControl>
 
-            <Box sx={{ display: "flex", gap: 1.2, flexWrap: "wrap", mt: 3 }}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                flexWrap: { xs: "wrap", sm: "nowrap" },
+                mt: 3,
+              }}
+            >
               <Button
                 variant="contained"
                 onClick={handleSaveAnswer}
                 disabled={draftOption === ""}
+                sx={{ flex: 1, minWidth: 0 }}
               >
                 Save Answer
               </Button>
               <Button
                 variant="outlined"
-                color="warning"
-                onClick={handleSkipQuestion}
-              >
-                Skip
-              </Button>
-              <Button
-                variant="outlined"
                 color="inherit"
                 onClick={handleClearAnswer}
+                sx={{ flex: 1, minWidth: 0 }}
               >
                 Clear
               </Button>
-            </Box>
-
-            <Box sx={{ display: "flex", gap: 1.2, flexWrap: "wrap", mt: 3 }}>
               <Button
                 variant="outlined"
                 onClick={() =>
                   navigate(`/user/test/${testId}?q=${selectedIdx + 1}`)
                 }
+                sx={{ flex: 1, minWidth: 0 }}
               >
                 Back to Test
               </Button>
