@@ -953,24 +953,57 @@ const ViewResults = () => {
                           </Button>
                         )}
                         {row.isPublished && (
-                          <Chip
-                            label={
-                              row.showDetailedAnswers
-                                ? "Detailed"
-                                : "Marks Only"
-                            }
-                            size="small"
+                          <Box
                             sx={{
-                              fontSize: { xs: "0.6rem", sm: "0.7rem" },
-                              fontWeight: 700,
-                              bgcolor: row.showDetailedAnswers
-                                ? "rgba(37, 99, 235, 0.12)"
-                                : "rgba(16, 185, 129, 0.12)",
-                              color: row.showDetailedAnswers
-                                ? "#1D4ED8"
-                                : "#047857",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.75,
+                              flexWrap: "wrap",
+                              justifyContent: "center",
                             }}
-                          />
+                          >
+                            <Chip
+                              label={
+                                row.showDetailedAnswers
+                                  ? "Detailed"
+                                  : "Marks Only"
+                              }
+                              size="small"
+                              sx={{
+                                fontSize: { xs: "0.6rem", sm: "0.7rem" },
+                                fontWeight: 700,
+                                bgcolor: row.showDetailedAnswers
+                                  ? "rgba(37, 99, 235, 0.12)"
+                                  : "rgba(16, 185, 129, 0.12)",
+                                color: row.showDetailedAnswers
+                                  ? "#1D4ED8"
+                                  : "#047857",
+                              }}
+                            />
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={() =>
+                                setReleaseDialogTarget({
+                                  kind: "single",
+                                  userId: row.userId,
+                                  testId: row.testId,
+                                  label: `${row.userName ?? "Candidate"} • ${row.testName ?? "Test"}`,
+                                })
+                              }
+                              sx={{
+                                borderRadius: 1,
+                                fontWeight: 700,
+                                fontSize: { xs: "0.6rem", sm: "0.72rem" },
+                                px: { xs: 0.8, sm: 1.25 },
+                                py: { xs: 0.25, sm: 0.45 },
+                                borderColor: "#CBD5E1",
+                                color: "#334155",
+                              }}
+                            >
+                              Change Mode
+                            </Button>
+                          </Box>
                         )}
                       </Box>
                     </TableCell>
