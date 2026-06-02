@@ -72,6 +72,20 @@ const ResultPage = () => {
     fetchResult();
   }, [testId]);
 
+  const detailItems = result?.items ?? [];
+  const totalPages = Math.max(1, Math.ceil(detailItems.length / pageSize));
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const pagedItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return detailItems.slice(start, start + pageSize);
+  }, [detailItems, page]);
+
   if (loading)
     return (
       <Container sx={{ mt: 10, textAlign: "center" }}>
@@ -110,20 +124,6 @@ const ResultPage = () => {
     if (opt === 4) return item.option4_EN;
     return "";
   };
-
-  const detailItems = result.items ?? [];
-  const totalPages = Math.max(1, Math.ceil(detailItems.length / pageSize));
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
-
-  const pagedItems = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return detailItems.slice(start, start + pageSize);
-  }, [detailItems, page]);
 
   return (
     <Container
