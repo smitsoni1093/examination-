@@ -175,14 +175,12 @@ const TestPreviewPage = () => {
       const answer = savedAnswers[question.id];
       if (answer?.status === "answered") {
         acc.answered += 1;
-      } else if (answer?.status === "skipped") {
-        acc.skipped += 1;
       } else {
         acc.unanswered += 1;
       }
       return acc;
     },
-    { answered: 0, skipped: 0, unanswered: 0 },
+    { answered: 0, unanswered: 0 },
   );
 
   const filteredQuestions = questions.filter((question) => {
@@ -411,50 +409,6 @@ const TestPreviewPage = () => {
             </Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={4} md={3}>
-          <Paper
-            sx={{
-              p: 2.2,
-              borderRadius: 3,
-              border: "1px solid rgba(239, 68, 68, 0.25)",
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{ color: "#B91C1C", fontWeight: 700 }}
-            >
-              Unanswered
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: 800, mt: 0.5, color: "#DC2626" }}
-            >
-              {counts.unanswered}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={4} md={3}>
-          <Paper
-            sx={{
-              p: 2.2,
-              borderRadius: 3,
-              border: "1px solid rgba(245, 158, 11, 0.25)",
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{ color: "#B45309", fontWeight: 700 }}
-            >
-              Skipped
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: 800, mt: 0.5, color: "#D97706" }}
-            >
-              {counts.skipped}
-            </Typography>
-          </Paper>
-        </Grid>
       </Grid>
 
       <Grid container spacing={3}>
@@ -493,7 +447,7 @@ const TestPreviewPage = () => {
               <Chip
                 clickable
                 size="small"
-                label={`Unanswered (${counts.unanswered + counts.skipped})`}
+                label={`Unanswered (${counts.unanswered})`}
                 color={
                   questionMapFilter === "unanswered" ? "primary" : "default"
                 }
@@ -816,8 +770,8 @@ const TestPreviewPage = () => {
         <DialogTitle sx={{ fontWeight: 800 }}>Submit test now?</DialogTitle>
         <Box sx={{ px: 3, pb: 1.5 }}>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            You still have {counts.unanswered} unanswered and {counts.skipped}{" "}
-            skipped questions. You can submit as-is or go back and review first.
+            You still have {counts.unanswered} unanswered questions. You can
+            submit as-is or go back and review first.
           </Typography>
         </Box>
         <DialogActions sx={{ p: 3 }}>
