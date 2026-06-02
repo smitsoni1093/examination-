@@ -230,7 +230,10 @@ const ResultPage = () => {
                           <Typography sx={{ fontWeight: 700 }}>
                             Option {item.correctOption}
                           </Typography>
-                          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "text.secondary" }}
+                          >
                             {getOptionText(item, item.correctOption)}
                           </Typography>
                         </TableCell>
@@ -288,8 +291,10 @@ const ResultPage = () => {
                     variant="body2"
                     sx={{ color: "text.secondary", fontWeight: 600 }}
                   >
-                    Showing {Math.min((page - 1) * pageSize + 1, detailItems.length)} -{" "}
-                    {Math.min(page * pageSize, detailItems.length)} of {detailItems.length}
+                    Showing{" "}
+                    {Math.min((page - 1) * pageSize + 1, detailItems.length)} -{" "}
+                    {Math.min(page * pageSize, detailItems.length)} of{" "}
+                    {detailItems.length}
                   </Typography>
 
                   <Box
@@ -306,7 +311,10 @@ const ResultPage = () => {
                       size="small"
                       onClick={() => setPage(1)}
                       disabled={page === 1}
-                      sx={{ minWidth: { xs: "32px", sm: "36px" }, fontWeight: 700 }}
+                      sx={{
+                        minWidth: { xs: "32px", sm: "36px" },
+                        fontWeight: 700,
+                      }}
                     >
                       {"<<"}
                     </Button>
@@ -316,12 +324,17 @@ const ResultPage = () => {
                       size="small"
                       onClick={() => setPage(Math.max(1, page - 1))}
                       disabled={page === 1}
-                      sx={{ minWidth: { xs: "32px", sm: "36px" }, fontWeight: 700 }}
+                      sx={{
+                        minWidth: { xs: "32px", sm: "36px" },
+                        fontWeight: 700,
+                      }}
                     >
                       {"<"}
                     </Button>
 
-                    <Typography sx={{ fontWeight: 700, px: { xs: 0.5, sm: 1 } }}>
+                    <Typography
+                      sx={{ fontWeight: 700, px: { xs: 0.5, sm: 1 } }}
+                    >
                       page {page} of {totalPages}
                     </Typography>
 
@@ -330,7 +343,10 @@ const ResultPage = () => {
                       size="small"
                       onClick={() => setPage(Math.min(totalPages, page + 1))}
                       disabled={page === totalPages}
-                      sx={{ minWidth: { xs: "32px", sm: "36px" }, fontWeight: 700 }}
+                      sx={{
+                        minWidth: { xs: "32px", sm: "36px" },
+                        fontWeight: 700,
+                      }}
                     >
                       {">"}
                     </Button>
@@ -340,7 +356,10 @@ const ResultPage = () => {
                       size="small"
                       onClick={() => setPage(totalPages)}
                       disabled={page === totalPages}
-                      sx={{ minWidth: { xs: "32px", sm: "36px" }, fontWeight: 700 }}
+                      sx={{
+                        minWidth: { xs: "32px", sm: "36px" },
+                        fontWeight: 700,
+                      }}
                     >
                       {">>"}
                     </Button>
