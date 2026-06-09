@@ -61,11 +61,13 @@ type BankQuestion = {
   id: number;
   question_EN: string;
   sourceFileName?: string | null;
+  displayOrder?: number;
 };
 
 type SelectedQuestion = {
   id: number;
   question_EN: string;
+  displayOrder?: number;
 };
 
 type TestData = {
@@ -217,9 +219,14 @@ const TestBuilder = () => {
         adminApi.getQuestions(),
         adminApi.getQuestionSources(),
       ]);
-      setBankQuestions(
-        Array.isArray(qRes.data) ? (qRes.data as BankQuestion[]) : [],
-      );
+      const orderedQuestions = Array.isArray(qRes.data)
+        ? [...(qRes.data as BankQuestion[])].sort((left, right) => {
+            const leftOrder = left.displayOrder ?? Number.MAX_SAFE_INTEGER;
+            const rightOrder = right.displayOrder ?? Number.MAX_SAFE_INTEGER;
+            return leftOrder - rightOrder || left.id - right.id;
+          })
+        : [];
+      setBankQuestions(orderedQuestions);
       setSources(
         (Array.isArray(srcRes.data) ? srcRes.data : []).filter(
           (item: string | null) => item !== null,
@@ -350,9 +357,17 @@ const TestBuilder = () => {
     if (!testId) return;
     setLoading(true);
     try {
+      const orderedSelectedQuestions = [...selectedQuestions].sort(
+        (left, right) => {
+          const leftOrder = left.displayOrder ?? Number.MAX_SAFE_INTEGER;
+          const rightOrder = right.displayOrder ?? Number.MAX_SAFE_INTEGER;
+          return leftOrder - rightOrder || left.id - right.id;
+        },
+      );
+
       await adminApi.assignQuestions({
         testId,
-        questionIds: selectedQuestions.map((q) => q.id),
+        questionIds: orderedSelectedQuestions.map((q) => q.id),
       });
       setMessage({
         type: "success",

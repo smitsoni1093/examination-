@@ -111,7 +111,8 @@ namespace ExamAPI.Services
                 .ToDictionaryAsync(a => a.QuestionId, a => a.SelectedOption);
 
             var questions = test.TestQuestions
-                .OrderBy(tq => tq.OrderIndex)
+                .OrderBy(tq => tq.Question.DisplayOrder <= 0 ? int.MaxValue : tq.Question.DisplayOrder)
+                .ThenBy(tq => tq.QuestionId)
                 .Select(tq => new QuestionDto(
                     tq.Question.Id, tq.OrderIndex,
                     tq.Question.Question_EN, tq.Question.Option1_EN, tq.Question.Option2_EN,
@@ -119,7 +120,8 @@ namespace ExamAPI.Services
                     tq.Question.Question_HI, tq.Question.Option1_HI, tq.Question.Option2_HI,
                     tq.Question.Option3_HI, tq.Question.Option4_HI,
                     tq.Question.Question_GU, tq.Question.Option1_GU, tq.Question.Option2_GU,
-                    tq.Question.Option3_GU, tq.Question.Option4_GU
+                    tq.Question.Option3_GU, tq.Question.Option4_GU,
+                    tq.Question.DisplayOrder
                 ))
                 .ToList();
 

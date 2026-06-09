@@ -266,7 +266,8 @@ namespace ExamAPI.DTOs
         int Id, int OrderIndex,
         string Question_EN, string Option1_EN, string Option2_EN, string Option3_EN, string Option4_EN,
         string Question_HI, string Option1_HI, string Option2_HI, string Option3_HI, string Option4_HI,
-        string Question_GU, string Option1_GU, string Option2_GU, string Option3_GU, string Option4_GU
+        string Question_GU, string Option1_GU, string Option2_GU, string Option3_GU, string Option4_GU,
+        int DisplayOrder = 0
     );
     public record TestDto(int Id, string Name, string? Description, int Duration, List<QuestionDto> Questions, Dictionary<int, int> SavedAnswers, string? TestImageUrl = null, DateTime? ClosingAt = null, List<TestInstructionDto>? Instructions = null);
     public record ResultDto(

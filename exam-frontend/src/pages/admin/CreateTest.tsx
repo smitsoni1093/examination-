@@ -45,6 +45,7 @@ type InstructionItem = {
 type QuestionItem = {
   id: number;
   question_EN: string;
+  displayOrder?: number;
 };
 
 type TestPayload = {
@@ -104,7 +105,14 @@ const CreateTest = () => {
   const fetchQuestions = async () => {
     try {
       const res = await adminApi.getQuestions();
-      setQuestions(Array.isArray(res.data) ? res.data : []);
+      const orderedQuestions = Array.isArray(res.data)
+        ? [...res.data].sort((left: QuestionItem, right: QuestionItem) => {
+            const leftOrder = left.displayOrder ?? Number.MAX_SAFE_INTEGER;
+            const rightOrder = right.displayOrder ?? Number.MAX_SAFE_INTEGER;
+            return leftOrder - rightOrder || left.id - right.id;
+          })
+        : [];
+      setQuestions(orderedQuestions);
     } catch (err: unknown) {
       console.error(err);
     }
@@ -174,6 +182,18 @@ const CreateTest = () => {
 
     setLoading(true);
     try {
+      const orderedQuestionIds = [...selectedQuestions].sort(
+        (leftId, rightId) => {
+          const leftOrder =
+            questions.find((question) => question.id === leftId)
+              ?.displayOrder ?? Number.MAX_SAFE_INTEGER;
+          const rightOrder =
+            questions.find((question) => question.id === rightId)
+              ?.displayOrder ?? Number.MAX_SAFE_INTEGER;
+          return leftOrder - rightOrder || leftId - rightId;
+        },
+      );
+
       const payload: TestPayload = {
         name,
         duration: 0,
@@ -186,7 +206,7 @@ const CreateTest = () => {
       const testId = testRes.data.id;
       await adminApi.assignQuestions({
         testId,
-        questionIds: selectedQuestions,
+        questionIds: orderedQuestionIds,
       });
 
       setMessage({

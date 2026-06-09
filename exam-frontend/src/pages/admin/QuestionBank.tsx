@@ -53,6 +53,7 @@ type Question = {
   question_EN: string;
   sourceFileName?: string;
   createdAt: string;
+  displayOrder?: number;
 };
 
 const QuestionBank = () => {
@@ -72,6 +73,12 @@ const QuestionBank = () => {
   const [sourceFilter, setSourceFilter] = useState("All Sources");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [message, setMessage] = useState<MessageState>({ type: "", text: "" });
+
+  const orderedQuestions = [...questions].sort((left, right) => {
+    const leftOrder = left.displayOrder ?? Number.MAX_SAFE_INTEGER;
+    const rightOrder = right.displayOrder ?? Number.MAX_SAFE_INTEGER;
+    return leftOrder - rightOrder || left.id - right.id;
+  });
 
   const fetchQuestionsPage = useCallback(
     async (page: number, source: string, search: string) => {
@@ -641,17 +648,18 @@ const QuestionBank = () => {
                     >
                       <Checkbox
                         checked={
-                          selectedIds.length === questions.length &&
-                          questions.length > 0
+                          selectedIds.length === orderedQuestions.length &&
+                          orderedQuestions.length > 0
                         }
                         indeterminate={
                           selectedIds.length > 0 &&
-                          selectedIds.length < questions.length
+                          selectedIds.length < orderedQuestions.length
                         }
                         onChange={() => {
-                          if (selectedIds.length === questions.length)
+                          if (selectedIds.length === orderedQuestions.length)
                             setSelectedIds([]);
-                          else setSelectedIds(questions.map((q) => q.id));
+                          else
+                            setSelectedIds(orderedQuestions.map((q) => q.id));
                         }}
                       />
                     </TableCell>
@@ -697,7 +705,7 @@ const QuestionBank = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {questions.map((q) => {
+                  {orderedQuestions.map((q) => {
                     const isSelected = selectedIds.includes(q.id);
                     return (
                       <TableRow
@@ -737,6 +745,15 @@ const QuestionBank = () => {
                               }}
                             >
                               #Q-{q.id.toString().padStart(4, "0")}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                color: isDark ? "#CBD5E1" : "#94A3B8",
+                                fontSize: 11,
+                                fontWeight: 800,
+                              }}
+                            >
+                              ORDER {q.displayOrder ?? "-"}
                             </Typography>
                             <Chip
                               label="MCQ"

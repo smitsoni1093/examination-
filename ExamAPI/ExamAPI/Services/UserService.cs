@@ -186,7 +186,8 @@ namespace ExamAPI.Services
                 .ToDictionaryAsync(ua => ua.QuestionId, ua => ua.SelectedOption);
 
             var questions = test.TestQuestions
-                .OrderBy(tq => tq.OrderIndex)
+                .OrderBy(tq => tq.Question.DisplayOrder <= 0 ? int.MaxValue : tq.Question.DisplayOrder)
+                .ThenBy(tq => tq.QuestionId)
                 .Select(tq => new QuestionDto(
                     tq.Question.Id, tq.OrderIndex,
                     tq.Question.Question_EN, tq.Question.Option1_EN, tq.Question.Option2_EN,
@@ -194,7 +195,8 @@ namespace ExamAPI.Services
                     tq.Question.Question_HI, tq.Question.Option1_HI, tq.Question.Option2_HI,
                     tq.Question.Option3_HI, tq.Question.Option4_HI,
                     tq.Question.Question_GU, tq.Question.Option1_GU, tq.Question.Option2_GU,
-                    tq.Question.Option3_GU, tq.Question.Option4_GU
+                    tq.Question.Option3_GU, tq.Question.Option4_GU,
+                    tq.Question.DisplayOrder
                 ))
                 .ToList();
 
@@ -387,11 +389,12 @@ namespace ExamAPI.Services
             return await _db.TestQuestions
                 .AsNoTracking()
                 .Where(tq => tq.TestId == testId)
-                .OrderBy(tq => tq.OrderIndex)
-                .Select(tq => new { tq.OrderIndex, Question = tq.Question })
+                .OrderBy(tq => tq.Question.DisplayOrder <= 0 ? int.MaxValue : tq.Question.DisplayOrder)
+                .ThenBy(tq => tq.QuestionId)
+                .Select(tq => new { DisplayOrder = tq.Question.DisplayOrder, tq.OrderIndex, Question = tq.Question })
                 .Select(x => new AdminAnswerReviewItemDto(
                     x.Question.Id,
-                    x.OrderIndex,
+                    x.DisplayOrder > 0 ? x.DisplayOrder : x.OrderIndex,
                     x.Question.Question_EN,
                     x.Question.Option1_EN,
                     x.Question.Option2_EN,

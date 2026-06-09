@@ -63,9 +63,6 @@ namespace ExamAPI.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("HindiText")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -99,6 +96,9 @@ namespace ExamAPI.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
 
                     b.Property<string>("Option1_EN")
                         .IsRequired()
@@ -166,7 +166,7 @@ namespace ExamAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AdminId");
+                    b.HasIndex("AdminId", "DisplayOrder");
 
                     b.ToTable("Questions");
                 });
@@ -187,6 +187,9 @@ namespace ExamAPI.Migrations
 
                     b.Property<int>("Score")
                         .HasColumnType("int");
+
+                    b.Property<bool>("ShowDetailedAnswers")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("SubmittedAt")
                         .HasColumnType("datetime2");

@@ -1153,6 +1153,8 @@ namespace ExamAPI.Services
             if (dto.CorrectOption < 1 || dto.CorrectOption > 4)
                 throw new ArgumentException("CorrectOption must be between 1 and 4.");
 
+            var nextDisplayOrder = await GetNextQuestionDisplayOrderAsync(adminId);
+
             var q = new Question
             {
                 Question_EN = dto.Question_EN, Option1_EN = dto.Option1_EN, Option2_EN = dto.Option2_EN,
@@ -1162,6 +1164,7 @@ namespace ExamAPI.Services
                 Question_GU = dto.Question_GU, Option1_GU = dto.Option1_GU, Option2_GU = dto.Option2_GU,
                 Option3_GU = dto.Option3_GU, Option4_GU = dto.Option4_GU,
                 CorrectOption = dto.CorrectOption,
+                DisplayOrder = nextDisplayOrder,
                 AdminId = adminId
             };
             _db.Questions.Add(q);
@@ -1197,7 +1200,10 @@ namespace ExamAPI.Services
             if (!string.IsNullOrEmpty(search)) 
                 query = query.Where(q => q.Question_EN.Contains(search) || q.Id.ToString() == search);
             
-            IQueryable<Question> finalResult = query.OrderByDescending(q => q.CreatedAt);
+            IQueryable<Question> finalResult = query
+                .OrderBy(q => q.DisplayOrder <= 0 ? int.MaxValue : q.DisplayOrder)
+                .ThenBy(q => q.CreatedAt)
+                .ThenBy(q => q.Id);
             
             if (skip.HasValue) finalResult = finalResult.Skip(skip.Value);
             if (take.HasValue) finalResult = finalResult.Take(take.Value);
@@ -1220,7 +1226,9 @@ namespace ExamAPI.Services
 
             var totalCount = await query.CountAsync();
             var items = await query
-                .OrderByDescending(q => q.CreatedAt)
+                .OrderBy(q => q.DisplayOrder <= 0 ? int.MaxValue : q.DisplayOrder)
+                .ThenBy(q => q.CreatedAt)
+                .ThenBy(q => q.Id)
                 .Skip(safeSkip)
                 .Take(safeTake)
                 .ToListAsync();
@@ -1468,8 +1476,10 @@ namespace ExamAPI.Services
                 if (!testExists) throw new KeyNotFoundException("Test not found.");
             }
             return await _db.TestQuestions
+                .Include(tq => tq.Question)
                 .Where(tq => tq.TestId == testId)
-                .OrderBy(tq => tq.OrderIndex)
+                .OrderBy(tq => tq.Question.DisplayOrder <= 0 ? int.MaxValue : tq.Question.DisplayOrder)
+                .ThenBy(tq => tq.QuestionId)
                 .Select(tq => tq.QuestionId)
                 .ToListAsync();
         }
@@ -1698,8 +1708,10 @@ namespace ExamAPI.Services
                 if (!testExists) throw new KeyNotFoundException("Test not found.");
             }
             return await _db.TestQuestions
+                .Include(tq => tq.Question)
                 .Where(tq => tq.TestId == testId)
-                .OrderBy(tq => tq.OrderIndex)
+                .OrderBy(tq => tq.Question.DisplayOrder <= 0 ? int.MaxValue : tq.Question.DisplayOrder)
+                .ThenBy(tq => tq.QuestionId)
                 .Select(tq => tq.Question)
                 .ToListAsync();
         }
@@ -1726,8 +1738,18 @@ namespace ExamAPI.Services
             var existing = _db.TestQuestions.Where(tq => tq.TestId == dto.TestId);
             _db.TestQuestions.RemoveRange(existing);
 
-            // Assign new questions with order
-            var assignments = dto.QuestionIds.Select((qId, index) => new TestQuestion
+            var orderedQuestionIds = await _db.Questions
+                .Where(q => dto.QuestionIds.Contains(q.Id) && (adminId == null || q.AdminId == adminId))
+                .OrderBy(q => q.DisplayOrder <= 0 ? int.MaxValue : q.DisplayOrder)
+                .ThenBy(q => q.Id)
+                .Select(q => q.Id)
+                .ToListAsync();
+
+            if (orderedQuestionIds.Count != dto.QuestionIds.Count)
+                throw new InvalidOperationException("One or more questions could not be found.");
+
+            // Assign new questions with order preserved by display sequence
+            var assignments = orderedQuestionIds.Select((qId, index) => new TestQuestion
             {
                 TestId = dto.TestId,
                 QuestionId = qId,
@@ -1830,11 +1852,12 @@ namespace ExamAPI.Services
             var items = await _db.TestQuestions
                 .AsNoTracking()
                 .Where(tq => tq.TestId == testId)
-                .OrderBy(tq => tq.OrderIndex)
-                .Select(tq => new { tq.OrderIndex, Question = tq.Question })
+                .OrderBy(tq => tq.Question.DisplayOrder <= 0 ? int.MaxValue : tq.Question.DisplayOrder)
+                .ThenBy(tq => tq.QuestionId)
+                .Select(tq => new { DisplayOrder = tq.Question.DisplayOrder, tq.OrderIndex, Question = tq.Question })
                 .Select(x => new AdminAnswerReviewItemDto(
                     x.Question.Id,
-                    x.OrderIndex,
+                    x.DisplayOrder > 0 ? x.DisplayOrder : x.OrderIndex,
                     x.Question.Question_EN,
                     x.Question.Option1_EN,
                     x.Question.Option2_EN,
@@ -2092,6 +2115,8 @@ namespace ExamAPI.Services
                 errors.Add("Invalid Correct Answer. Use A/B/C/D or match one option value.");
             }
 
+            var displayOrder = ResolveDisplayOrder(rowNumber, qNo);
+
             Question? mappedQuestion = null;
             if (!errors.Any())
             {
@@ -2103,6 +2128,7 @@ namespace ExamAPI.Services
                     Option3_EN = optionC,
                     Option4_EN = optionD,
                     CorrectOption = correctOption,
+                    DisplayOrder = displayOrder,
                     SourceFileName = fileName,
                     AdminId = adminId
                 };
@@ -2134,6 +2160,24 @@ namespace ExamAPI.Services
             if (string.Equals(correctAnswer.Trim(), optionD, StringComparison.OrdinalIgnoreCase)) return 4;
 
             return 0;
+        }
+
+        private async Task<int> GetNextQuestionDisplayOrderAsync(int? adminId)
+        {
+            var maxDisplayOrder = await _db.Questions
+                .Where(q => q.AdminId == adminId)
+                .Select(q => (int?)q.DisplayOrder)
+                .MaxAsync();
+
+            return Math.Max(maxDisplayOrder ?? 0, 0) + 1;
+        }
+
+        private static int ResolveDisplayOrder(int rowNumber, string? qNo)
+        {
+            if (!string.IsNullOrWhiteSpace(qNo) && int.TryParse(qNo.Trim(), out var parsed) && parsed > 0)
+                return parsed;
+
+            return Math.Max(rowNumber - 1, 1);
         }
 
         private static QuestionImportFileData ParseQuestionImportFile(byte[] fileBytes, string extension)

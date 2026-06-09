@@ -34,6 +34,9 @@ namespace ExamAPI.Models
         /// <summary>Correct option index: 1, 2, 3, or 4</summary>
         public int CorrectOption { get; set; }
 
+        /// <summary>Stable display sequence used for bank, test, and exam ordering.</summary>
+        public int DisplayOrder { get; set; }
+
         public string SourceFileName { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

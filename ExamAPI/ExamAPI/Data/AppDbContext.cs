@@ -116,6 +116,9 @@ namespace ExamAPI.Data
                 .HasForeignKey(q => q.AdminId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Question>()
+                .HasIndex(q => new { q.AdminId, q.DisplayOrder });
+
             modelBuilder.Entity<Instruction>()
                 .HasOne(i => i.Admin)
                 .WithMany()
