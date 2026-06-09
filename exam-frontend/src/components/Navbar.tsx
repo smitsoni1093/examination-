@@ -305,17 +305,25 @@ const Navbar = () => {
                 startIcon={
                   <Language
                     sx={{
-                      fontSize: { xs: 14, sm: 16 },
+                      display: { xs: "none", sm: "inline-flex" },
+                      fontSize: { xs: 12, sm: 16 },
                       color: themeMode === "dark" ? "#93C5FD" : "#0369A1",
                     }}
                   />
                 }
-                endIcon={<KeyboardArrowDown sx={{ fontSize: 16 }} />}
+                endIcon={
+                  <KeyboardArrowDown
+                    sx={{
+                      display: { xs: "none", sm: "inline-flex" },
+                      fontSize: { xs: 13, sm: 16 },
+                    }}
+                  />
+                }
                 sx={{
                   borderRadius: "14px",
-                  px: { xs: 1, sm: 1.25, md: 1.5 },
-                  py: { xs: 0.65, sm: 0.75 },
-                  minWidth: { xs: 92, sm: 118, md: 152 },
+                  px: { xs: 0.45, sm: 1.25, md: 1.5 },
+                  py: { xs: 0.45, sm: 0.75 },
+                  minWidth: { xs: 52, sm: 118, md: 152 },
                   bgcolor: themeMode === "dark" ? "#000000" : "#FFFFFF",
                   borderColor:
                     themeMode === "dark"
@@ -329,6 +337,13 @@ const Navbar = () => {
                       ? "0 8px 18px rgba(0, 0, 0, 0.6)"
                       : "0 8px 18px rgba(15, 23, 42, 0.08)",
                   transition: "all 0.2s ease",
+                  "& .MuiButton-startIcon": {
+                    mr: { xs: 0, sm: 0.7 },
+                    ml: { xs: 0, sm: -0.3 },
+                  },
+                  "& .MuiButton-endIcon": {
+                    ml: { xs: 0, sm: 0.5 },
+                  },
                   "&:hover": {
                     borderColor: alpha("#0EA5E9", 0.45),
                     boxShadow: "0 10px 22px rgba(2, 132, 199, 0.16)",
@@ -339,26 +354,31 @@ const Navbar = () => {
                 <Box
                   component="span"
                   sx={{
-                    display: { xs: "none", sm: "inline-flex" },
+                    display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    minWidth: 24,
-                    height: 18,
+                    minWidth: { xs: 22, sm: 24 },
+                    height: { xs: 18, sm: 18 },
                     borderRadius: "999px",
-                    fontSize: "0.55rem",
+                    fontSize: { xs: "0.52rem", sm: "0.55rem" },
                     fontWeight: 900,
                     letterSpacing: 0.4,
                     color: "#0C4A6E",
                     bgcolor: alpha("#0EA5E9", 0.14),
                     border: `1px solid ${alpha("#0284C7", 0.2)}`,
-                    mr: 0.35,
+                    mr: { xs: 0, sm: 0.35 },
                   }}
                 >
                   {currentLang.toUpperCase()}
                 </Box>
-                {t("navbar.language")}:
-                <Box component="span" sx={{ ml: 0.5 }}>
-                  {languageLabels[currentLang] || languageLabels.en}
+                <Box
+                  component="span"
+                  sx={{ display: { xs: "none", sm: "inline" } }}
+                >
+                  {t("navbar.language")}:
+                  <Box component="span" sx={{ ml: 0.5 }}>
+                    {languageLabels[currentLang] || languageLabels.en}
+                  </Box>
                 </Box>
               </Button>
 
