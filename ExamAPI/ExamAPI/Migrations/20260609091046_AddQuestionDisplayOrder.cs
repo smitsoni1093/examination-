@@ -8,12 +8,12 @@ namespace ExamAPI.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "DisplayOrder",
-                table: "Questions",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
+            migrationBuilder.Sql(@"
+IF COL_LENGTH('Questions', 'DisplayOrder') IS NULL
+BEGIN
+    ALTER TABLE Questions ADD DisplayOrder int NOT NULL CONSTRAINT DF_Questions_DisplayOrder DEFAULT(0);
+END;
+");
 
             migrationBuilder.Sql(@"
 ;WITH OrderedQuestions AS
@@ -33,21 +33,39 @@ INNER JOIN OrderedQuestions o
 ON q.Id = o.Id;
 ");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Questions_AdminId_DisplayOrder",
-                table: "Questions",
-                columns: new[] { "AdminId", "DisplayOrder" });
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_Questions_AdminId_DisplayOrder'
+      AND object_id = OBJECT_ID('Questions')
+)
+BEGIN
+    CREATE INDEX IX_Questions_AdminId_DisplayOrder ON Questions (AdminId, DisplayOrder);
+END;
+");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_Questions_AdminId_DisplayOrder",
-                table: "Questions");
+            migrationBuilder.Sql(@"
+IF EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_Questions_AdminId_DisplayOrder'
+      AND object_id = OBJECT_ID('Questions')
+)
+BEGIN
+    DROP INDEX IX_Questions_AdminId_DisplayOrder ON Questions;
+END;
+");
 
-            migrationBuilder.DropColumn(
-                name: "DisplayOrder",
-                table: "Questions");
+            migrationBuilder.Sql(@"
+IF COL_LENGTH('Questions', 'DisplayOrder') IS NOT NULL
+BEGIN
+    ALTER TABLE Questions DROP COLUMN DisplayOrder;
+END;
+");
         }
     }
 }
