@@ -25,6 +25,7 @@ import {
   setAttemptId,
   setCurrentQuestionIndex,
 } from "../../store/examSlice";
+import { logout } from "../../store/authSlice";
 import { userApi } from "../../api/endpoints";
 
 const TestPage = () => {
@@ -36,6 +37,7 @@ const TestPage = () => {
     (state: RootState) => state.theme?.mode || "light",
   );
   const isDark = themeMode === "dark";
+  const role = useSelector((state: RootState) => state.auth.role);
 
   const { testName, questions, savedAnswers, attemptId } = useSelector(
     (state: RootState) => state.exam,
@@ -43,6 +45,7 @@ const TestPage = () => {
 
   const [currentIdx, setCurrentIdx] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [savingAndLoggingOut, setSavingAndLoggingOut] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [navigatorPage, setNavigatorPage] = useState(1);
   const navigatorPageSize = 20;
@@ -202,6 +205,41 @@ const TestPage = () => {
   const handlePreview = () => {
     navigate(`/user/test/${testId}/preview?q=${currentIdx + 1}`);
   };
+
+  const handleSaveAndLogout = useCallback(async () => {
+    if (savingAndLoggingOut) return;
+
+    setSavingAndLoggingOut(true);
+    try {
+      if (attemptId && currentQ) {
+        await userApi.saveAttemptAnswer(attemptId, {
+          questionId: currentQ.id,
+          selectedOption: currentAnswer,
+          lastQuestionIndex: currentIdx,
+        });
+      }
+
+      dispatch(clearTest());
+      dispatch(logout());
+      navigate(
+        role === "Admin" || role === "SuperAdmin" ? "/admin/login" : "/login",
+      );
+    } catch (err) {
+      console.error("Save before logout failed", err);
+      window.alert("Unable to save your current progress. Please try again.");
+    } finally {
+      setSavingAndLoggingOut(false);
+    }
+  }, [
+    attemptId,
+    currentQ,
+    currentAnswer,
+    currentIdx,
+    dispatch,
+    navigate,
+    role,
+    savingAndLoggingOut,
+  ]);
 
   const handleFinalSubmit = useCallback(async () => {
     if (submitting) return;
@@ -647,7 +685,13 @@ const TestPage = () => {
               </Box>
             )}
 
-            <Box sx={{ mt: 4, mb: 2 }}>
+            <Box
+              sx={{
+                mt: 4,
+                mb: 2,
+                display: { xs: "none", md: "block" },
+              }}
+            >
               <Button
                 fullWidth
                 variant="contained"
@@ -656,6 +700,35 @@ const TestPage = () => {
                 sx={{ fontSize: "0.8rem", py: 0.95 }}
               >
                 FINISH EXAM
+              </Button>
+            </Box>
+
+            <Box
+              sx={{
+                mt: 4,
+                mb: 2,
+                display: { xs: "flex", md: "none" },
+                gap: 1.5,
+              }}
+            >
+              <Button
+                fullWidth
+                variant="contained"
+                color="error"
+                onClick={handleFinishClick}
+                sx={{ fontSize: "0.8rem", py: 0.95, flex: 1, minWidth: 0 }}
+              >
+                Finish Exam
+              </Button>
+              <Button
+                fullWidth
+                variant="contained"
+                color="success"
+                onClick={handleSaveAndLogout}
+                disabled={savingAndLoggingOut}
+                sx={{ fontSize: "0.8rem", py: 0.95, flex: 1, minWidth: 0 }}
+              >
+                {savingAndLoggingOut ? "Saving..." : "Save & Logout"}
               </Button>
             </Box>
           </Paper>

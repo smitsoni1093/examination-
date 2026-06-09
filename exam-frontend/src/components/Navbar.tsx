@@ -549,7 +549,7 @@ const Navbar = () => {
                   color={isTestScreen ? "success" : "error"}
                   size="small"
                   sx={{
-                    display: { xs: "flex", md: "none" },
+                    display: { xs: isTestScreen ? "none" : "flex", md: "none" },
                     bgcolor: isTestScreen
                       ? alpha("#10B981", 0.1)
                       : alpha("#EF4444", 0.1),
