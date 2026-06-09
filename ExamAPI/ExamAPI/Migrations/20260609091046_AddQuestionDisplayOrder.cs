@@ -8,13 +8,6 @@ namespace ExamAPI.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "ShowDetailedAnswers",
-                table: "Results",
-                type: "bit",
-                nullable: false,
-                defaultValue: false);
-
             migrationBuilder.AddColumn<int>(
                 name: "DisplayOrder",
                 table: "Questions",
@@ -51,10 +44,6 @@ ON q.Id = o.Id;
             migrationBuilder.DropIndex(
                 name: "IX_Questions_AdminId_DisplayOrder",
                 table: "Questions");
-
-            migrationBuilder.DropColumn(
-                name: "ShowDetailedAnswers",
-                table: "Results");
 
             migrationBuilder.DropColumn(
                 name: "DisplayOrder",
