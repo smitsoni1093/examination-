@@ -32,8 +32,7 @@
     "of": "of",
     "english": "English",
     "hindi": "हिंदी",
-    "gujarati": "ગુજરાતી"
-    ,
+    "gujarati": "ગુજરાતી",
     "backToDashboard": "Back to Dashboard",
     "previous": "Previous",
     "previewTest": "Preview Test",
@@ -52,8 +51,7 @@
     "submitTestNow": "Submit test now?",
     "unansweredInfo": "You still have {{count}} unanswered questions. You can submit as-is or go back and review first.",
     "goBack": "Go Back",
-    "submitAnyway": "Submit Anyway"
-    ,
+    "submitAnyway": "Submit Anyway",
     "confirmLogout": "Confirm logout",
     "saveBeforeLogout": "Your current answer and resume point will be saved before you leave this test.",
     "logoutConfirmMessage": "Are you sure you want to logout? You will need to sign in again to continue."
@@ -504,21 +502,21 @@
     "ERROR_UNKNOWN": "An unknown error occurred",
     "ERROR_INVALID_INPUT": "Invalid input",
     "ERROR_DATABASE": "Database error occurred",
-    "NOT_FOUND": "Requested resource was not found"
-    ,"MOBILE_INVALID": "Please enter a valid mobile number"
-    ,"MOBILE_REQUIRED": "Mobile number is required"
-    ,"PINCODE_INVALID": "Please enter a valid pincode"
-    ,"MOBILE_NOT_REGISTERED": "Mobile number is not registered"
-    ,"MOBILE_ALREADY_EXISTS": "Mobile number already exists"
-    ,"OTP_SENT": "OTP sent successfully"
-    ,"OTP_SEND_FAILED": "Unable to send OTP right now. Please try again"
-    ,"OTP_INVALID": "Invalid OTP"
-    ,"OTP_EXPIRED": "OTP has expired"
-    ,"OTP_ALREADY_USED": "OTP already used"
-    ,"OTP_MAX_ATTEMPTS": "Maximum OTP attempts reached"
-    ,"OTP_RESEND_WAIT": "Please wait before requesting another OTP"
-    ,"OTP_SELECTION_EXPIRED": "OTP session expired. Please request a new OTP"
-    ,"OTP_SELECTION_INVALID": "Selected account is invalid. Please verify OTP again"
+    "NOT_FOUND": "Requested resource was not found",
+    "MOBILE_INVALID": "Please enter a valid mobile number",
+    "MOBILE_REQUIRED": "Mobile number is required",
+    "PINCODE_INVALID": "Please enter a valid pincode",
+    "MOBILE_NOT_REGISTERED": "Mobile number is not registered",
+    "MOBILE_ALREADY_EXISTS": "Mobile number already exists",
+    "OTP_SENT": "OTP sent successfully",
+    "OTP_SEND_FAILED": "Unable to send OTP right now. Please try again",
+    "OTP_INVALID": "Invalid OTP",
+    "OTP_EXPIRED": "OTP has expired",
+    "OTP_ALREADY_USED": "OTP already used",
+    "OTP_MAX_ATTEMPTS": "Maximum OTP attempts reached",
+    "OTP_RESEND_WAIT": "Please wait before requesting another OTP",
+    "OTP_SELECTION_EXPIRED": "OTP session expired. Please request a new OTP",
+    "OTP_SELECTION_INVALID": "Selected account is invalid. Please verify OTP again"
   },
   "modal": {
     "confirmDelete": "Confirm Delete",

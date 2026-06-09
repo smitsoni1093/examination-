@@ -730,7 +730,9 @@ const TestPage = () => {
                 disabled={savingAndLoggingOut}
                 sx={{ fontSize: "0.8rem", py: 0.95, flex: 1, minWidth: 0 }}
               >
-                {savingAndLoggingOut ? t("common.saving") : t("common.saveAndLogout")}
+                {savingAndLoggingOut
+                  ? t("common.saving")
+                  : t("common.saveAndLogout")}
               </Button>
             </Box>
           </Paper>
@@ -757,7 +759,9 @@ const TestPage = () => {
           </Typography>
         </Box>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setConfirmSubmit(false)}>{t("common.cancel")}</Button>
+          <Button onClick={() => setConfirmSubmit(false)}>
+            {t("common.cancel")}
+          </Button>
           <Button
             onClick={handleFinalSubmit}
             variant="contained"

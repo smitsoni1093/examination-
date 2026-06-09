@@ -45,7 +45,8 @@ const Navbar = () => {
   const { t, i18n } = useTranslation();
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [savingAndLoggingOut, setSavingAndLoggingOut] = useState(false);
-  const [languageMenuAnchor, setLanguageMenuAnchor] = useState<null | HTMLElement>(null);
+  const [languageMenuAnchor, setLanguageMenuAnchor] =
+    useState<null | HTMLElement>(null);
   const exam = useSelector((state: RootState) => state.exam);
   const isTestScreen = location.pathname.startsWith("/user/test/");
   const currentQuestion = useMemo(
@@ -316,7 +317,10 @@ const Navbar = () => {
                   py: { xs: 0.65, sm: 0.75 },
                   minWidth: { xs: 92, sm: 118, md: 152 },
                   bgcolor: themeMode === "dark" ? "#000000" : "#FFFFFF",
-                  borderColor: themeMode === "dark" ? alpha("#E2E8F0", 0.18) : alpha("#1E293B", 0.16),
+                  borderColor:
+                    themeMode === "dark"
+                      ? alpha("#E2E8F0", 0.18)
+                      : alpha("#1E293B", 0.16),
                   color: themeMode === "dark" ? "#E2E8F0" : "#0F172A",
                   fontWeight: 800,
                   textTransform: "none",
@@ -539,7 +543,9 @@ const Navbar = () => {
                     },
                   }}
                 >
-                  {isTestScreen ? t("common.saveAndLogout") : t("navbar.logout")}
+                  {isTestScreen
+                    ? t("common.saveAndLogout")
+                    : t("navbar.logout")}
                 </Button>
 
                 <IconButton
@@ -589,15 +595,15 @@ const Navbar = () => {
         PaperProps={{ sx: { borderRadius: 4 } }}
       >
         <DialogTitle sx={{ fontWeight: 900 }}>
-            {isTestScreen ? t("common.saveAndLogout") : t("common.confirmLogout")}
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText sx={{ color: "#475569", fontWeight: 600 }}>
-              {isTestScreen
-                ? t("common.saveBeforeLogout")
-                : t("common.logoutConfirmMessage")}
-            </DialogContentText>
-          </DialogContent>
+          {isTestScreen ? t("common.saveAndLogout") : t("common.confirmLogout")}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: "#475569", fontWeight: 600 }}>
+            {isTestScreen
+              ? t("common.saveBeforeLogout")
+              : t("common.logoutConfirmMessage")}
+          </DialogContentText>
+        </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={closeLogoutConfirm} variant="outlined">
             {t("common.cancel")}

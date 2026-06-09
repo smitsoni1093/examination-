@@ -934,14 +934,18 @@ const TestPreviewPage = () => {
       </Box>
 
       <Dialog open={confirmSubmit} onClose={() => setConfirmSubmit(false)}>
-        <DialogTitle sx={{ fontWeight: 800 }}>{t("common.submitTestNow")}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>
+          {t("common.submitTestNow")}
+        </DialogTitle>
         <Box sx={{ px: 3, pb: 1.5 }}>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {t("common.unansweredInfo", { count: counts.unanswered })}
           </Typography>
         </Box>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setConfirmSubmit(false)}>{t("common.goBack")}</Button>
+          <Button onClick={() => setConfirmSubmit(false)}>
+            {t("common.goBack")}
+          </Button>
           <Button
             onClick={handleFinalSubmit}
             variant="contained"
