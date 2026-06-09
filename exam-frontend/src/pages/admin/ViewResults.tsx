@@ -1209,49 +1209,73 @@ const ViewResults = () => {
                   answer review with right and wrong answers.
                 </Typography>
               </DialogContent>
-              <DialogActions sx={{ p: 2, flexWrap: "wrap" }}>
-                <Button onClick={() => setReleaseDialogTarget(null)}>
+              <DialogActions
+                sx={{ p: 2, flexWrap: "wrap", alignItems: "center" }}
+              >
+                <Button
+                  onClick={() => setReleaseDialogTarget(null)}
+                  sx={{ mr: { xs: 0, sm: 1 } }}
+                >
                   Cancel
                 </Button>
-                <Button
-                  variant="outlined"
-                  onClick={async () => {
-                    if (!releaseDialogTarget) return;
-                    const target = releaseDialogTarget;
-                    setReleaseDialogTarget(null);
-                    if (target.kind === "bulk") {
-                      await handleBulkRelease(false);
-                      return;
-                    }
-                    await handleReleaseResult(
-                      target.userId,
-                      target.testId,
-                      false,
-                    );
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    width: { xs: "100%", sm: "auto" },
+                    mt: { xs: 1, sm: 0 },
                   }}
                 >
-                  Release Marks Only
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={async () => {
-                    if (!releaseDialogTarget) return;
-                    const target = releaseDialogTarget;
-                    setReleaseDialogTarget(null);
-                    if (target.kind === "bulk") {
-                      await handleBulkRelease(true);
-                      return;
-                    }
-                    await handleReleaseResult(
-                      target.userId,
-                      target.testId,
-                      true,
-                    );
-                  }}
-                  sx={{ bgcolor: "#2563EB", "&:hover": { bgcolor: "#1D4ED8" } }}
-                >
-                  Release with Answers
-                </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={async () => {
+                      if (!releaseDialogTarget) return;
+                      const target = releaseDialogTarget;
+                      setReleaseDialogTarget(null);
+                      if (target.kind === "bulk") {
+                        await handleBulkRelease(false);
+                        return;
+                      }
+                      await handleReleaseResult(
+                        target.userId,
+                        target.testId,
+                        false,
+                      );
+                    }}
+                    sx={{ flex: 1, minWidth: 0, pt: 1.1, pb: 1.1 }}
+                  >
+                    Release Marks Only
+                  </Button>
+
+                  <Button
+                    variant="contained"
+                    onClick={async () => {
+                      if (!releaseDialogTarget) return;
+                      const target = releaseDialogTarget;
+                      setReleaseDialogTarget(null);
+                      if (target.kind === "bulk") {
+                        await handleBulkRelease(true);
+                        return;
+                      }
+                      await handleReleaseResult(
+                        target.userId,
+                        target.testId,
+                        true,
+                      );
+                    }}
+                    sx={{
+                      flex: 1,
+                      minWidth: 0,
+                      pt: 1.1,
+                      pb: 1.1,
+                      bgcolor: "#2563EB",
+                      "&:hover": { bgcolor: "#1D4ED8" },
+                    }}
+                  >
+                    Release with Answers
+                  </Button>
+                </Box>
               </DialogActions>
             </Dialog>
           </Box>
