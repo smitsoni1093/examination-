@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
+import { useTranslation } from "react-i18next";
 import {
   Container,
   Typography,
@@ -33,6 +34,7 @@ const TestPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const themeMode = useSelector(
     (state: RootState) => state.theme?.mode || "light",
   );
@@ -311,7 +313,7 @@ const TestPage = () => {
             },
           }}
         >
-          Back to Dashboard
+          {t("common.backToDashboard")}
         </Button>
       </Box>
 
@@ -432,7 +434,7 @@ const TestPage = () => {
                 bgcolor: isDark ? "#000000" : undefined,
               }}
             >
-              ⟵ Previous
+              {t("common.previous")}
             </Button>
 
             {currentIdx === questions.length - 1 ? (
@@ -449,7 +451,7 @@ const TestPage = () => {
                   onClick={handlePreview}
                   sx={{ fontSize: "0.82rem", py: 0.8 }}
                 >
-                  Preview Test
+                  {t("common.previewTest")}
                 </Button>
                 <Button
                   variant="contained"
@@ -457,7 +459,7 @@ const TestPage = () => {
                   onClick={handleFinishClick}
                   sx={{ fontSize: "0.82rem", py: 0.8 }}
                 >
-                  Submit Test
+                  {t("common.submitTest")}
                 </Button>
               </Box>
             ) : (
@@ -466,7 +468,7 @@ const TestPage = () => {
                 onClick={() => setCurrentIdx((prev) => prev + 1)}
                 sx={{ fontSize: "0.82rem", py: 0.8 }}
               >
-                Next ⟶
+                {t("common.next")} ⟶
               </Button>
             )}
           </Box>
@@ -699,7 +701,7 @@ const TestPage = () => {
                 onClick={handleFinishClick}
                 sx={{ fontSize: "0.8rem", py: 0.95 }}
               >
-                FINISH EXAM
+                {t("common.finishExam")}
               </Button>
             </Box>
 
@@ -718,7 +720,7 @@ const TestPage = () => {
                 onClick={handleFinishClick}
                 sx={{ fontSize: "0.8rem", py: 0.95, flex: 1, minWidth: 0 }}
               >
-                Finish Exam
+                {t("common.finishExam")}
               </Button>
               <Button
                 fullWidth
@@ -728,7 +730,7 @@ const TestPage = () => {
                 disabled={savingAndLoggingOut}
                 sx={{ fontSize: "0.8rem", py: 0.95, flex: 1, minWidth: 0 }}
               >
-                {savingAndLoggingOut ? "Saving..." : "Save & Logout"}
+                {savingAndLoggingOut ? t("common.saving") : t("common.saveAndLogout")}
               </Button>
             </Box>
           </Paper>
@@ -755,14 +757,14 @@ const TestPage = () => {
           </Typography>
         </Box>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setConfirmSubmit(false)}>Cancel</Button>
+          <Button onClick={() => setConfirmSubmit(false)}>{t("common.cancel")}</Button>
           <Button
             onClick={handleFinalSubmit}
             variant="contained"
             color="error"
             disabled={submitting}
           >
-            {submitting ? "Submitting..." : "Yes, Submit Final"}
+            {submitting ? t("common.submitting") : t("common.submitFinal")}
           </Button>
         </DialogActions>
       </Dialog>

@@ -3,8 +3,8 @@ import {
   Toolbar,
   Typography,
   Button,
-  Select,
   MenuItem,
+  Menu,
   Box,
   Avatar,
   IconButton,
@@ -17,7 +17,6 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@mui/material";
-import type { SelectChangeEvent } from "@mui/material/Select";
 import { alpha } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -46,10 +45,8 @@ const Navbar = () => {
   const { t, i18n } = useTranslation();
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [savingAndLoggingOut, setSavingAndLoggingOut] = useState(false);
+  const [languageMenuAnchor, setLanguageMenuAnchor] = useState<null | HTMLElement>(null);
   const exam = useSelector((state: RootState) => state.exam);
-  const hideLanguagePicker =
-    location.pathname === "/login" ||
-    location.pathname.startsWith("/user/test/");
   const isTestScreen = location.pathname.startsWith("/user/test/");
   const currentQuestion = useMemo(
     () => exam.questions[exam.currentQuestionIndex],
@@ -134,8 +131,12 @@ const Navbar = () => {
     gu: t("common.gujarati"),
   };
 
-  const onLanguageSelect = (event: SelectChangeEvent<string>) => {
-    handleLanguageChange(event.target.value);
+  const openLanguageMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setLanguageMenuAnchor(event.currentTarget);
+  };
+
+  const closeLanguageMenu = () => {
+    setLanguageMenuAnchor(null);
   };
 
   const onThemeToggle = (_event: unknown, checked: boolean) => {
@@ -290,15 +291,35 @@ const Navbar = () => {
               />
             </Box>
 
-            {!hideLanguagePicker && (
-              <Box
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={openLanguageMenu}
+                startIcon={
+                  <Language
+                    sx={{
+                      fontSize: { xs: 14, sm: 16 },
+                      color: themeMode === "dark" ? "#93C5FD" : "#0369A1",
+                    }}
+                  />
+                }
+                endIcon={<KeyboardArrowDown sx={{ fontSize: 16 }} />}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  bgcolor: themeMode === "dark" ? "#000000" : "#FFFFFF",
                   borderRadius: "14px",
-                  px: { xs: 0.6, sm: 1, md: 1.5 },
-                  border: `1px solid ${themeMode === "dark" ? alpha("#E2E8F0", 0.18) : alpha("#1E293B", 0.16)}`,
+                  px: { xs: 1, sm: 1.25, md: 1.5 },
+                  py: { xs: 0.65, sm: 0.75 },
+                  minWidth: { xs: 92, sm: 118, md: 152 },
+                  bgcolor: themeMode === "dark" ? "#000000" : "#FFFFFF",
+                  borderColor: themeMode === "dark" ? alpha("#E2E8F0", 0.18) : alpha("#1E293B", 0.16),
+                  color: themeMode === "dark" ? "#E2E8F0" : "#0F172A",
+                  fontWeight: 800,
+                  textTransform: "none",
                   boxShadow:
                     themeMode === "dark"
                       ? "0 8px 18px rgba(0, 0, 0, 0.6)"
@@ -307,121 +328,98 @@ const Navbar = () => {
                   "&:hover": {
                     borderColor: alpha("#0EA5E9", 0.45),
                     boxShadow: "0 10px 22px rgba(2, 132, 199, 0.16)",
+                    bgcolor: themeMode === "dark" ? "#050505" : "#F8FAFC",
                   },
                 }}
               >
-                <Language
+                <Box
+                  component="span"
                   sx={{
-                    fontSize: { xs: 15, sm: 17 },
-                    mr: { xs: 0.3, sm: 0.5 },
-                    color: themeMode === "dark" ? "#93C5FD" : "#0369A1",
-                    display: { xs: "none", sm: "block" },
-                  }}
-                />
-                <Select
-                  value={currentLang}
-                  onChange={onLanguageSelect}
-                  size="small"
-                  IconComponent={KeyboardArrowDown}
-                  displayEmpty
-                  renderValue={(value) => (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: { xs: 0.4, sm: 0.8 },
-                      }}
-                    >
-                      <Box
-                        component="span"
-                        sx={{
-                          display: { xs: "none", sm: "inline-flex" },
-                          alignItems: "center",
-                          justifyContent: "center",
-                          minWidth: 24,
-                          height: 18,
-                          borderRadius: "999px",
-                          fontSize: "0.55rem",
-                          fontWeight: 900,
-                          letterSpacing: 0.4,
-                          color: "#0C4A6E",
-                          bgcolor: alpha("#0EA5E9", 0.14),
-                          border: `1px solid ${alpha("#0284C7", 0.2)}`,
-                        }}
-                      >
-                        {String(value).toUpperCase()}
-                      </Box>
-                      <Typography
-                        sx={{
-                          fontSize: {
-                            xs: "0.7rem",
-                            sm: "0.78rem",
-                            md: "0.84rem",
-                          },
-                          fontWeight: 800,
-                          color: themeMode === "dark" ? "#E2E8F0" : "#0F172A",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {languageLabels[value] || languageLabels.en}
-                      </Typography>
-                    </Box>
-                  )}
-                  MenuProps={{
-                    PaperProps: {
-                      sx: {
-                        mt: 0.8,
-                        borderRadius: "14px",
-                        bgcolor: themeMode === "dark" ? "#000000" : "#FFFFFF",
-                        border: `1px solid ${themeMode === "dark" ? alpha("#E2E8F0", 0.18) : alpha("#1E293B", 0.1)}`,
-                        boxShadow:
-                          themeMode === "dark"
-                            ? "0 18px 32px rgba(0, 0, 0, 0.72)"
-                            : "0 18px 32px rgba(15, 23, 42, 0.18)",
-                        "& .MuiMenuItem-root": {
-                          borderRadius: "10px",
-                          mx: 0.7,
-                          my: 0.35,
-                          fontSize: "0.86rem",
-                          fontWeight: 700,
-                          color: themeMode === "dark" ? "#E2E8F0" : "#1E293B",
-                          "&.Mui-selected": {
-                            bgcolor: alpha("#0EA5E9", 0.14),
-                            color: themeMode === "dark" ? "#BAE6FD" : "#0C4A6E",
-                          },
-                          "&.Mui-selected:hover": {
-                            bgcolor: alpha("#0EA5E9", 0.22),
-                          },
-                        },
-                      },
-                    },
-                  }}
-                  sx={{
-                    minWidth: { xs: 80, sm: 120, md: 154 },
-                    "& .MuiOutlinedInput-notchedOutline": { border: "none" },
-                    "& .MuiSelect-icon": {
-                      color: themeMode === "dark" ? "#93C5FD" : "#0369A1",
-                      right: { xs: 4, sm: 6 },
-                    },
-                    "& .MuiSelect-select": {
-                      py: { xs: 0.7, sm: 0.95 },
-                      pr: { xs: 3, sm: 4 },
-                      pl: { xs: 0.15, sm: 0.2 },
-                    },
-                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                      border: "none",
-                    },
-                    fontSize: { xs: "0.7rem", sm: "0.78rem", md: "0.84rem" },
-                    fontWeight: 700,
-                    color: themeMode === "dark" ? "#E2E8F0" : "#1E293B",
+                    display: { xs: "none", sm: "inline-flex" },
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minWidth: 24,
+                    height: 18,
+                    borderRadius: "999px",
+                    fontSize: "0.55rem",
+                    fontWeight: 900,
+                    letterSpacing: 0.4,
+                    color: "#0C4A6E",
+                    bgcolor: alpha("#0EA5E9", 0.14),
+                    border: `1px solid ${alpha("#0284C7", 0.2)}`,
+                    mr: 0.35,
                   }}
                 >
-                  <MenuItem value="en">{languageLabels.en}</MenuItem>
-                  <MenuItem value="hi">{languageLabels.hi}</MenuItem>
-                  <MenuItem value="gu">{languageLabels.gu}</MenuItem>
-                </Select>
-              </Box>
-            )}
+                  {currentLang.toUpperCase()}
+                </Box>
+                {t("navbar.language")}:
+                <Box component="span" sx={{ ml: 0.5 }}>
+                  {languageLabels[currentLang] || languageLabels.en}
+                </Box>
+              </Button>
+
+              <Menu
+                anchorEl={languageMenuAnchor}
+                open={Boolean(languageMenuAnchor)}
+                onClose={closeLanguageMenu}
+                MenuListProps={{ dense: true }}
+                PaperProps={{
+                  sx: {
+                    mt: 0.8,
+                    borderRadius: "14px",
+                    bgcolor: themeMode === "dark" ? "#000000" : "#FFFFFF",
+                    border: `1px solid ${themeMode === "dark" ? alpha("#E2E8F0", 0.18) : alpha("#1E293B", 0.1)}`,
+                    boxShadow:
+                      themeMode === "dark"
+                        ? "0 18px 32px rgba(0, 0, 0, 0.72)"
+                        : "0 18px 32px rgba(15, 23, 42, 0.18)",
+                    "& .MuiMenuItem-root": {
+                      borderRadius: "10px",
+                      mx: 0.7,
+                      my: 0.35,
+                      fontSize: "0.86rem",
+                      fontWeight: 700,
+                      color: themeMode === "dark" ? "#E2E8F0" : "#1E293B",
+                      "&.Mui-selected": {
+                        bgcolor: alpha("#0EA5E9", 0.14),
+                        color: themeMode === "dark" ? "#BAE6FD" : "#0C4A6E",
+                      },
+                      "&.Mui-selected:hover": {
+                        bgcolor: alpha("#0EA5E9", 0.22),
+                      },
+                    },
+                  },
+                }}
+              >
+                <MenuItem
+                  selected={currentLang === "en"}
+                  onClick={() => {
+                    void handleLanguageChange("en");
+                    closeLanguageMenu();
+                  }}
+                >
+                  {languageLabels.en}
+                </MenuItem>
+                <MenuItem
+                  selected={currentLang === "hi"}
+                  onClick={() => {
+                    void handleLanguageChange("hi");
+                    closeLanguageMenu();
+                  }}
+                >
+                  {languageLabels.hi}
+                </MenuItem>
+                <MenuItem
+                  selected={currentLang === "gu"}
+                  onClick={() => {
+                    void handleLanguageChange("gu");
+                    closeLanguageMenu();
+                  }}
+                >
+                  {languageLabels.gu}
+                </MenuItem>
+              </Menu>
+            </Box>
 
             {token ? (
               <Box
@@ -541,7 +539,7 @@ const Navbar = () => {
                     },
                   }}
                 >
-                  {isTestScreen ? "Save & Logout" : t("navbar.logout")}
+                  {isTestScreen ? t("common.saveAndLogout") : t("navbar.logout")}
                 </Button>
 
                 <IconButton
@@ -591,18 +589,18 @@ const Navbar = () => {
         PaperProps={{ sx: { borderRadius: 4 } }}
       >
         <DialogTitle sx={{ fontWeight: 900 }}>
-          {isTestScreen ? "Save & Logout" : "Confirm logout"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ color: "#475569", fontWeight: 600 }}>
-            {isTestScreen
-              ? "Your current answer and resume point will be saved before you leave this test."
-              : "Are you sure you want to logout? You will need to sign in again to continue."}
-          </DialogContentText>
-        </DialogContent>
+            {isTestScreen ? t("common.saveAndLogout") : t("common.confirmLogout")}
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ color: "#475569", fontWeight: 600 }}>
+              {isTestScreen
+                ? t("common.saveBeforeLogout")
+                : t("common.logoutConfirmMessage")}
+            </DialogContentText>
+          </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={closeLogoutConfirm} variant="outlined">
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             onClick={confirmLogout}
@@ -611,10 +609,10 @@ const Navbar = () => {
             disabled={savingAndLoggingOut}
           >
             {savingAndLoggingOut
-              ? "Saving..."
+              ? t("common.saving")
               : isTestScreen
-                ? "Save & Logout"
-                : "Logout"}
+                ? t("common.saveAndLogout")
+                : t("navbar.logout")}
           </Button>
         </DialogActions>
       </Dialog>

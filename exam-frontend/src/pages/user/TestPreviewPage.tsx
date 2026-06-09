@@ -23,6 +23,7 @@ import {
 } from "@mui/material";
 import { ArrowBackRounded } from "@mui/icons-material";
 import type { RootState } from "../../store/store";
+import { useTranslation } from "react-i18next";
 import {
   clearAnswer,
   clearTest,
@@ -45,6 +46,7 @@ const TestPreviewPage = () => {
     (state: RootState) => state.theme?.mode || "light",
   );
   const isDark = themeMode === "dark";
+  const { t } = useTranslation();
   const { testName, questions, savedAnswers, attemptId } = useSelector(
     (state: RootState) => state.exam,
   );
@@ -828,7 +830,7 @@ const TestPreviewPage = () => {
                 disabled={draftOption === ""}
                 sx={{ flex: 1, minWidth: 0 }}
               >
-                Save Answer
+                {t("common.saveAnswer")}
               </Button>
               <Button
                 variant="outlined"
@@ -836,7 +838,7 @@ const TestPreviewPage = () => {
                 onClick={handleClearAnswer}
                 sx={{ flex: 1, minWidth: 0 }}
               >
-                Clear
+                {t("common.clear")}
               </Button>
               <Button
                 variant="outlined"
@@ -845,7 +847,7 @@ const TestPreviewPage = () => {
                 }
                 sx={{ flex: 1, minWidth: 0 }}
               >
-                Back to Test
+                {t("common.backToTest")}
               </Button>
             </Box>
           </Paper>
@@ -864,7 +866,7 @@ const TestPreviewPage = () => {
           variant="body2"
           sx={{ color: isDark ? "#CBD5E1" : "#475569", mb: 1.2 }}
         >
-          Slide the round button from left to right to ask for final submit.
+          {t("common.slideToSubmit")}
         </Typography>
 
         <Box
@@ -893,7 +895,7 @@ const TestPreviewPage = () => {
               pointerEvents: "none",
             }}
           >
-            Slide to Submit Final Test
+            {t("common.slideToSubmitButton")}
           </Box>
 
           <Box
@@ -932,22 +934,21 @@ const TestPreviewPage = () => {
       </Box>
 
       <Dialog open={confirmSubmit} onClose={() => setConfirmSubmit(false)}>
-        <DialogTitle sx={{ fontWeight: 800 }}>Submit test now?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>{t("common.submitTestNow")}</DialogTitle>
         <Box sx={{ px: 3, pb: 1.5 }}>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            You still have {counts.unanswered} unanswered questions. You can
-            submit as-is or go back and review first.
+            {t("common.unansweredInfo", { count: counts.unanswered })}
           </Typography>
         </Box>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setConfirmSubmit(false)}>Go Back</Button>
+          <Button onClick={() => setConfirmSubmit(false)}>{t("common.goBack")}</Button>
           <Button
             onClick={handleFinalSubmit}
             variant="contained"
             color="error"
             disabled={submitting}
           >
-            {submitting ? "Submitting..." : "Submit Anyway"}
+            {submitting ? t("common.submitting") : t("common.submitAnyway")}
           </Button>
         </DialogActions>
       </Dialog>
