@@ -47,7 +47,7 @@ type ResultItem = {
   userId: number;
   testId: number;
   userName?: string | null;
-  mobile?: string | null;
+  mobileNumber?: string | null;
   testName?: string | null;
   score: number;
   totalQuestions: number;
@@ -139,7 +139,7 @@ const ViewResults = () => {
       const userId = String(row.userId ?? "").toLowerCase();
       const testId = String(row.testId ?? "").toLowerCase();
       const score = String(row.score ?? "").toLowerCase();
-      const mobile = String(row.mobile ?? "").toLowerCase();
+      const mobile = String(row.mobileNumber ?? "").toLowerCase();
 
       return (
         userName.includes(term) ||
@@ -306,6 +306,7 @@ const ViewResults = () => {
     const headers = [
       "Candidate Name",
       "Candidate User ID",
+      "Mobile",
       "Assessment Module",
       "Score",
       "Total Questions",
@@ -322,6 +323,7 @@ const ViewResults = () => {
       return [
         row.userName,
         row.userId,
+        row.mobileNumber ?? "",
         row.testName,
         row.score,
         row.totalQuestions,
@@ -842,7 +844,7 @@ const ViewResults = () => {
                           fontSize: { xs: "0.75rem", sm: "0.9rem" },
                         }}
                       >
-                        {row.mobile ?? "-"}
+                        {row.mobileNumber ?? "-"}
                       </Typography>
                     </TableCell>
                     <TableCell
