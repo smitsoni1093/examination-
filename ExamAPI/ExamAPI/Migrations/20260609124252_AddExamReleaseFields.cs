@@ -11,29 +11,42 @@ namespace ExamAPI.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "IsReleased",
-                table: "TestAttempts",
-                type: "bit",
-                nullable: false,
-                defaultValue: false);
+            // Add IsReleased column if it doesn't already exist
+            migrationBuilder.Sql(
+                @"IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_NAME = 'TestAttempts' AND COLUMN_NAME = 'IsReleased')
+                BEGIN
+                    ALTER TABLE [TestAttempts] ADD [IsReleased] bit NOT NULL DEFAULT CAST(0 AS bit);
+                END");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_TestAttempts_UserId_TestId_IsSubmitted_IsReleased",
-                table: "TestAttempts",
-                columns: new[] { "UserId", "TestId", "IsSubmitted", "IsReleased" });
+            // Create index only if it doesn't exist
+            migrationBuilder.Sql(
+                @"IF NOT EXISTS (SELECT 1 FROM sys.indexes 
+                    WHERE name = 'IX_TestAttempts_UserId_TestId_IsSubmitted_IsReleased')
+                BEGIN
+                    CREATE INDEX [IX_TestAttempts_UserId_TestId_IsSubmitted_IsReleased] 
+                    ON [TestAttempts]([UserId], [TestId], [IsSubmitted], [IsReleased]);
+                END");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_TestAttempts_UserId_TestId_IsSubmitted_IsReleased",
-                table: "TestAttempts");
+            // Drop index if it exists
+            migrationBuilder.Sql(
+                @"IF EXISTS (SELECT 1 FROM sys.indexes 
+                    WHERE name = 'IX_TestAttempts_UserId_TestId_IsSubmitted_IsReleased')
+                BEGIN
+                    DROP INDEX [IX_TestAttempts_UserId_TestId_IsSubmitted_IsReleased] ON [TestAttempts];
+                END");
 
-            migrationBuilder.DropColumn(
-                name: "IsReleased",
-                table: "TestAttempts");
+            // Drop column if it exists
+            migrationBuilder.Sql(
+                @"IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_NAME = 'TestAttempts' AND COLUMN_NAME = 'IsReleased')
+                BEGIN
+                    ALTER TABLE [TestAttempts] DROP COLUMN [IsReleased];
+                END");
         }
     }
 }
