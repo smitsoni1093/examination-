@@ -298,7 +298,10 @@ namespace ExamAPI.Services
                     existing.IsPublished,
                     existing.ShowDetailedAnswers,
                     existing.PublishedAt,
-                    existingItems);
+                    existingItems,
+                    0,
+                    false,
+                    existing.User.MobileNumber);
             }
 
             // Fetch questions with correct answers
@@ -345,7 +348,10 @@ namespace ExamAPI.Services
                 result.IsPublished,
                 result.ShowDetailedAnswers,
                 result.PublishedAt,
-                null);
+                null,
+                0,
+                false,
+                user!.MobileNumber);
         }
 
         /// <summary>Get the result for a user's test</summary>
@@ -385,7 +391,10 @@ namespace ExamAPI.Services
                 publishedResult.IsPublished,
                 publishedResult.ShowDetailedAnswers,
                 publishedResult.PublishedAt,
-                items);
+                items,
+                0,
+                false,
+                publishedResult.User.MobileNumber);
         }
 
         private async Task<List<AdminAnswerReviewItemDto>> BuildAnswerReviewItemsAsync(int userId, int testId)

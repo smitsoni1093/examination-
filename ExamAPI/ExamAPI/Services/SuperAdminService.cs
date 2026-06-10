@@ -80,8 +80,23 @@ namespace ExamAPI.Services
 
         public async Task<List<ResultDto>> GetAllResultsAsync()
         {
-            return await _db.Results
+            var results = await _db.Results
+                .Include(r => r.User)
+                .Include(r => r.Test)
                 .OrderByDescending(r => r.SubmittedAt)
+                .ToListAsync();
+
+            var attemptsByResult = await _db.TestAttempts
+                .AsNoTracking()
+                .Where(a => results.Select(r => r.UserId).Contains(a.UserId) && results.Select(r => r.TestId).Contains(a.TestId))
+                .OrderByDescending(a => a.LastSavedTime)
+                .ToListAsync();
+
+            var latestAttemptByKey = attemptsByResult
+                .GroupBy(a => new { a.UserId, a.TestId })
+                .ToDictionary(g => (g.Key.UserId, g.Key.TestId), g => g.First());
+
+            return results
                 .Select(r => new ResultDto(
                     r.UserId,
                     r.User.Name,
@@ -91,12 +106,13 @@ namespace ExamAPI.Services
                     r.TotalQuestions,
                     r.SubmittedAt,
                     r.IsPublished,
-                    false,
+                    r.ShowDetailedAnswers,
                     r.PublishedAt,
                     null,
-                    0,
-                    false))
-                .ToListAsync();
+                    latestAttemptByKey.TryGetValue((r.UserId, r.TestId), out var attempt) ? attempt.Id : 0,
+                    latestAttemptByKey.TryGetValue((r.UserId, r.TestId), out var activeAttempt) && activeAttempt.IsReleased,
+                    r.User.MobileNumber))
+                .ToList();
         }
     }
 }

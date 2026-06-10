@@ -285,7 +285,8 @@ namespace ExamAPI.DTOs
         DateTime? PublishedAt = null,
         List<AdminAnswerReviewItemDto>? Items = null,
         int AttemptId = 0,
-        bool IsReleased = false
+        bool IsReleased = false,
+        string? MobileNumber = null
     );
 
     public record ReleaseResultDto(int UserId, int TestId, bool ShowDetailedAnswers = false);

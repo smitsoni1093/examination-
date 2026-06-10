@@ -265,7 +265,10 @@ namespace ExamAPI.Services
                     existingResult.IsPublished,
                     existingResult.ShowDetailedAnswers,
                     existingResult.PublishedAt,
-                    null);
+                    null,
+                    0,
+                    false,
+                    existingResult.User.MobileNumber);
 
             if (existingResult != null)
             {
@@ -313,7 +316,10 @@ namespace ExamAPI.Services
                 existingResult.IsPublished,
                 existingResult.ShowDetailedAnswers,
                 existingResult.PublishedAt,
-                null);
+                null,
+                0,
+                false,
+                user!.MobileNumber);
         }
     }
 }

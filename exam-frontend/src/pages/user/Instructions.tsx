@@ -201,23 +201,8 @@ const Instructions = () => {
             }
           }}
         >
-          {isSubmitted
-            ? isResultPublished
-              ? t("userInstructions.viewResult")
-              : t("userInstructions.resumeExam")
-            : t("test.startTest")}
+          {isSubmitted ? t("userInstructions.resumeExam") : t("test.startTest")}
         </Button>
-
-        {isSubmitted && (
-          <Button
-            variant="outlined"
-            sx={{ mt: 2 }}
-            fullWidth
-            onClick={() => navigate(`/user/result/${testId}`)}
-          >
-            {t("userInstructions.goToResult")}
-          </Button>
-        )}
       </Paper>
     </Container>
   );
