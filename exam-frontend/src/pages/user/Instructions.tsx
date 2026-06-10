@@ -1,27 +1,39 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Typography, Box, Paper, Button, CircularProgress, Alert } from '@mui/material';
-import { ArrowBackRounded } from '@mui/icons-material';
-import { useDispatch } from 'react-redux';
-import { useTranslation } from 'react-i18next';
-import { userApi } from '../../api/endpoints';
-import { setTest } from '../../store/examSlice';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Container,
+  Typography,
+  Box,
+  Paper,
+  Button,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
+import { ArrowBackRounded } from "@mui/icons-material";
+import { useDispatch } from "react-redux";
+import { useTranslation } from "react-i18next";
+import { userApi } from "../../api/endpoints";
+import { setTest } from "../../store/examSlice";
 
 const Instructions = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { t } = useTranslation();
-  const formatSubmissionDate = (value: string | Date) => new Intl.DateTimeFormat('en-GB').format(new Date(value));
-  
+  const formatSubmissionDate = (value: string | Date) =>
+    new Intl.DateTimeFormat("en-GB").format(new Date(value));
+
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [testData, setTestData] = useState<any>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isResultPublished, setIsResultPublished] = useState(false);
+  const [isReleased, setIsReleased] = useState(false);
 
   const instructionLines = Array.isArray(testData?.instructions)
-    ? [...testData.instructions].sort((a: any, b: any) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+    ? [...testData.instructions].sort(
+        (a: any, b: any) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0),
+      )
     : [];
 
   useEffect(() => {
@@ -35,11 +47,16 @@ const Instructions = () => {
         setTestData(testRes.data);
         dispatch(setTest(testRes.data));
 
-        const currentStatus = (statusRes.data || []).find((t: any) => t.id === Number(testId));
+        const currentStatus = (statusRes.data || []).find(
+          (t: any) => t.id === Number(testId),
+        );
         setIsSubmitted(!!currentStatus?.isSubmitted);
         setIsResultPublished(!!currentStatus?.isResultPublished);
+        setIsReleased(!!currentStatus?.isReleased);
       } catch (err: any) {
-        setError(err.response?.data?.message || t('userInstructions.errorLoadingTest'));
+        setError(
+          err.response?.data?.message || t("userInstructions.errorLoadingTest"),
+        );
       } finally {
         setLoading(false);
       }
@@ -47,53 +64,70 @@ const Instructions = () => {
     fetchTest();
   }, [testId, dispatch, t]);
 
-  if (loading) return <Container sx={{ mt: 10, textAlign: 'center' }}><CircularProgress /></Container>;
-  
-  if (error) return (
-    <Container maxWidth="md" sx={{ mt: 10, textAlign: 'center' }}>
-      <Typography variant="h5" color="error">{error}</Typography>
-      <Button
-        variant="outlined"
-        startIcon={<ArrowBackRounded />}
-        sx={{
-          mt: 3,
-          borderRadius: 3,
-          px: 2,
-          py: 1,
-          fontWeight: 700,
-          borderColor: '#CBD5E1',
-          color: '#334155',
-          '&:hover': { borderColor: '#94A3B8', bgcolor: '#F8FAFC' },
-        }}
-        onClick={() => navigate('/user')}
-      >
-        {t('userInstructions.backToDashboard')}
-      </Button>
-    </Container>
-  );
+  if (loading)
+    return (
+      <Container sx={{ mt: 10, textAlign: "center" }}>
+        <CircularProgress />
+      </Container>
+    );
+
+  if (error)
+    return (
+      <Container maxWidth="md" sx={{ mt: 10, textAlign: "center" }}>
+        <Typography variant="h5" color="error">
+          {error}
+        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackRounded />}
+          sx={{
+            mt: 3,
+            borderRadius: 3,
+            px: 2,
+            py: 1,
+            fontWeight: 700,
+            borderColor: "#CBD5E1",
+            color: "#334155",
+            "&:hover": { borderColor: "#94A3B8", bgcolor: "#F8FAFC" },
+          }}
+          onClick={() => navigate("/user")}
+        >
+          {t("userInstructions.backToDashboard")}
+        </Button>
+      </Container>
+    );
 
   return (
     <Container maxWidth="md" sx={{ mt: 5 }}>
       <Paper sx={{ p: 5 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, gap: 2, flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 1.5,
+            gap: 2,
+            flexWrap: "wrap",
+          }}
+        >
           <Typography variant="h4" sx={{ mb: 0 }}>
-            {t('userInstructions.title', { name: testData?.name })}
+            {t("userInstructions.title", { name: testData?.name })}
           </Typography>
           <Button
             variant="outlined"
             startIcon={<ArrowBackRounded />}
-            onClick={() => navigate('/user')}
+            onClick={() => navigate("/user")}
             sx={{
               borderRadius: 3,
               px: 2,
               py: 1,
               fontWeight: 700,
-              borderColor: '#CBD5E1',
-              color: '#334155',
-              '&:hover': { borderColor: '#94A3B8', bgcolor: '#F8FAFC' },
+              borderColor: "#CBD5E1",
+              color: "#334155",
+              "&:hover": { borderColor: "#94A3B8", bgcolor: "#F8FAFC" },
             }}
           >
-            {t('userInstructions.backToDashboard')}
+            {t("userInstructions.backToDashboard")}
           </Button>
         </Box>
         <Typography variant="h6" color="primary" gutterBottom>
@@ -105,8 +139,8 @@ const Instructions = () => {
             variant="body1"
             sx={{
               mt: 1,
-              color: '#334155',
-              whiteSpace: 'pre-line',
+              color: "#334155",
+              whiteSpace: "pre-line",
               lineHeight: 1.8,
               fontWeight: 500,
             }}
@@ -116,7 +150,10 @@ const Instructions = () => {
         )}
 
         {testData?.closingAt && (
-          <Typography variant="body2" sx={{ color: '#92400E', fontWeight: 700, mb: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{ color: "#92400E", fontWeight: 700, mb: 1 }}
+          >
             Last Date of Submission: {formatSubmissionDate(testData.closingAt)}
           </Typography>
         )}
@@ -136,37 +173,46 @@ const Instructions = () => {
         </Box>
 
         {isSubmitted && (
-          <Alert severity={isResultPublished ? 'success' : 'info'} sx={{ mb: 2 }}>
+          <Alert
+            severity={isResultPublished ? "success" : "info"}
+            sx={{ mb: 2 }}
+          >
             {isResultPublished
-              ? t('userInstructions.resultReleasedInfo')
-              : t('userInstructions.resultPendingReleaseInfo')}
+              ? t("userInstructions.resultReleasedInfo")
+              : t("userInstructions.resultPendingReleaseInfo")}
           </Alert>
         )}
 
-        <Button 
-          variant="contained" 
-          color="primary" 
-          size="large" 
+        <Button
+          variant="contained"
+          color="primary"
+          size="large"
           fullWidth
-          disabled={isSubmitted}
+          disabled={isSubmitted && !isReleased}
           onClick={async () => {
             try {
               const startRes = await userApi.startTestAttempt(Number(testId));
-              dispatch(setTest({ ...testData, attemptId: startRes.data.attemptId }));
+              dispatch(
+                setTest({ ...testData, attemptId: startRes.data.attemptId }),
+              );
               navigate(`/user/test/${testId}`);
             } catch (err: any) {
-              const message = err.response?.data?.message || '';
-              if (String(message).toLowerCase().includes('already submitted')) {
+              const message = err.response?.data?.message || "";
+              if (String(message).toLowerCase().includes("already submitted")) {
                 navigate(`/user/result/${testId}`);
                 return;
               }
-              setError(message || t('userInstructions.unableToStartTest'));
+              setError(message || t("userInstructions.unableToStartTest"));
             }
           }}
         >
           {isSubmitted
-            ? (isResultPublished ? t('userInstructions.viewResult') : t('userInstructions.submittedPendingRelease'))
-            : t('test.startTest')}
+            ? isReleased
+              ? t("userInstructions.resumeExam")
+              : isResultPublished
+                ? t("userInstructions.viewResult")
+                : t("userInstructions.submittedPendingRelease")
+            : t("test.startTest")}
         </Button>
 
         {isSubmitted && (
@@ -176,7 +222,7 @@ const Instructions = () => {
             fullWidth
             onClick={() => navigate(`/user/result/${testId}`)}
           >
-            {t('userInstructions.goToResult')}
+            {t("userInstructions.goToResult")}
           </Button>
         )}
       </Paper>

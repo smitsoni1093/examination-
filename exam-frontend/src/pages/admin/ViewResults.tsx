@@ -85,6 +85,12 @@ const ViewResults = () => {
     testId: number;
     label: string;
   } | null>(null);
+  const [releaseExamLoading, setReleaseExamLoading] = useState<string | null>(
+    null,
+  );
+  const [releaseExamMessage, setReleaseExamMessage] = useState<string | null>(
+    null,
+  );
   const pageSize = 10;
 
   useEffect(() => {
@@ -182,6 +188,29 @@ const ViewResults = () => {
     } catch (error: unknown) {
       console.error("Failed to release result", error);
       setError("Failed to release result. Please try again.");
+    }
+  };
+
+  const handleReleaseExam = async (userId: number, testId: number) => {
+    const rowKey = `${userId}-${testId}`;
+    setReleaseExamMessage(null);
+    setReleaseExamLoading(rowKey);
+
+    try {
+      await adminApi.releaseExam({ userId, testId });
+      setReleaseExamMessage(
+        "Exam released successfully. The student can resume from their last saved position.",
+      );
+    } catch (error: unknown) {
+      console.error("Failed to release exam", error);
+      const err = error as ApiError;
+      setReleaseExamMessage(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to release exam. Please try again.",
+      );
+    } finally {
+      setReleaseExamLoading(null);
     }
   };
 
@@ -484,6 +513,21 @@ const ViewResults = () => {
       </Box>
 
       <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 6, lg: 10 } }}>
+        {releaseExamMessage && (
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 700,
+                color: releaseExamMessage.startsWith("Failed")
+                  ? "error.main"
+                  : "success.main",
+              }}
+            >
+              {releaseExamMessage}
+            </Typography>
+          </Box>
+        )}
         {/* Insights Bar */}
         <Box
           sx={{
@@ -923,6 +967,30 @@ const ViewResults = () => {
                           }}
                         >
                           View
+                        </Button>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() =>
+                            handleReleaseExam(row.userId, row.testId)
+                          }
+                          disabled={
+                            releaseExamLoading === `${row.userId}-${row.testId}`
+                          }
+                          sx={{
+                            borderRadius: 1,
+                            fontWeight: 700,
+                            fontSize: { xs: "0.6rem", sm: "0.75rem" },
+                            px: { xs: 0.8, sm: 1.5 },
+                            py: { xs: 0.3, sm: 0.5 },
+                            bgcolor: "#2563EB",
+                            color: "#FFFFFF",
+                            "&:hover": {
+                              bgcolor: "#1D4ED8",
+                            },
+                          }}
+                        >
+                          Release Exam
                         </Button>
                         {!row.isPublished && (
                           <Button

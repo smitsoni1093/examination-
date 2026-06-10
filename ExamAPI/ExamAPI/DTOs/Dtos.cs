@@ -82,7 +82,8 @@ namespace ExamAPI.DTOs
         bool HasInProgressAttempt = false,
         int AnsweredCount = 0,
         string? TestImageUrl = null,
-        DateTime? ClosingAt = null
+        DateTime? ClosingAt = null,
+        bool IsReleased = false
     );
 
     public record UserProfileDto(
@@ -134,6 +135,7 @@ namespace ExamAPI.DTOs
         int? LastQuestionIndex,
         DateTime LastSavedTime,
         string Status,
+        int? NextQuestionIndex,
         string? TestImageUrl = null,
         DateTime? ClosingAt = null,
         List<TestInstructionDto>? Instructions = null
@@ -281,10 +283,14 @@ namespace ExamAPI.DTOs
         bool IsPublished = false,
         bool ShowDetailedAnswers = false,
         DateTime? PublishedAt = null,
-        List<AdminAnswerReviewItemDto>? Items = null
+        List<AdminAnswerReviewItemDto>? Items = null,
+        int AttemptId = 0,
+        bool IsReleased = false
     );
 
     public record ReleaseResultDto(int UserId, int TestId, bool ShowDetailedAnswers = false);
+    public record ReleaseExamDto(int UserId, int TestId);
+    public record ReleaseExamResponseDto(bool Success, string Message);
 
     public record AdminAnswerReviewItemDto(
         int QuestionId,

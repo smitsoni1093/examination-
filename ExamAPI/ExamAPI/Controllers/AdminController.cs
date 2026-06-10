@@ -448,6 +448,20 @@ namespace ExamAPI.Controllers
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
         }
 
+        [HttpPost("exams/release")]
+        public async Task<IActionResult> ReleaseExam([FromBody] ReleaseExamDto dto)
+        {
+            try
+            {
+                var adminId = GetAdminId();
+                var result = await _adminService.ReleaseExamAsync(adminId, dto);
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException ex) { return Unauthorized(new { message = ex.Message }); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+        }
+
         [HttpPut("questions/{id}")]
         public async Task<IActionResult> UpdateQuestion(int id, Question question)
         {

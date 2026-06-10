@@ -206,6 +206,7 @@
     "yourScore": "YOUR SCORE",
     "details": "Details",
     "continueTest": "Continue Test",
+    "resumeExam": "Resume Exam",
     "mcqProgress": "MCQ Progress: {{answered}}/{{total}}",
     "enrollNow": "Enroll Now",
     "errorFallback": "Failed to establish secure connection."
@@ -223,6 +224,7 @@
     "rule5": "5. The test will automatically submit when the timer reaches zero.",
     "rule5NoTimer": "5. The test will submit only when you click submit.",
     "resultReleasedInfo": "You have already submitted this test. The result is released.",
+    "examReleasedInfo": "Your exam has been reopened by the admin. You can resume it now.",
     "resultPendingReleaseInfo": "You have already submitted this test. Result is pending admin release.",
     "viewResult": "View Result",
     "submittedPendingRelease": "Submitted - Pending Release",

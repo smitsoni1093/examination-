@@ -129,6 +129,8 @@ export const adminApi = {
     showDetailedAnswers = false,
   ) =>
     api.post("/admin/results/release", { userId, testId, showDetailedAnswers }),
+  releaseExam: (data: { userId: number; testId: number }) =>
+    api.post("/admin/exams/release", data),
 };
 
 export const superAdminApi = {

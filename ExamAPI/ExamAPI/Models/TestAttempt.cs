@@ -15,9 +15,11 @@ namespace ExamAPI.Models
 
         public string Status { get; set; } = "InProgress";
         public bool IsSubmitted { get; set; } = false;
+        public bool IsReleased { get; set; } = false;
 
         public int? LastQuestionIndex { get; set; }
 
         public ICollection<StudentAnswer> Answers { get; set; } = new List<StudentAnswer>();
+        // no release history model needed
     }
 }

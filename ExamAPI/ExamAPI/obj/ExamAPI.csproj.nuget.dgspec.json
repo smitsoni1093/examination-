@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj": {}
+    "C:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj": {}
   },
   "projects": {
-    "c:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj": {
+    "C:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj",
+        "projectUniqueName": "C:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj",
         "projectName": "ExamAPI",
-        "projectPath": "c:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj",
+        "projectPath": "C:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj",
         "packagesPath": "C:\\Users\\Shiv\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\obj\\",
+        "outputPath": "C:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

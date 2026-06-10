@@ -74,9 +74,17 @@ const TestPage = () => {
         // Jump to last saved index or first unanswered
         const answers = res.data.savedAnswers || {};
         const qs: any[] = res.data.questions || [];
+        const nextIdxFromServer = res.data.nextQuestionIndex;
         const lastIdx: number | null = res.data.lastQuestionIndex ?? null;
 
         if (
+          typeof nextIdxFromServer === "number" &&
+          nextIdxFromServer >= 0 &&
+          nextIdxFromServer < qs.length
+        ) {
+          setCurrentIdx(nextIdxFromServer);
+          dispatch(setCurrentQuestionIndex(nextIdxFromServer));
+        } else if (
           typeof lastIdx === "number" &&
           lastIdx >= 0 &&
           lastIdx < qs.length

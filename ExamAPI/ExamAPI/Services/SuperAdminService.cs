@@ -93,7 +93,9 @@ namespace ExamAPI.Services
                     r.IsPublished,
                     false,
                     r.PublishedAt,
-                    null))
+                    null,
+                    0,
+                    false))
                 .ToListAsync();
         }
     }

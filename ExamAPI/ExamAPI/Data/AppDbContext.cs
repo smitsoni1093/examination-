@@ -32,6 +32,10 @@ namespace ExamAPI.Data
                 .HasIndex(a => new { a.UserId, a.TestId, a.Status })
                 ;
 
+            modelBuilder.Entity<TestAttempt>()
+                .HasIndex(a => new { a.UserId, a.TestId, a.IsSubmitted, a.IsReleased });
+
+
             // One answer per attempt per question
             modelBuilder.Entity<StudentAnswer>()
                 .HasIndex(a => new { a.AttemptId, a.QuestionId })

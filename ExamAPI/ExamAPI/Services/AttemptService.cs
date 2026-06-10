@@ -10,6 +10,8 @@ namespace ExamAPI.Services
         private readonly AppDbContext _db;
 
         private static bool IsClosed(Test test) => test.ClosingAt.HasValue && test.ClosingAt.Value <= DateTime.UtcNow;
+        private static bool HasActiveRelease(TestAttempt attempt) =>
+            attempt.IsReleased;
 
         public AttemptService(AppDbContext db) => _db = db;
 
@@ -51,10 +53,6 @@ namespace ExamAPI.Services
 
         public async Task<TestAttempt> StartOrResumeAttemptAsync(int userId, int adminId, int testId)
         {
-            // Block if already submitted (existing system invariant: one Result per user per test)
-            if (await _db.Results.AnyAsync(r => r.UserId == userId && r.TestId == testId))
-                throw new InvalidOperationException("Test already submitted.");
-
             var test = await _db.Tests.FirstOrDefaultAsync(t => t.Id == testId && !t.IsDeleted && t.AdminId == adminId);
             if (test == null) throw new KeyNotFoundException("Test not found.");
             if (!test.IsActive) throw new InvalidOperationException("Test is not active.");
@@ -64,9 +62,18 @@ namespace ExamAPI.Services
 
             var existing = await _db.TestAttempts
                 .OrderByDescending(a => a.LastSavedTime)
-                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId && !a.IsSubmitted);
+                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId && (!a.IsSubmitted || HasActiveRelease(a)));
 
-            if (existing != null) return existing;
+            if (existing != null)
+            {
+                if (existing.IsSubmitted && !HasActiveRelease(existing))
+                    throw new InvalidOperationException("Test already submitted.");
+
+                return existing;
+            }
+
+            if (await _db.Results.AnyAsync(r => r.UserId == userId && r.TestId == testId))
+                throw new InvalidOperationException("Test already submitted.");
 
             var attempt = new TestAttempt
             {
@@ -89,7 +96,7 @@ namespace ExamAPI.Services
             var attempt = await _db.TestAttempts
                 .AsNoTracking()
                 .OrderByDescending(a => a.LastSavedTime)
-                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId && !a.IsSubmitted);
+                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId && (!a.IsSubmitted || HasActiveRelease(a)));
 
             if (attempt == null) return null;
 
@@ -130,6 +137,20 @@ namespace ExamAPI.Services
                 .Select(ti => new TestInstructionDto(ti.InstructionId, ti.Instruction.Text, ti.OrderIndex))
                 .ToList();
 
+            int? nextQuestionIndex = null;
+            for (var i = 0; i < questions.Count; i++)
+            {
+                var question = questions[i];
+                if (!answers.TryGetValue(question.Id, out var selected) || selected < 1 || selected > 4)
+                {
+                    nextQuestionIndex = i;
+                    break;
+                }
+            }
+
+            if (!nextQuestionIndex.HasValue && questions.Count > 0)
+                nextQuestionIndex = 0;
+
             var dto = new AttemptDto(
                 attempt.Id,
                 test.Id,
@@ -140,6 +161,7 @@ namespace ExamAPI.Services
                 attempt.LastQuestionIndex,
                 attempt.LastSavedTime,
                 attempt.Status,
+                nextQuestionIndex,
                 test.TestImageUrl,
                 test.ClosingAt,
                 instructions
@@ -162,8 +184,10 @@ namespace ExamAPI.Services
             if (IsClosed(test)) throw new InvalidOperationException("Test is closed.");
             await EnsureUserCanAccessTestAsync(userId, adminId, test);
 
-            // Block edits if a Result already exists (extra safety)
-            if (await _db.Results.AnyAsync(r => r.UserId == userId && r.TestId == attempt.TestId))
+            if (attempt.IsSubmitted && !HasActiveRelease(attempt))
+                throw new InvalidOperationException("Test already submitted.");
+
+            if (!HasActiveRelease(attempt) && await _db.Results.AnyAsync(r => r.UserId == userId && r.TestId == attempt.TestId))
                 throw new InvalidOperationException("Test already submitted.");
 
             var existing = await _db.StudentAnswers
@@ -203,7 +227,8 @@ namespace ExamAPI.Services
 
             if (attempt == null) throw new KeyNotFoundException("Attempt not found.");
             if (attempt.UserId != userId) throw new UnauthorizedAccessException("Attempt does not belong to user.");
-            if (attempt.IsSubmitted) throw new InvalidOperationException("Attempt is already submitted.");
+            var hasActiveRelease = HasActiveRelease(attempt);
+            if (attempt.IsSubmitted && !hasActiveRelease) throw new InvalidOperationException("Attempt is already submitted.");
 
             var testForOrg = await _db.Tests.AsNoTracking().FirstOrDefaultAsync(t => t.Id == attempt.TestId && !t.IsDeleted);
             if (testForOrg == null) throw new KeyNotFoundException("Test not found.");
@@ -214,20 +239,6 @@ namespace ExamAPI.Services
                 .Include(r => r.User)
                 .Include(r => r.Test)
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.TestId == attempt.TestId);
-
-            if (existingResult != null)
-                return new ResultDto(
-                    existingResult.UserId,
-                    existingResult.User.Name,
-                    existingResult.TestId,
-                    existingResult.Test.Name,
-                    existingResult.Score,
-                    existingResult.TotalQuestions,
-                    existingResult.SubmittedAt,
-                    existingResult.IsPublished,
-                    existingResult.ShowDetailedAnswers,
-                    existingResult.PublishedAt,
-                    null);
 
             var testQuestions = await _db.TestQuestions
                 .Include(tq => tq.Question)
@@ -242,27 +253,54 @@ namespace ExamAPI.Services
                 answers.TryGetValue(tq.QuestionId, out var selected) &&
                 selected == tq.Question.CorrectOption);
 
-            var test = await _db.Tests.FindAsync(attempt.TestId);
-            var user = await _db.Users.FindAsync(userId);
+            if (existingResult != null && !hasActiveRelease)
+                return new ResultDto(
+                    existingResult.UserId,
+                    existingResult.User.Name,
+                    existingResult.TestId,
+                    existingResult.Test.Name,
+                    existingResult.Score,
+                    existingResult.TotalQuestions,
+                    existingResult.SubmittedAt,
+                    existingResult.IsPublished,
+                    existingResult.ShowDetailedAnswers,
+                    existingResult.PublishedAt,
+                    null);
 
-            var result = new Result
+            if (existingResult != null)
             {
-                UserId = userId,
-                TestId = attempt.TestId,
-                Score = score,
-                TotalQuestions = testQuestions.Count,
-                SubmittedAt = DateTime.UtcNow,
-                IsPublished = false,
-                PublishedAt = null
-            };
-
-            _db.Results.Add(result);
+                existingResult.Score = score;
+                existingResult.TotalQuestions = testQuestions.Count;
+                existingResult.SubmittedAt = DateTime.UtcNow;
+                existingResult.IsPublished = false;
+                existingResult.ShowDetailedAnswers = false;
+                existingResult.PublishedAt = null;
+            }
+            else
+            {
+                existingResult = new Result
+                {
+                    UserId = userId,
+                    TestId = attempt.TestId,
+                    Score = score,
+                    TotalQuestions = testQuestions.Count,
+                    SubmittedAt = DateTime.UtcNow,
+                    IsPublished = false,
+                    ShowDetailedAnswers = false,
+                    PublishedAt = null
+                };
+                _db.Results.Add(existingResult);
+            }
 
             attempt.Status = "Completed";
             attempt.IsSubmitted = true;
+            attempt.IsReleased = false;
             attempt.LastSavedTime = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
+
+            var test = await _db.Tests.FindAsync(attempt.TestId);
+            var user = await _db.Users.FindAsync(userId);
 
             return new ResultDto(
                 userId,
@@ -271,10 +309,10 @@ namespace ExamAPI.Services
                 test!.Name,
                 score,
                 testQuestions.Count,
-                result.SubmittedAt,
-                result.IsPublished,
-                result.ShowDetailedAnswers,
-                result.PublishedAt,
+                existingResult.SubmittedAt,
+                existingResult.IsPublished,
+                existingResult.ShowDetailedAnswers,
+                existingResult.PublishedAt,
                 null);
         }
     }

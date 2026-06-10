@@ -10,6 +10,8 @@ namespace ExamAPI.Services
         private readonly AppDbContext _db;
 
         private static bool IsClosed(Test test) => test.ClosingAt.HasValue && test.ClosingAt.Value <= DateTime.UtcNow;
+        private static bool HasActiveRelease(TestAttempt attempt) =>
+            attempt.IsReleased;
 
         public UserService(AppDbContext db) => _db = db;
 
@@ -99,7 +101,7 @@ namespace ExamAPI.Services
             var recentAttempts = await _db.TestAttempts
                 .AsNoTracking()
                 .Where(a => a.UserId == userId && testIds.Contains(a.TestId))
-                .Select(a => new { a.Id, a.TestId, a.LastSavedTime, a.Status })
+                .Select(a => new { a.Id, a.TestId, a.LastSavedTime, a.Status, a.IsReleased })
                 .OrderByDescending(a => a.LastSavedTime)
                 .ToListAsync();
 
@@ -147,6 +149,7 @@ namespace ExamAPI.Services
                 var legacyAnsweredCount = legacyAnsweredCounts.TryGetValue(t.Id, out var legacyCount) ? legacyCount : 0;
                 var answeredCount = Math.Max(attemptAnsweredCount, legacyAnsweredCount);
                 var hasInProgressAttempt = !isSubmitted && hasAttempt && string.Equals(latestAttempt?.Status, "InProgress", StringComparison.OrdinalIgnoreCase);
+                var isReleased = hasAttempt && latestAttempt != null && latestAttempt.IsReleased;
 
                 return new UserTestStatusDto(
                     t.Id,
@@ -161,7 +164,8 @@ namespace ExamAPI.Services
                     hasInProgressAttempt,
                     answeredCount,
                     t.TestImageUrl,
-                    t.ClosingAt
+                    t.ClosingAt,
+                    isReleased
                 );
             }).ToList();
         }
@@ -184,6 +188,13 @@ namespace ExamAPI.Services
             var savedAnswers = await _db.UserAnswers
                 .Where(ua => ua.UserId == userId && ua.TestId == testId)
                 .ToDictionaryAsync(ua => ua.QuestionId, ua => ua.SelectedOption);
+
+            var latestAttempt = await _db.TestAttempts
+                .AsNoTracking()
+                .OrderByDescending(a => a.LastSavedTime)
+                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId);
+
+            var hasActiveRelease = latestAttempt != null && HasActiveRelease(latestAttempt);
 
             var questions = test.TestQuestions
                 .OrderBy(tq => tq.Question.DisplayOrder <= 0 ? int.MaxValue : tq.Question.DisplayOrder)
@@ -216,8 +227,15 @@ namespace ExamAPI.Services
             if (IsClosed(test)) throw new InvalidOperationException("Test is closed.");
             await EnsureUserCanAccessTestAsync(userId, adminId, test);
 
+            var latestAttempt = await _db.TestAttempts
+                .AsNoTracking()
+                .OrderByDescending(a => a.LastSavedTime)
+                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == dto.TestId);
+
+            var hasActiveRelease = latestAttempt != null && HasActiveRelease(latestAttempt);
+
             // Prevent saving if test is already submitted
-            if (await _db.Results.AnyAsync(r => r.UserId == userId && r.TestId == dto.TestId))
+            if (!hasActiveRelease && await _db.Results.AnyAsync(r => r.UserId == userId && r.TestId == dto.TestId))
                 throw new InvalidOperationException("Test already submitted. Cannot modify answers.");
 
             var existing = await _db.UserAnswers
@@ -250,13 +268,20 @@ namespace ExamAPI.Services
             if (IsClosed(testForOrg)) throw new InvalidOperationException("Test is closed.");
             await EnsureUserCanAccessTestAsync(userId, adminId, testForOrg);
 
+            var latestAttempt = await _db.TestAttempts
+                .AsNoTracking()
+                .OrderByDescending(a => a.LastSavedTime)
+                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == dto.TestId);
+
+            var hasActiveRelease = latestAttempt != null && HasActiveRelease(latestAttempt);
+
             // Prevent re-submission
             var existing = await _db.Results
                 .Include(r => r.User)
                 .Include(r => r.Test)
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.TestId == dto.TestId);
 
-            if (existing != null)
+            if (existing != null && !hasActiveRelease)
             {
                 var existingItems = existing.ShowDetailedAnswers
                     ? await BuildAnswerReviewItemsAsync(userId, dto.TestId)

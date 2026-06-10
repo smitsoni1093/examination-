@@ -5908,11 +5908,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI.Tests\\ExamAPI.Tests.csproj",
+      "projectUniqueName": "C:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI.Tests\\ExamAPI.Tests.csproj",
       "projectName": "ExamAPI.Tests",
-      "projectPath": "c:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI.Tests\\ExamAPI.Tests.csproj",
+      "projectPath": "C:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI.Tests\\ExamAPI.Tests.csproj",
       "packagesPath": "C:\\Users\\Shiv\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI.Tests\\obj\\",
+      "outputPath": "C:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI.Tests\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -5933,8 +5933,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "c:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj": {
-              "projectPath": "c:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj"
+            "C:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj": {
+              "projectPath": "C:\\Users\\Shiv\\OneDrive\\Documents\\examination-\\ExamAPI\\ExamAPI\\ExamAPI.csproj"
             }
           }
         }
