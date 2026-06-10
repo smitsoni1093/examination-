@@ -227,6 +227,7 @@
     "examReleasedInfo": "Your exam has been reopened by the admin. You can resume it now.",
     "resultPendingReleaseInfo": "You have already submitted this test. Result is pending admin release.",
     "viewResult": "View Result",
+    "resumeExam": "Resume Exam",
     "submittedPendingRelease": "Submitted - Pending Release",
     "goToResult": "Go To Result",
     "backToDashboard": "Back to Dashboard",
