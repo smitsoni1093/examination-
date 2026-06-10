@@ -62,7 +62,7 @@ namespace ExamAPI.Services
 
             var existing = await _db.TestAttempts
                 .OrderByDescending(a => a.LastSavedTime)
-                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId && (!a.IsSubmitted || HasActiveRelease(a)));
+                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId && (!a.IsSubmitted || a.IsReleased));
 
             if (existing != null)
             {
@@ -96,7 +96,7 @@ namespace ExamAPI.Services
             var attempt = await _db.TestAttempts
                 .AsNoTracking()
                 .OrderByDescending(a => a.LastSavedTime)
-                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId && (!a.IsSubmitted || HasActiveRelease(a)));
+                .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId && (!a.IsSubmitted || a.IsReleased));
 
             if (attempt == null) return null;
 
