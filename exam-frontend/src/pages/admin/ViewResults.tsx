@@ -1019,7 +1019,8 @@ const ViewResults = () => {
                               handleReleaseExam(row.userId, row.testId)
                             }
                             disabled={
-                              releaseExamLoading === `${row.userId}-${row.testId}`
+                              releaseExamLoading ===
+                              `${row.userId}-${row.testId}`
                             }
                             sx={{
                               borderRadius: 1,
@@ -1126,13 +1127,13 @@ const ViewResults = () => {
               {filteredResults.length === 0 && !loading && (
                 <TableRow>
                   <TableCell
-                      colSpan={9}
-                      align="center"
-                      sx={{
-                        py: { xs: 5, md: 10 },
-                        fontSize: { xs: "0.8rem", sm: "0.9rem" },
-                      }}
-                    >
+                    colSpan={9}
+                    align="center"
+                    sx={{
+                      py: { xs: 5, md: 10 },
+                      fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                    }}
+                  >
                     <Typography color="text.secondary" sx={{ fontWeight: 600 }}>
                       {searchTerm.trim()
                         ? "No results match your search."
@@ -1145,10 +1146,10 @@ const ViewResults = () => {
               {loading && (
                 <TableRow>
                   <TableCell
-                        colSpan={9}
-                        align="center"
-                        sx={{ py: { xs: 5, md: 10 } }}
-                      >
+                    colSpan={9}
+                    align="center"
+                    sx={{ py: { xs: 5, md: 10 } }}
+                  >
                     <LinearProgress
                       sx={{ width: "50%", mx: "auto", borderRadius: 3 }}
                     />
