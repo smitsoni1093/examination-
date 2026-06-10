@@ -270,6 +270,33 @@ namespace ExamAPI.Services
                     false,
                     existingResult.User.MobileNumber);
 
+            // If an existing published Result exists and this attempt is an admin-reopened attempt (IsReleased),
+            // do NOT overwrite the original Result. Mark the reopened attempt as submitted and return the original Result.
+            if (existingResult != null && hasActiveRelease)
+            {
+                attempt.Status = "Completed";
+                attempt.IsSubmitted = true;
+                attempt.IsReleased = false;
+                attempt.LastSavedTime = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+
+                return new ResultDto(
+                    existingResult.UserId,
+                    existingResult.User.Name,
+                    existingResult.TestId,
+                    existingResult.Test.Name,
+                    existingResult.Score,
+                    existingResult.TotalQuestions,
+                    existingResult.SubmittedAt,
+                    existingResult.IsPublished,
+                    existingResult.ShowDetailedAnswers,
+                    existingResult.PublishedAt,
+                    null,
+                    0,
+                    false,
+                    existingResult.User.MobileNumber);
+            }
+
             if (existingResult != null)
             {
                 existingResult.Score = score;
