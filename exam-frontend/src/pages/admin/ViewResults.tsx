@@ -47,6 +47,7 @@ type ResultItem = {
   userId: number;
   testId: number;
   userName?: string | null;
+  mobile?: string | null;
   testName?: string | null;
   score: number;
   totalQuestions: number;
@@ -54,6 +55,7 @@ type ResultItem = {
   isPublished?: boolean;
   showDetailedAnswers?: boolean;
   publishedAt?: string | null;
+  isReleased?: boolean;
 };
 
 type ApiError = {
@@ -137,13 +139,15 @@ const ViewResults = () => {
       const userId = String(row.userId ?? "").toLowerCase();
       const testId = String(row.testId ?? "").toLowerCase();
       const score = String(row.score ?? "").toLowerCase();
+      const mobile = String(row.mobile ?? "").toLowerCase();
 
       return (
         userName.includes(term) ||
         testName.includes(term) ||
         userId.includes(term) ||
         testId.includes(term) ||
-        score.includes(term)
+        score.includes(term) ||
+        mobile.includes(term)
       );
     });
   }, [results, searchTerm]);
@@ -200,6 +204,17 @@ const ViewResults = () => {
       await adminApi.releaseExam({ userId, testId });
       setReleaseExamMessage(
         "Exam released successfully. The student can resume from their last saved position.",
+      );
+      setResults((prev) =>
+        prev.map((item) => {
+          if (item.userId === userId && item.testId === testId) {
+            return {
+              ...item,
+              isReleased: true,
+            };
+          }
+          return item;
+        }),
       );
     } catch (error: unknown) {
       console.error("Failed to release exam", error);
@@ -692,6 +707,17 @@ const ViewResults = () => {
                     fontSize: { xs: "0.7rem", sm: "0.85rem" },
                   }}
                 >
+                  MOBILE
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 800,
+                    color: isDark ? "#FFFFFF" : "#475569",
+                    py: { xs: 1.5, md: 2.5 },
+                    display: { xs: "none", md: "table-cell" },
+                    fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                  }}
+                >
                   ASSESSMENT MODULE
                 </TableCell>
                 <TableCell
@@ -800,6 +826,23 @@ const ViewResults = () => {
                         }}
                       >
                         {row.userName}
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        py: { xs: 1, md: 2 },
+                        fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                        display: { xs: "none", md: "table-cell" },
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontWeight: 600,
+                          color: isDark ? "#CBD5E1" : "#475569",
+                          fontSize: { xs: "0.75rem", sm: "0.9rem" },
+                        }}
+                      >
+                        {row.mobile ?? "-"}
                       </Typography>
                     </TableCell>
                     <TableCell
@@ -968,30 +1011,32 @@ const ViewResults = () => {
                         >
                           View
                         </Button>
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={() =>
-                            handleReleaseExam(row.userId, row.testId)
-                          }
-                          disabled={
-                            releaseExamLoading === `${row.userId}-${row.testId}`
-                          }
-                          sx={{
-                            borderRadius: 1,
-                            fontWeight: 700,
-                            fontSize: { xs: "0.6rem", sm: "0.75rem" },
-                            px: { xs: 0.8, sm: 1.5 },
-                            py: { xs: 0.3, sm: 0.5 },
-                            bgcolor: "#2563EB",
-                            color: "#FFFFFF",
-                            "&:hover": {
-                              bgcolor: "#1D4ED8",
-                            },
-                          }}
-                        >
-                          Release Exam
-                        </Button>
+                        {!row.isReleased && (
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() =>
+                              handleReleaseExam(row.userId, row.testId)
+                            }
+                            disabled={
+                              releaseExamLoading === `${row.userId}-${row.testId}`
+                            }
+                            sx={{
+                              borderRadius: 1,
+                              fontWeight: 700,
+                              fontSize: { xs: "0.6rem", sm: "0.75rem" },
+                              px: { xs: 0.8, sm: 1.5 },
+                              py: { xs: 0.3, sm: 0.5 },
+                              bgcolor: "#2563EB",
+                              color: "#FFFFFF",
+                              "&:hover": {
+                                bgcolor: "#1D4ED8",
+                              },
+                            }}
+                          >
+                            Reopen Paper
+                          </Button>
+                        )}
                         {!row.isPublished && (
                           <Button
                             variant="contained"
@@ -1081,13 +1126,13 @@ const ViewResults = () => {
               {filteredResults.length === 0 && !loading && (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
-                    align="center"
-                    sx={{
-                      py: { xs: 5, md: 10 },
-                      fontSize: { xs: "0.8rem", sm: "0.9rem" },
-                    }}
-                  >
+                      colSpan={9}
+                      align="center"
+                      sx={{
+                        py: { xs: 5, md: 10 },
+                        fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                      }}
+                    >
                     <Typography color="text.secondary" sx={{ fontWeight: 600 }}>
                       {searchTerm.trim()
                         ? "No results match your search."
@@ -1100,10 +1145,10 @@ const ViewResults = () => {
               {loading && (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
-                    align="center"
-                    sx={{ py: { xs: 5, md: 10 } }}
-                  >
+                        colSpan={9}
+                        align="center"
+                        sx={{ py: { xs: 5, md: 10 } }}
+                      >
                     <LinearProgress
                       sx={{ width: "50%", mx: "auto", borderRadius: 3 }}
                     />

@@ -172,14 +172,9 @@ const Instructions = () => {
           )}
         </Box>
 
-        {isSubmitted && (
-          <Alert
-            severity={isResultPublished ? "success" : "info"}
-            sx={{ mb: 2 }}
-          >
-            {isResultPublished
-              ? t("userInstructions.resultReleasedInfo")
-              : t("userInstructions.resultPendingReleaseInfo")}
+        {isSubmitted && isResultPublished && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {t("userInstructions.resultReleasedInfo")}
           </Alert>
         )}
 
@@ -207,11 +202,9 @@ const Instructions = () => {
           }}
         >
           {isSubmitted
-            ? isReleased
-              ? t("userInstructions.resumeExam")
-              : isResultPublished
-                ? t("userInstructions.viewResult")
-                : t("userInstructions.submittedPendingRelease")
+            ? isResultPublished
+              ? t("userInstructions.viewResult")
+              : t("userInstructions.resumeExam")
             : t("test.startTest")}
         </Button>
 
