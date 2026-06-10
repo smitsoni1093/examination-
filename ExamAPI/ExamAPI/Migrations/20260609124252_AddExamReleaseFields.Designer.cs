@@ -845,8 +845,6 @@ namespace ExamAPI.Migrations
             modelBuilder.Entity("ExamAPI.Models.TestAttempt", b =>
                 {
                     b.Navigation("Answers");
-
-                    b.Navigation("Releases");
                 });
 
             modelBuilder.Entity("ExamAPI.Models.User", b =>
