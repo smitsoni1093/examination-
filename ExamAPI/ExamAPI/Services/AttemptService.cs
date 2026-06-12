@@ -232,7 +232,6 @@ namespace ExamAPI.Services
 
             var testForOrg = await _db.Tests.AsNoTracking().FirstOrDefaultAsync(t => t.Id == attempt.TestId && !t.IsDeleted);
             if (testForOrg == null) throw new KeyNotFoundException("Test not found.");
-            if (IsClosed(testForOrg)) throw new InvalidOperationException("Test is closed.");
             await EnsureUserCanAccessTestAsync(userId, adminId, testForOrg);
 
             var existingResult = await _db.Results
@@ -252,50 +251,6 @@ namespace ExamAPI.Services
             int score = testQuestions.Count(tq =>
                 answers.TryGetValue(tq.QuestionId, out var selected) &&
                 selected == tq.Question.CorrectOption);
-
-            if (existingResult != null && !hasActiveRelease)
-                return new ResultDto(
-                    existingResult.UserId,
-                    existingResult.User.Name,
-                    existingResult.TestId,
-                    existingResult.Test.Name,
-                    existingResult.Score,
-                    existingResult.TotalQuestions,
-                    existingResult.SubmittedAt,
-                    existingResult.IsPublished,
-                    existingResult.ShowDetailedAnswers,
-                    existingResult.PublishedAt,
-                    null,
-                    0,
-                    false,
-                    existingResult.User.MobileNumber);
-
-            // If an existing published Result exists and this attempt is an admin-reopened attempt (IsReleased),
-            // do NOT overwrite the original Result. Mark the reopened attempt as submitted and return the original Result.
-            if (existingResult != null && hasActiveRelease)
-            {
-                attempt.Status = "Completed";
-                attempt.IsSubmitted = true;
-                attempt.IsReleased = false;
-                attempt.LastSavedTime = DateTime.UtcNow;
-                await _db.SaveChangesAsync();
-
-                return new ResultDto(
-                    existingResult.UserId,
-                    existingResult.User.Name,
-                    existingResult.TestId,
-                    existingResult.Test.Name,
-                    existingResult.Score,
-                    existingResult.TotalQuestions,
-                    existingResult.SubmittedAt,
-                    existingResult.IsPublished,
-                    existingResult.ShowDetailedAnswers,
-                    existingResult.PublishedAt,
-                    null,
-                    0,
-                    false,
-                    existingResult.User.MobileNumber);
-            }
 
             if (existingResult != null)
             {

@@ -47,7 +47,7 @@ const TestPreviewPage = () => {
   );
   const isDark = themeMode === "dark";
   const { t } = useTranslation();
-  const { testName, questions, savedAnswers, attemptId } = useSelector(
+  const { testName, questions, savedAnswers, attemptId, closingAt } = useSelector(
     (state: RootState) => state.exam,
   );
 
@@ -66,6 +66,7 @@ const TestPreviewPage = () => {
   const reviewSectionRef = useRef<HTMLDivElement | null>(null);
   const dragStartClientXRef = useRef(0);
   const dragStartSliderXRef = useRef(0);
+  const autoSubmitStartedRef = useRef(false);
   const submitKnobSize = 54;
   const questionMapPageSize = 30;
 
@@ -80,6 +81,7 @@ const TestPreviewPage = () => {
             id: res.data.testId,
             name: res.data.testName,
             testImageUrl: res.data.testImageUrl,
+            closingAt: res.data.closingAt,
             duration: res.data.duration,
             questions: res.data.questions,
             savedAnswers: res.data.savedAnswers,
@@ -307,6 +309,58 @@ const TestPreviewPage = () => {
       setSubmitting(false);
     }
   }, [submitting, attemptId, testId, navigate, dispatch]);
+
+  useEffect(() => {
+    if (!closingAt || submitting || autoSubmitStartedRef.current) return;
+
+    const closingTime = new Date(closingAt).getTime();
+    if (!Number.isFinite(closingTime)) return;
+
+    const submitAtClosingTime = async () => {
+      autoSubmitStartedRef.current = true;
+      if (testId) {
+        try {
+          const res = await userApi.getTestAttempt(Number(testId));
+          const latestClosingAt = res.data.closingAt;
+          const latestClosingTime = latestClosingAt
+            ? new Date(latestClosingAt).getTime()
+            : Number.NaN;
+
+          if (Number.isFinite(latestClosingTime) && latestClosingTime > Date.now()) {
+            dispatch(
+              setTest({
+                id: res.data.testId,
+                name: res.data.testName,
+                testImageUrl: res.data.testImageUrl,
+                closingAt: latestClosingAt,
+                duration: res.data.duration,
+                questions: res.data.questions,
+                savedAnswers: res.data.savedAnswers,
+                attemptId: res.data.attemptId,
+              }),
+            );
+            dispatch(setAttemptId(res.data.attemptId));
+            autoSubmitStartedRef.current = false;
+            return;
+          }
+        } catch {
+          // If the attempt can no longer be loaded, continue with final submit.
+        }
+      }
+
+      setConfirmSubmit(false);
+      void handleFinalSubmit();
+    };
+
+    const delay = closingTime - Date.now();
+    if (delay <= 0) {
+      submitAtClosingTime();
+      return;
+    }
+
+    const timeoutId = window.setTimeout(submitAtClosingTime, delay);
+    return () => window.clearTimeout(timeoutId);
+  }, [closingAt, dispatch, handleFinalSubmit, submitting, testId]);
 
   if (loading) {
     return (

@@ -17,6 +17,11 @@ namespace ExamAPI.Models
         public bool IsSubmitted { get; set; } = false;
         public bool IsReleased { get; set; } = false;
 
+        // If this attempt was created by reopening a previous submitted attempt,
+        // store the parent attempt id for audit and separation of answers.
+        public int? ParentAttemptId { get; set; }
+        public TestAttempt? ParentAttempt { get; set; }
+
         public int? LastQuestionIndex { get; set; }
 
         public ICollection<StudentAnswer> Answers { get; set; } = new List<StudentAnswer>();

@@ -32,6 +32,7 @@ interface ExamState {
   attemptId: number | null;
   testName: string | null;
   testImageUrl: string | null;
+  closingAt: string | null;
   duration: number; // minutes
   questions: Question[];
   savedAnswers: Record<number, SavedAnswerState>;
@@ -94,6 +95,7 @@ const initialState: ExamState = {
   attemptId: null,
   testName: null,
   testImageUrl: null,
+  closingAt: null,
   duration: 0,
   questions: [],
   savedAnswers: {},
@@ -109,6 +111,7 @@ const examSlice = createSlice({
       state.attemptId = action.payload.attemptId ?? null;
       state.testName = action.payload.name;
       state.testImageUrl = action.payload.testImageUrl ?? null;
+      state.closingAt = action.payload.closingAt ?? null;
       state.duration = action.payload.duration;
       state.questions = action.payload.questions;
       state.savedAnswers = normalizeSavedAnswers(action.payload.savedAnswers);

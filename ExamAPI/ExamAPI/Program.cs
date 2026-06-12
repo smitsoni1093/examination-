@@ -28,6 +28,7 @@ builder.Services.AddScoped<AttemptService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<ISmsService, UrlTemplateSmsService>();
 builder.Services.AddSingleton<LocalizationService>();
+builder.Services.AddHostedService<ExamAutoSubmitService>();
 builder.Services.AddHttpClient();
 
 // ── JWT Authentication ────────────────────────────────────────────────────────

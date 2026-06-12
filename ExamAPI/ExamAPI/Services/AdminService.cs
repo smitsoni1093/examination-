@@ -1800,7 +1800,8 @@ namespace ExamAPI.Services
                     r.PublishedAt,
                     null,
                     latestAttemptByKey.TryGetValue((r.UserId, r.TestId), out var attempt) ? attempt.Id : 0,
-                    latestAttemptByKey.TryGetValue((r.UserId, r.TestId), out var activeAttempt) && activeAttempt.IsReleased))
+                    latestAttemptByKey.TryGetValue((r.UserId, r.TestId), out var activeAttempt) && activeAttempt.IsReleased,
+                    r.User.MobileNumber))
                 .ToList();
         }
 
@@ -1836,24 +1837,75 @@ namespace ExamAPI.Services
             var test = await _db.Tests.FirstOrDefaultAsync(t => t.Id == dto.TestId && !t.IsDeleted && t.AdminId == adminId);
             if (test == null) throw new KeyNotFoundException("Test not found.");
 
+            if (test.ClosingAt.HasValue && test.ClosingAt.Value <= DateTime.UtcNow)
+                throw new InvalidOperationException("Test closing date has passed.");
+
+            var openAttempt = await _db.TestAttempts
+                .AsNoTracking()
+                .Where(a => a.UserId == dto.UserId && a.TestId == dto.TestId && !a.IsSubmitted)
+                .OrderByDescending(a => a.LastSavedTime)
+                .FirstOrDefaultAsync();
+
+            if (openAttempt != null)
+                return new ReleaseExamResponseDto(true, "Exam is already reopened.");
+
             var attempt = await _db.TestAttempts
                 .Where(a => a.UserId == dto.UserId && a.TestId == dto.TestId && a.IsSubmitted)
                 .OrderByDescending(a => a.LastSavedTime)
                 .FirstOrDefaultAsync();
 
             if (attempt == null) throw new KeyNotFoundException("Attempt not found.");
-            if (!attempt.IsSubmitted) throw new InvalidOperationException("Attempt must be submitted before it can be released.");
-            if (attempt.IsReleased)
-                return new ReleaseExamResponseDto(true, "Exam already released.");
 
-            if (test.ClosingAt.HasValue && test.ClosingAt.Value <= DateTime.UtcNow)
-                throw new InvalidOperationException("Test closing date has passed.");
+            using var transaction = await _db.Database.BeginTransactionAsync();
 
-            attempt.IsReleased = true;
+            var now = DateTime.UtcNow;
+            attempt.Status = "Reopened";
+            attempt.IsReleased = false;
+            attempt.LastSavedTime = now;
 
+            var reopenedAttempt = new TestAttempt
+            {
+                UserId = dto.UserId,
+                TestId = dto.TestId,
+                ParentAttemptId = attempt.Id,
+                StartTime = now,
+                LastSavedTime = now,
+                Status = "InProgress",
+                IsSubmitted = false,
+                IsReleased = false,
+                LastQuestionIndex = attempt.LastQuestionIndex
+            };
+
+            _db.TestAttempts.Add(reopenedAttempt);
             await _db.SaveChangesAsync();
 
-            return new ReleaseExamResponseDto(true, "Exam released successfully");
+            var answers = await _db.StudentAnswers
+                .AsNoTracking()
+                .Where(a => a.AttemptId == attempt.Id)
+                .ToListAsync();
+
+            if (answers.Any())
+            {
+                _db.StudentAnswers.AddRange(answers.Select(a => new StudentAnswer
+                {
+                    AttemptId = reopenedAttempt.Id,
+                    QuestionId = a.QuestionId,
+                    SelectedOption = a.SelectedOption,
+                    IsAnswered = a.IsAnswered,
+                    UpdatedAt = now
+                }));
+            }
+
+            var result = await _db.Results
+                .FirstOrDefaultAsync(r => r.UserId == dto.UserId && r.TestId == dto.TestId);
+
+            if (result != null)
+                _db.Results.Remove(result);
+
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return new ReleaseExamResponseDto(true, "Exam reopened successfully");
         }
 
         public async Task<AdminAnswerReviewDto> GetAnswerReviewAsync(int adminId, int userId, int testId)
@@ -1869,6 +1921,7 @@ namespace ExamAPI.Services
             // Fetch answers from StudentAnswers via the TestAttempt (new Attempt system)
             var attempt = await _db.TestAttempts
                 .AsNoTracking()
+                .OrderByDescending(a => a.LastSavedTime)
                 .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId && a.IsSubmitted);
 
             Dictionary<int, int> answers = new();

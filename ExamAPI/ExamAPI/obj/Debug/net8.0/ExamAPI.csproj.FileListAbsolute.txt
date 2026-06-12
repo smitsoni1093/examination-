@@ -312,3 +312,11 @@ C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\s
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\obj\Debug\net8.0\swae.build.ex.cache
 C:\Users\Shiv\OneDrive\Documents\examination-\ExamAPI\ExamAPI\bin\Debug\net8.0\appsettings.Production.json
+C:\Users\Shiv\OneDrive\Documents\examination-\.tmp\examapi-build\appsettings.Development.json
+C:\Users\Shiv\OneDrive\Documents\examination-\.tmp\examapi-build\appsettings.json
+C:\Users\Shiv\OneDrive\Documents\examination-\.tmp\examapi-build\appsettings.Production.json
+C:\Users\Shiv\OneDrive\Documents\examination-\.tmp\examapi-build\ExamAPI.staticwebassets.endpoints.json
+C:\Users\Shiv\OneDrive\Documents\examination-\.tmp\examapi-build\ExamAPI.deps.json
+C:\Users\Shiv\OneDrive\Documents\examination-\.tmp\examapi-build\ExamAPI.runtimeconfig.json
+C:\Users\Shiv\OneDrive\Documents\examination-\.tmp\examapi-build\ExamAPI.dll
+C:\Users\Shiv\OneDrive\Documents\examination-\.tmp\examapi-build\ExamAPI.pdb

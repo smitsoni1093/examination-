@@ -203,18 +203,10 @@ const ViewResults = () => {
     try {
       await adminApi.releaseExam({ userId, testId });
       setReleaseExamMessage(
-        "Exam released successfully. The student can resume from their last saved position.",
+        "Paper reopened successfully. The old result was removed and the student can submit again.",
       );
       setResults((prev) =>
-        prev.map((item) => {
-          if (item.userId === userId && item.testId === testId) {
-            return {
-              ...item,
-              isReleased: true,
-            };
-          }
-          return item;
-        }),
+        prev.filter((item) => !(item.userId === userId && item.testId === testId)),
       );
     } catch (error: unknown) {
       console.error("Failed to release exam", error);
@@ -505,7 +497,7 @@ const ViewResults = () => {
             <TextField
               fullWidth
               size="small"
-              placeholder="Search by user, test, id, or score"
+              placeholder="Search by user, test, id, mobile or score"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{

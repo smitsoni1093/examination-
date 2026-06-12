@@ -265,7 +265,6 @@ namespace ExamAPI.Services
         {
             var testForOrg = await _db.Tests.AsNoTracking().FirstOrDefaultAsync(t => t.Id == dto.TestId && !t.IsDeleted);
             if (testForOrg == null) throw new KeyNotFoundException("Test not found.");
-            if (IsClosed(testForOrg)) throw new InvalidOperationException("Test is closed.");
             await EnsureUserCanAccessTestAsync(userId, adminId, testForOrg);
 
             var latestAttempt = await _db.TestAttempts
@@ -401,6 +400,7 @@ namespace ExamAPI.Services
         {
             var attempt = await _db.TestAttempts
                 .AsNoTracking()
+                .OrderByDescending(a => a.LastSavedTime)
                 .FirstOrDefaultAsync(a => a.UserId == userId && a.TestId == testId && a.IsSubmitted);
 
             Dictionary<int, int> answers = new();
