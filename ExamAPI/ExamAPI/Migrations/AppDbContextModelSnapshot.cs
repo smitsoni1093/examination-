@@ -321,6 +321,9 @@ namespace ExamAPI.Migrations
                     b.Property<DateTime>("LastSavedTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("ParentAttemptId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
@@ -335,6 +338,8 @@ namespace ExamAPI.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentAttemptId");
 
                     b.HasIndex("TestId");
 
@@ -694,6 +699,10 @@ namespace ExamAPI.Migrations
 
             modelBuilder.Entity("ExamAPI.Models.TestAttempt", b =>
                 {
+                    b.HasOne("ExamAPI.Models.TestAttempt", "ParentAttempt")
+                        .WithMany()
+                        .HasForeignKey("ParentAttemptId");
+
                     b.HasOne("ExamAPI.Models.Test", "Test")
                         .WithMany()
                         .HasForeignKey("TestId")
@@ -705,6 +714,8 @@ namespace ExamAPI.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ParentAttempt");
 
                     b.Navigation("Test");
 
@@ -842,8 +853,6 @@ namespace ExamAPI.Migrations
             modelBuilder.Entity("ExamAPI.Models.TestAttempt", b =>
                 {
                     b.Navigation("Answers");
-
-                    b.Navigation("Releases");
                 });
 
             modelBuilder.Entity("ExamAPI.Models.User", b =>

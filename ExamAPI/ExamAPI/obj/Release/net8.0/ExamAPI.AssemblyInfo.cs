@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ExamAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ca64edcaae17ebc80ef1528112cd10d69a304077")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5296b0fce28aedfbafa9bbb547fff98d362240a6")]
 [assembly: System.Reflection.AssemblyProductAttribute("ExamAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ExamAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
