@@ -189,7 +189,12 @@ const UserDashboard = () => {
                       })}
                     </Typography>
                     <Typography
-                      sx={{ mt: 0.5, color: "#BFDBFE", maxWidth: 560 }}
+                      sx={{
+                        mt: 0.5,
+                        color: "#BFDBFE",
+                        maxWidth: 560,
+                        display: { xs: "none", md: "block" },
+                      }}
                     >
                       {t("userDashboard.subtitle")}
                     </Typography>
@@ -324,6 +329,7 @@ const UserDashboard = () => {
                 borderColor: "#CBD5E1",
                 color: "#0F172A",
                 bgcolor: "#FFFFFF",
+                display: { xs: "none", md: "inline-flex" },
                 "&:hover": {
                   bgcolor: "#F8FAFC",
                   borderColor: "#94A3B8",
