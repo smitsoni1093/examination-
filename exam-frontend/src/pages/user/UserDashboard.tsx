@@ -204,6 +204,7 @@ const UserDashboard = () => {
                   justifyContent={{ xs: "flex-start", md: "flex-end" }}
                   flexWrap="wrap"
                   rowGap={1.4}
+                  sx={{ display: { xs: "none", md: "flex" } }}
                 >
                   <Box
                     sx={{
