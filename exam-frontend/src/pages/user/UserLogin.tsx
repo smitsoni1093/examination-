@@ -69,14 +69,26 @@ const UserLogin = () => {
     return `******${mobileNumber.slice(-4)}`;
   }, [mobileNumber]);
 
-  const mapError = (err: any) => {
-    const messageKey = err?.response?.data?.messageKey;
+  const mapError = (err: unknown) => {
+    const responseData =
+      typeof err === "object" && err !== null && "response" in err
+        ? (
+            err as {
+              response?: {
+                data?: { messageKey?: string; message?: string };
+              };
+            }
+          ).response?.data
+        : undefined;
+
+    const messageKey = responseData?.messageKey;
     if (messageKey && t(`api.${messageKey}`) !== `api.${messageKey}`) {
       return t(`api.${messageKey}`);
     }
 
     return (
-      err?.response?.data?.message || err?.message || t("api.ERROR_UNKNOWN")
+      responseData?.message ||
+      (err instanceof Error ? err.message : t("api.ERROR_UNKNOWN"))
     );
   };
 
@@ -118,7 +130,7 @@ const UserLogin = () => {
           ? t("auth.selectAccountPrompt")
           : t("auth.findAccount"),
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(mapError(err));
       setAccounts([]);
       setSelectionToken("");
@@ -147,7 +159,7 @@ const UserLogin = () => {
       } else {
         navigate("/user");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(mapError(err));
     } finally {
       setLoading(false);
