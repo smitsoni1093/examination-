@@ -654,6 +654,28 @@ const TestList = () => {
                     fullWidth
                     variant="outlined"
                     startIcon={<EditOutlined />}
+                    onClick={() => navigate(`/admin/manage-questions/${test.id}`)}
+                    sx={{
+                      mt: 1.5,
+                      borderRadius: 3,
+                      py: 1.6,
+                      fontWeight: 900,
+                      borderColor: "rgba(139, 92, 246, 0.35)",
+                      color: "#7C3AED",
+                      "&:hover": {
+                        borderColor: "#7C3AED",
+                        bgcolor: "rgba(139, 92, 246, 0.06)",
+                      },
+                      fontSize: { xs: "0.85rem", sm: "0.95rem" },
+                    }}
+                  >
+                    Manage Questions
+                  </Button>
+
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<EditOutlined />}
                     onClick={() => handleOpenEdit(test)}
                     sx={{
                       mt: 1.5,
