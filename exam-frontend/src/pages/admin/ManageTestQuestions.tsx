@@ -1185,26 +1185,6 @@ const ManageTestQuestions = () => {
           </Button>
           <Stack direction="row" spacing={3}>
             <Button
-              variant="outlined"
-              onClick={() => handleCreateQuestion(false)}
-              sx={{
-                fontWeight: 900,
-                px: 4,
-                py: 1.8,
-                borderRadius: 4,
-                color: "#EC4899",
-                borderColor: "rgba(236, 72, 153, 0.2)",
-                borderWidth: 2,
-                "&:hover": {
-                  bgcolor: "rgba(236, 72, 153, 0.05)",
-                  borderColor: "#EC4899",
-                  borderWidth: 2,
-                },
-              }}
-            >
-              Save & Next
-            </Button>
-            <Button
               variant="contained"
               onClick={() => handleCreateQuestion(true)}
               startIcon={<Save />}
@@ -1222,7 +1202,7 @@ const ManageTestQuestions = () => {
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
-              Finalize & Assign
+              {editingId ? "Save Changes" : "Save Question"}
             </Button>
           </Stack>
         </DialogActions>
