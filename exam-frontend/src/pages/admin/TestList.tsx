@@ -654,7 +654,9 @@ const TestList = () => {
                     fullWidth
                     variant="outlined"
                     startIcon={<EditOutlined />}
-                    onClick={() => navigate(`/admin/manage-questions/${test.id}`)}
+                    onClick={() =>
+                      navigate(`/admin/manage-questions/${test.id}`)
+                    }
                     sx={{
                       mt: 1.5,
                       borderRadius: 3,
