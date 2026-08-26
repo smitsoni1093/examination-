@@ -149,7 +149,10 @@ const LanguageSection = ({
         placeholder={`Enter the question in ${label}...`}
         value={question[`Question_${langCode}` as keyof NewQuestion]}
         onChange={(event) =>
-          onChange(`Question_${langCode}` as keyof NewQuestion, event.target.value)
+          onChange(
+            `Question_${langCode}` as keyof NewQuestion,
+            event.target.value,
+          )
         }
         sx={{
           "& .MuiOutlinedInput-root": { borderRadius: 4, bgcolor: "#F8FAFC" },
