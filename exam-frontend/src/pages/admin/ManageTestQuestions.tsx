@@ -85,6 +85,119 @@ type NewQuestion = {
   CorrectOption: number;
 };
 
+type LanguageCode = "EN" | "HI" | "GU";
+
+type LanguageSectionProps = {
+  langCode: LanguageCode;
+  label: string;
+  color: string;
+  icon: React.ReactNode;
+  question: NewQuestion;
+  onChange: (field: keyof NewQuestion, value: string) => void;
+};
+
+const LanguageSection = ({
+  langCode,
+  label,
+  color,
+  icon,
+  question,
+  onChange,
+}: LanguageSectionProps) => (
+  <Box sx={{ p: 4, bgcolor: "#FFFFFF" }}>
+    <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+      <Avatar
+        sx={{
+          bgcolor: `${color}15`,
+          color: color,
+          mr: 2.5,
+          width: 48,
+          height: 48,
+          borderRadius: 3,
+        }}
+      >
+        {icon}
+      </Avatar>
+      <Box>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 800, color: "#0F172A", lineHeight: 1.2 }}
+        >
+          {label} Configuration
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: "#64748B",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: 1,
+          }}
+        >
+          {langCode} VERSION
+        </Typography>
+      </Box>
+    </Box>
+
+    <Stack spacing={4}>
+      <TextField
+        fullWidth
+        required
+        label="The Assessment Question"
+        multiline
+        rows={3}
+        placeholder={`Enter the question in ${label}...`}
+        value={question[`Question_${langCode}` as keyof NewQuestion]}
+        onChange={(event) =>
+          onChange(`Question_${langCode}` as keyof NewQuestion, event.target.value)
+        }
+        sx={{
+          "& .MuiOutlinedInput-root": { borderRadius: 4, bgcolor: "#F8FAFC" },
+          "& .MuiInputLabel-root": { fontWeight: 700 },
+        }}
+      />
+
+      <Box>
+        <Typography
+          variant="overline"
+          sx={{ fontWeight: 800, color: "#94A3B8", mb: 2, display: "block" }}
+        >
+          MCQ RESPONSE OPTIONS
+        </Typography>
+        <Grid container spacing={3}>
+          {[1, 2, 3, 4].map((num) => (
+            <Grid item xs={12} sm={6} key={num}>
+              <TextField
+                fullWidth
+                required
+                label={`Option ${num}`}
+                placeholder={`Enter choice ${num}...`}
+                value={
+                  question[`Option${num}_${langCode}` as keyof NewQuestion]
+                }
+                onChange={(event) =>
+                  onChange(
+                    `Option${num}_${langCode}` as keyof NewQuestion,
+                    event.target.value,
+                  )
+                }
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 3,
+                    transition: "all 0.2s",
+                    "&:hover": { bgcolor: "#F1F5F9" },
+                  },
+                  "& .MuiInputLabel-root": { fontWeight: 600 },
+                }}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    </Stack>
+  </Box>
+);
+
 const ManageTestQuestions = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
@@ -353,113 +466,12 @@ const ManageTestQuestions = () => {
       q.id.toString().includes(searchTerm),
   );
 
-  const LangSection = ({
-    langCode,
-    label,
-    color,
-    icon,
-  }: {
-    langCode: "EN" | "HI" | "GU";
-    label: string;
-    color: string;
-    icon: React.ReactNode;
-  }) => (
-    <Box sx={{ p: 4, bgcolor: "#FFFFFF" }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-        <Avatar
-          sx={{
-            bgcolor: `${color}15`,
-            color: color,
-            mr: 2.5,
-            width: 48,
-            height: 48,
-            borderRadius: 3,
-          }}
-        >
-          {icon}
-        </Avatar>
-        <Box>
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 800, color: "#0F172A", lineHeight: 1.2 }}
-          >
-            {label} Configuration
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              color: "#64748B",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: 1,
-            }}
-          >
-            {langCode} VERSION
-          </Typography>
-        </Box>
-      </Box>
-
-      <Stack spacing={4}>
-        <TextField
-          fullWidth
-          required
-          label="The Assessment Question"
-          multiline
-          rows={3}
-          placeholder={`Enter the question in ${label}...`}
-          value={newQuestion[`Question_${langCode}` as keyof NewQuestion]}
-          onChange={(e) =>
-            setNewQuestion({
-              ...newQuestion,
-              [`Question_${langCode}`]: e.target.value,
-            } as NewQuestion)
-          }
-          sx={{
-            "& .MuiOutlinedInput-root": { borderRadius: 4, bgcolor: "#F8FAFC" },
-            "& .MuiInputLabel-root": { fontWeight: 700 },
-          }}
-        />
-
-        <Box>
-          <Typography
-            variant="overline"
-            sx={{ fontWeight: 800, color: "#94A3B8", mb: 2, display: "block" }}
-          >
-            MCQ RESPONSE OPTIONS
-          </Typography>
-          <Grid container spacing={3}>
-            {[1, 2, 3, 4].map((num) => (
-              <Grid item xs={12} sm={6} key={num}>
-                <TextField
-                  fullWidth
-                  required
-                  label={`Option ${num}`}
-                  placeholder={`Enter choice ${num}...`}
-                  value={
-                    newQuestion[`Option${num}_${langCode}` as keyof NewQuestion]
-                  }
-                  onChange={(e) =>
-                    setNewQuestion({
-                      ...newQuestion,
-                      [`Option${num}_${langCode}`]: e.target.value,
-                    } as NewQuestion)
-                  }
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 3,
-                      transition: "all 0.2s",
-                      "&:hover": { bgcolor: "#F1F5F9" },
-                    },
-                    "& .MuiInputLabel-root": { fontWeight: 600 },
-                  }}
-                />
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      </Stack>
-    </Box>
-  );
+  const handleQuestionFieldChange = (
+    field: keyof NewQuestion,
+    value: string,
+  ) => {
+    setNewQuestion((current) => ({ ...current, [field]: value }));
+  };
 
   if (loading)
     return (
@@ -1047,27 +1059,33 @@ const ManageTestQuestions = () => {
 
         <DialogContent sx={{ p: 0, bgcolor: "#FFFFFF" }}>
           {tabValue === 0 && (
-            <LangSection
+            <LanguageSection
               langCode="EN"
               label="English"
               color="#6366F1"
               icon={<Language />}
+              question={newQuestion}
+              onChange={handleQuestionFieldChange}
             />
           )}
           {tabValue === 1 && (
-            <LangSection
+            <LanguageSection
               langCode="HI"
               label="Hindi"
               color="#F59E0B"
               icon={<Translate />}
+              question={newQuestion}
+              onChange={handleQuestionFieldChange}
             />
           )}
           {tabValue === 2 && (
-            <LangSection
+            <LanguageSection
               langCode="GU"
               label="Gujarati"
               color="#10B981"
               icon={<Quiz />}
+              question={newQuestion}
+              onChange={handleQuestionFieldChange}
             />
           )}
 
